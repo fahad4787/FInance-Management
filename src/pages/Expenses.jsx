@@ -31,7 +31,7 @@ const Expenses = () => {
   const [initialValues, setInitialValues] = useState(defaultForm);
 
   useEffect(() => {
-    document.title = 'Expenses | Finance Management';
+    document.title = 'Expenses | FinHub';
   }, []);
 
   useEffect(() => {

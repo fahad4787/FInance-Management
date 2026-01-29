@@ -33,6 +33,7 @@ const Dashboard = () => {
   const transactions = useSelector((state) => state.transactions.items);
   const expenses = useSelector((state) => state.expenses.items);
   const isLoading = useSelector((state) => state.transactions.isLoading);
+  const projectsError = useSelector((state) => state.projects.error);
   const transactionsError = useSelector((state) => state.transactions.error);
   const expensesError = useSelector((state) => state.expenses.error);
 
@@ -41,7 +42,7 @@ const Dashboard = () => {
   const [initialValues, setInitialValues] = useState(defaultForm);
 
   useEffect(() => {
-    document.title = 'Overview | Finance Management';
+    document.title = 'Overview | FinHub';
   }, []);
 
   useEffect(() => {
@@ -176,8 +177,9 @@ const Dashboard = () => {
           actions={<Button onClick={openAddModal}>Add Transaction</Button>}
         />
 
-        {(transactionsError || expensesError) && (
+        {(projectsError || transactionsError || expensesError) && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+            {projectsError && <p>{projectsError}</p>}
             {transactionsError && <p>{transactionsError}</p>}
             {expensesError && <p>{expensesError}</p>}
           </div>

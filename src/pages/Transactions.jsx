@@ -36,7 +36,7 @@ const Transactions = () => {
   const [initialValues, setInitialValues] = useState(defaultForm);
 
   useEffect(() => {
-    document.title = 'Transactions | Finance Management';
+    document.title = 'Transactions | FinHub';
   }, []);
 
   useEffect(() => {

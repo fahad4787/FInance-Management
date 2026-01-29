@@ -28,7 +28,7 @@ const Projects = () => {
   });
 
   useEffect(() => {
-    document.title = 'Projects | Finance Management';
+    document.title = 'Projects | FinHub';
   }, []);
 
   useEffect(() => {

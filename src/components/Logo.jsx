@@ -52,8 +52,8 @@ const Logo = ({ className = "" }) => {
         </div>
       </div>
       <div className="flex flex-col">
-        <span className="text-xl font-bold text-gray-800 leading-tight tracking-tight">Finance</span>
-        <span className="text-xs font-semibold text-primary-600 leading-tight uppercase tracking-wider">Management</span>
+        <span className="text-xl font-bold text-gray-800 leading-tight tracking-tight">FinHub</span>
+        <span className="text-xs font-semibold text-primary-600 leading-tight uppercase tracking-wider">Finance Hub</span>
       </div>
     </div>
   );

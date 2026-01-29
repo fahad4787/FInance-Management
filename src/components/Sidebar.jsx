@@ -1,9 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FiHome, FiFileText, FiRepeat, FiTrendingDown } from 'react-icons/fi';
+import { FiHome, FiFileText, FiRepeat, FiTrendingDown, FiLogOut } from 'react-icons/fi';
+import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
 
 const Sidebar = ({ isOpen = true }) => {
   const location = useLocation();
+  const { logout } = useAuth();
 
   const menuItems = [
     { path: '/', label: 'Dashboard', icon: <FiHome className="w-5 h-5" /> },
@@ -44,6 +46,17 @@ const Sidebar = ({ isOpen = true }) => {
             );
           })}
         </nav>
+        <div className={`p-4 border-t border-gray-200 ${!isOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+          <button
+            type="button"
+            onClick={logout}
+            aria-label="Sign out"
+            className="flex items-center gap-3 px-4 py-3 w-full rounded-lg font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+          >
+            <FiLogOut className="w-5 h-5" />
+            {isOpen && <span>Sign out</span>}
+          </button>
+        </div>
       </div>
     </div>
   );

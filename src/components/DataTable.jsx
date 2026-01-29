@@ -190,17 +190,7 @@ const DataTable = ({
                 </tr>
               </thead>
               <tbody>
-                {currentData.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={columns.length + (onEdit || onDelete ? 1 : 0)}
-                      className="py-12 text-center text-gray-500 font-medium"
-                    >
-                      No matching results. Try adjusting your search or filters.
-                    </td>
-                  </tr>
-                ) : (
-                  currentData.map((item, localIndex) => {
+                {currentData.map((item, localIndex) => {
                     const filteredIndex = startIndex + localIndex;
                     const uniqueId = item.id || `${localIndex}-${filteredIndex}`;
                     return (
@@ -234,8 +224,7 @@ const DataTable = ({
                         )}
                       </tr>
                     );
-                  })
-                )}
+                  })}
               </tbody>
             </table>
           </div>

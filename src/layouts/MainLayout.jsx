@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { Outlet } from 'react-router-dom';
 import { FiX, FiMenu } from 'react-icons/fi';
 import Sidebar from '../components/Sidebar';
 
-const MainLayout = ({ children }) => {
+const MainLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const toggleSidebar = () => {
@@ -30,7 +31,7 @@ const MainLayout = ({ children }) => {
         </div>
         <div className="overflow-auto h-[calc(100vh-73px)] w-full">
           <div className="w-full max-w-[1800px] mx-auto">
-            {children}
+            <Outlet />
           </div>
         </div>
       </div>
