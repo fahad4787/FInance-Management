@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen;
+  }
+  
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+html {
+  font-size: 15px;
+}
+
+html,
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}

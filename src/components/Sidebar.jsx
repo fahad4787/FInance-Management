@@ -1,0 +1,52 @@
+import { Link, useLocation } from 'react-router-dom';
+import { FiHome, FiFileText, FiRepeat, FiTrendingDown } from 'react-icons/fi';
+import Logo from './Logo';
+
+const Sidebar = ({ isOpen = true }) => {
+  const location = useLocation();
+
+  const menuItems = [
+    { path: '/', label: 'Dashboard', icon: <FiHome className="w-5 h-5" /> },
+    { path: '/projects', label: 'Projects', icon: <FiFileText className="w-5 h-5" /> },
+    { path: '/transactions', label: 'Transactions', icon: <FiRepeat className="w-5 h-5" /> },
+    { path: '/expenses', label: 'Expenses', icon: <FiTrendingDown className="w-5 h-5" /> }
+  ];
+
+  return (
+    <div
+      className={`bg-white shadow-lg border-r border-gray-200 fixed left-0 top-0 h-full z-40 transition-all duration-300 ${
+        isOpen ? 'w-64' : 'w-0 overflow-hidden'
+      }`}
+    >
+      <div className="flex flex-col h-full">
+        <div className={`p-6 border-b border-gray-200 ${!isOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+          <Link to="/" className="flex items-center">
+            <Logo />
+          </Link>
+        </div>
+        
+        <nav className={`flex-1 p-4 space-y-2 ${!isOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-colors ${
+                  isActive
+                    ? 'bg-primary-50 text-primary-600 border-l-4 border-primary-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-primary-600'
+                }`}
+              >
+                {item.icon}
+                {isOpen && <span>{item.label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </div>
+  );
+};
+
+export default Sidebar;
