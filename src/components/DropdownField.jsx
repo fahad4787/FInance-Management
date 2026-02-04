@@ -7,7 +7,8 @@ const DropdownField = ({
   options = [], 
   placeholder = "Select...",
   className = "",
-  hideLabel = false
+  hideLabel = false,
+  hidePlaceholder = false
 }) => {
   return (
     <div className={`flex flex-col ${className}`}>
@@ -22,7 +23,7 @@ const DropdownField = ({
           onChange={onChange}
           className="w-full h-11 px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary-500 appearance-none bg-white pr-10 cursor-pointer text-gray-700 text-sm"
         >
-          <option value="" className="text-gray-400">{placeholder}</option>
+          {!hidePlaceholder && <option value="" className="text-gray-400">{placeholder}</option>}
           {options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

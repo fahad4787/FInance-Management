@@ -14,7 +14,7 @@ const defaultForm = {
   client: '',
   date: '',
   project: '',
-  projectType: '',
+  projectType: 'Full time',
   totalMonthlyHours: '',
   hourlyRate: '',
   recruiterName: '',
@@ -40,6 +40,7 @@ const ProjectFormModal = ({
     ...defaultForm,
     ...(initialValues || {}),
     date: (initialValues && initialValues.date) ? initialValues.date : today,
+    projectType: (initialValues && initialValues.projectType !== undefined && initialValues.projectType !== '') ? initialValues.projectType : 'Full time',
     contractEnding: (initialValues && initialValues.contractEnding) ? initialValues.contractEnding : contractEndingDefault
   };
 
@@ -61,13 +62,12 @@ const ProjectFormModal = ({
     if (fieldName === 'client' && value) {
       const latestProject = findLatestProjectByBroker(value);
       if (latestProject) {
-        form.projectType = latestProject.projectType || '';
-        form.totalMonthlyHours = latestProject.totalMonthlyHours || '';
-        form.hourlyRate = latestProject.hourlyRate || '';
-        form.recruiterName = latestProject.recruiterName || '';
         form.brokerageValue = latestProject.brokerageValue || '';
         form.brokerageType = latestProject.brokerageType || 'percentage';
       }
+    }
+    if (fieldName === 'projectType' && value === 'Full time') {
+      form.contractEnding = '';
     }
     return form;
   };
@@ -96,7 +96,8 @@ const ProjectFormModal = ({
       type: 'dropdown',
       name: 'projectType',
       label: 'Project Type',
-      options: projectTypeOptions
+      options: projectTypeOptions,
+      hidePlaceholder: true
     },
     {
       type: 'number',
@@ -116,8 +117,9 @@ const ProjectFormModal = ({
     {
       type: 'date',
       name: 'contractEnding',
-      label: 'Contract Ending',
-      defaultValue: getDateSixMonthsFromNow()
+      label: 'End Date',
+      defaultValue: getDateSixMonthsFromNow(),
+      showWhen: (form) => form.projectType !== 'Full time'
     },
     {
       type: 'radio-group',

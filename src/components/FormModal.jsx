@@ -105,6 +105,7 @@ const FormModal = ({
           <DropdownField
             {...commonProps}
             options={resolvedOptions}
+            hidePlaceholder={field.hidePlaceholder}
           />
         );
       
@@ -162,8 +163,11 @@ const FormModal = ({
   const groupFieldsIntoRows = () => {
     const rows = [];
     let currentRow = [];
-    
-    fields.forEach((field, index) => {
+    const visibleFields = fields.filter(
+      (field) => typeof field.showWhen !== 'function' || field.showWhen(form)
+    );
+
+    visibleFields.forEach((field, index) => {
       if (field.type === 'section') {
         if (currentRow.length > 0) {
           rows.push({ type: 'row', fields: currentRow });
@@ -189,13 +193,13 @@ const FormModal = ({
         }
       } else {
         currentRow.push(field);
-        if (currentRow.length === 2 || field.fullWidth || index === fields.length - 1) {
+        if (currentRow.length === 2 || field.fullWidth || index === visibleFields.length - 1) {
           rows.push({ type: 'row', fields: currentRow });
           currentRow = [];
         }
       }
     });
-    
+
     return rows;
   };
 

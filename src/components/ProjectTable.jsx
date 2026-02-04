@@ -27,7 +27,7 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
     { key: 'totalMonthlyHours', label: 'Monthly Hours' },
     { key: 'hourlyRate', label: 'Hourly Rate' },
     { key: 'recruiterName', label: 'Recruiter Name' },
-    { key: 'contractEnding', label: 'Contract Ending' },
+    { key: 'contractEnding', label: 'End Date' },
     {
       key: 'brokerage',
       label: 'Brokerage',
