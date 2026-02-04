@@ -1,11 +1,6 @@
 import { FiUser, FiFileText } from 'react-icons/fi';
 import DataTable from './DataTable';
-
-const formatMoney = (v) => {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return '-';
-  return `$${n.toFixed(2)}`;
-};
+import { formatMoney } from '../utils/format';
 
 const toNumber = (v) => {
   const n = Number(v);
@@ -17,6 +12,12 @@ const computeNetTotal = (t) => {
   const brokerageAmount = toNumber(t.brokerageAmount);
   const additionalCharges = toNumber(t.additionalCharges);
   return amount - brokerageAmount - additionalCharges;
+};
+
+/** Net after 2% Impact Fund (matches Add/Edit Transaction summary "Total Amount (Net)") */
+const computeNetAfterImpactFund = (t) => {
+  const netBefore = Number.isFinite(Number(t.totalAmount)) ? Number(t.totalAmount) : computeNetTotal(t);
+  return netBefore * 0.98;
 };
 
 const TransactionTable = ({ transactions, onDelete, onEdit, isLoading = false, title = 'Transaction Details' }) => {
@@ -38,7 +39,7 @@ const TransactionTable = ({ transactions, onDelete, onEdit, isLoading = false, t
     {
       key: 'totalAmount',
       label: 'Total (Net)',
-      render: (v, t) => formatMoney(Number.isFinite(Number(v)) ? v : computeNetTotal(t))
+      render: (_, t) => formatMoney(computeNetAfterImpactFund(t))
     }
   ];
 

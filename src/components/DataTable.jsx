@@ -20,7 +20,9 @@ const DataTable = ({
   pagination = {
     enabled: true,
     itemsPerPage: 5
-  }
+  },
+  emptyTitle = 'No Data Yet',
+  emptyDescription = 'Get started by adding your first entry'
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValues, setFilterValues] = useState({});
@@ -82,8 +84,8 @@ const DataTable = ({
           <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
             <FiFileText className="w-12 h-12 text-gray-400" />
           </div>
-          <h4 className="text-xl font-semibold text-gray-700 mb-2">No Data Yet</h4>
-          <p className="text-gray-500 mb-6">Get started by adding your first entry</p>
+          <h4 className="text-xl font-semibold text-gray-700 mb-2">{emptyTitle}</h4>
+          <p className="text-gray-500 mb-6">{emptyDescription}</p>
         </div>
       </div>
     );
@@ -179,7 +181,7 @@ const DataTable = ({
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`py-3 px-4 text-sm font-semibold text-gray-700 capitalize ${column.align || 'text-center'}`}
+                      className={`py-3 px-4 text-sm font-semibold text-gray-700 capitalize ${column.align || 'text-center'} ${column.className || ''}`}
                     >
                       {column.label}
                     </th>
@@ -198,7 +200,7 @@ const DataTable = ({
                         {columns.map((column) => (
                           <td
                             key={column.key}
-                            className={`py-3 px-4 text-gray-700 ${column.align || 'text-center'}`}
+                            className={`py-3 px-4 text-gray-700 ${column.align || 'text-center'} ${column.className || ''}`}
                           >
                             {column.render ? column.render(item[column.key], item) : (item[column.key] || '-')}
                           </td>

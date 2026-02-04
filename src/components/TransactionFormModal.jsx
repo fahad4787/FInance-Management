@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import FormModal from './FormModal';
 import { FiUser, FiFileText, FiDollarSign } from 'react-icons/fi';
+import { formatMoney } from '../utils/format';
 import { FaPercent } from 'react-icons/fa6';
 import { HiOutlineCurrencyDollar } from 'react-icons/hi2';
 
@@ -34,12 +35,6 @@ const computeTotalAmount = ({ amount, brokerageAmount, additionalCharges, broker
     : computeBrokerageAmount({ amount, brokerageType, brokerageValue });
   const charges = toNumber(additionalCharges);
   return a - bAmt - charges;
-};
-
-const formatMoney = (v) => {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return '$0.00';
-  return `$${n.toFixed(2)}`;
 };
 
 const TransactionFormModal = ({
@@ -175,7 +170,9 @@ const TransactionFormModal = ({
         const amount = toNumber(form.amount);
         const brokerageAmount = computeBrokerageAmount(form);
         const additionalCharges = toNumber(form.additionalCharges);
-        const totalAmount = computeTotalAmount({ ...form, brokerageAmount });
+        const totalBeforeImpactFund = computeTotalAmount({ ...form, brokerageAmount });
+        const impactFundAmount = (totalBeforeImpactFund * 0.02) || 0;
+        const grandTotal = totalBeforeImpactFund - impactFundAmount;
 
         const brokerageLabel =
           form.brokerageType === 'percentage'
@@ -196,9 +193,13 @@ const TransactionFormModal = ({
               <span className="text-gray-600 font-medium">(-) Additional Charges</span>
               <span className="text-gray-900 font-semibold">{formatMoney(additionalCharges)}</span>
             </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600 font-medium">(-) Impact Fund (2%)</span>
+              <span className="text-gray-900 font-semibold">{formatMoney(impactFundAmount)}</span>
+            </div>
             <div className="border-t border-gray-200 pt-3 flex items-center justify-between">
               <span className="text-gray-900 font-semibold">Total Amount (Net)</span>
-              <span className="text-primary-700 font-bold text-lg">{formatMoney(totalAmount)}</span>
+              <span className="text-primary-700 font-bold text-lg">{formatMoney(grandTotal)}</span>
             </div>
           </div>
         );

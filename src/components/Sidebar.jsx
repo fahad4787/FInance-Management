@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FiHome, FiFileText, FiRepeat, FiTrendingDown, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiFileText, FiRepeat, FiTrendingDown, FiDollarSign, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
 
@@ -11,7 +11,8 @@ const Sidebar = ({ isOpen = true }) => {
     { path: '/', label: 'Dashboard', icon: <FiHome className="w-5 h-5" /> },
     { path: '/projects', label: 'Projects', icon: <FiFileText className="w-5 h-5" /> },
     { path: '/transactions', label: 'Transactions', icon: <FiRepeat className="w-5 h-5" /> },
-    { path: '/expenses', label: 'Expenses', icon: <FiTrendingDown className="w-5 h-5" /> }
+    { path: '/expenses', label: 'Expenses', icon: <FiTrendingDown className="w-5 h-5" /> },
+    { path: '/impact-fund', label: 'Impact Fund', icon: <FiDollarSign className="w-5 h-5" /> }
   ];
 
   return (

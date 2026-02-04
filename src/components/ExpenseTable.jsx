@@ -1,11 +1,7 @@
 import { FiFileText } from 'react-icons/fi';
 import DataTable from './DataTable';
 
-const formatMoney = (v) => {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return '-';
-  return `$${n.toFixed(2)}`;
-};
+import { formatMoney } from '../utils/format';
 
 const ExpenseTable = ({ expenses, onDelete, onEdit, isLoading = false, title = 'Expense Details' }) => {
   const columns = [

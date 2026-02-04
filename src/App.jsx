@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import Transactions from './pages/Transactions';
 import Expenses from './pages/Expenses';
+import ImpactFund from './pages/ImpactFund';
 import Signup from './pages/auth/Signup';
 import Login from './pages/auth/Login';
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -66,6 +67,7 @@ function AppRoutes() {
         <Route path="projects" element={<Projects />} />
         <Route path="transactions" element={<Transactions />} />
         <Route path="expenses" element={<Expenses />} />
+        <Route path="impact-fund" element={<ImpactFund />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
