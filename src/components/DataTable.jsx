@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiSearch, FiChevronDown, FiFileText, FiMoreVertical } from 'react-icons/fi';
 import SearchableDropdown from './SearchableDropdown';
 import Loader from './Loader';
@@ -17,6 +17,7 @@ const DataTable = ({
     searchFields: []
   },
   filters = [],
+  additionalFilters = null,
   pagination = {
     enabled: true,
     itemsPerPage: 5
@@ -31,8 +32,9 @@ const DataTable = ({
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const loadMore = pagination.loadMore === true;
   const itemsPerPage = pagination.enabled ? pagination.itemsPerPage : data.length;
+  const [visibleCount, setVisibleCount] = useState(loadMore ? itemsPerPage : data.length);
 
   const filteredData = data.filter((item) => {
     if (searchConfig.enabled && searchTerm) {
@@ -51,9 +53,14 @@ const DataTable = ({
   });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+  const startIndex = loadMore ? 0 : (currentPage - 1) * itemsPerPage;
+  const endIndex = loadMore ? visibleCount : startIndex + itemsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
+  const hasMore = loadMore && visibleCount < filteredData.length;
+
+  useEffect(() => {
+    if (loadMore) setVisibleCount(itemsPerPage);
+  }, [loadMore, itemsPerPage, filteredData.length]);
 
   const getFilterOptions = (filter) => {
     if (filter.options) return filter.options;
@@ -162,6 +169,12 @@ const DataTable = ({
             )}
           </div>
         ))}
+
+        {additionalFilters && (
+          <div className="flex items-end gap-2 flex-shrink-0">
+            {additionalFilters}
+          </div>
+        )}
       </div>
 
       {currentData.length === 0 ? (
@@ -175,19 +188,19 @@ const DataTable = ({
       ) : (
         <>
           <div className="overflow-x-auto relative">
-            <table className="w-full">
+            <table className="w-full min-w-max">
               <thead>
                 <tr className="border-b-2 border-gray-200">
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`py-3 px-4 text-sm font-semibold text-gray-700 capitalize ${column.align || 'text-center'} ${column.className || ''}`}
+                      className={`py-3 px-4 text-sm font-semibold text-gray-700 capitalize whitespace-nowrap ${column.align || 'text-center'} ${column.className || ''}`}
                     >
                       {column.label}
                     </th>
                   ))}
                   {(onEdit || onDelete) && (
-                    <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700 capitalize">Actions</th>
+                    <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700 capitalize whitespace-nowrap">Actions</th>
                   )}
                 </tr>
               </thead>
@@ -200,7 +213,7 @@ const DataTable = ({
                         {columns.map((column) => (
                           <td
                             key={column.key}
-                            className={`py-3 px-4 text-gray-700 ${column.align || 'text-center'} ${column.className || ''}`}
+                            className={`py-3 px-4 text-gray-700 whitespace-nowrap ${column.align || 'text-center'} ${column.className || ''}`}
                           >
                             {column.render ? column.render(item[column.key], item) : (item[column.key] || '-')}
                           </td>
@@ -282,7 +295,21 @@ const DataTable = ({
             </>
           )}
 
-          {pagination.enabled && totalPages > 1 && (
+          {pagination.enabled && (loadMore ? (
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-gray-600">
+                Showing 1 to {Math.min(visibleCount, filteredData.length)} of {filteredData.length} entries
+              </div>
+              {hasMore && (
+                <button
+                  onClick={() => setVisibleCount(prev => prev + itemsPerPage)}
+                  className="px-5 py-2.5 bg-primary-500 text-white rounded-lg hover:bg-primary-600 font-semibold transition-colors"
+                >
+                  Load more
+                </button>
+              )}
+            </div>
+          ) : totalPages > 1 && (
             <div className="mt-6 flex items-center justify-between">
               <div className="text-sm text-gray-600">
                 Showing {startIndex + 1} to {Math.min(endIndex, filteredData.length)} of {filteredData.length} entries
@@ -307,7 +334,7 @@ const DataTable = ({
                 </button>
               </div>
             </div>
-          )}
+          ))}
         </>
       )}
 

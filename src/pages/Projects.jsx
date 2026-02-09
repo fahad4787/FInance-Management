@@ -3,8 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createProject, editProject, fetchProjects, removeProject } from '../store/projects/projectsSlice';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
+import ModernDatePicker from '../components/ModernDatePicker';
+import FilterBar from '../components/FilterBar';
+import SearchableDropdown from '../components/SearchableDropdown';
 import ProjectTable from '../components/ProjectTable';
 import ProjectFormModal from '../components/ProjectFormModal';
+import { normalizeDateToYYYYMMDD, getThisMonthRange } from '../utils/date';
 
 const Projects = () => {
   const dispatch = useDispatch();
@@ -12,6 +16,13 @@ const Projects = () => {
   const isLoading = useSelector((state) => state.projects.isLoading);
   const error = useSelector((state) => state.projects.error);
 
+  const projectTypeLabels = ['Full time', 'Part time', 'Contract'];
+
+  const { from: defaultFrom, to: defaultTo } = getThisMonthRange();
+  const [dateFrom, setDateFrom] = useState(defaultFrom);
+  const [dateTo, setDateTo] = useState(defaultTo);
+  const [selectedBroker, setSelectedBroker] = useState('');
+  const [selectedProjectType, setSelectedProjectType] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState(null);
   const [initialValues, setInitialValues] = useState({
@@ -26,6 +37,31 @@ const Projects = () => {
     brokerageType: 'percentage',
     brokerageValue: ''
   });
+
+  const filteredProjects = useMemo(() => {
+    let list = projects || [];
+    if (dateFrom) {
+      const from = normalizeDateToYYYYMMDD(dateFrom);
+      list = list.filter((p) => {
+        const d = normalizeDateToYYYYMMDD(p.date);
+        return d && d >= from;
+      });
+    }
+    if (dateTo) {
+      const to = normalizeDateToYYYYMMDD(dateTo);
+      list = list.filter((p) => {
+        const d = normalizeDateToYYYYMMDD(p.date);
+        return d && d <= to;
+      });
+    }
+    if (selectedBroker) {
+      list = list.filter((p) => (p.client || '').trim() === selectedBroker);
+    }
+    if (selectedProjectType) {
+      list = list.filter((p) => (p.projectType || '').trim() === selectedProjectType);
+    }
+    return list;
+  }, [projects, dateFrom, dateTo, selectedBroker, selectedProjectType]);
 
   useEffect(() => {
     document.title = 'Projects | FinHub';
@@ -111,12 +147,28 @@ const Projects = () => {
   return (
     <div className="p-6 md:p-8 w-full">
       <div className="w-full space-y-8">
-        <PageHeader
-          title="Projects"
-          actions={
-            <Button onClick={openAddModal}>Add Project</Button>
-          }
-        />
+        <PageHeader title="Projects" actions={<Button onClick={openAddModal}>Add Project</Button>} />
+
+        <FilterBar>
+          <SearchableDropdown
+            label="Broker"
+            value={selectedBroker}
+            onChange={setSelectedBroker}
+            options={clientOptions}
+            placeholder="All Brokers"
+            className="min-w-[160px] sm:min-w-[200px]"
+          />
+          <SearchableDropdown
+            label="Project Type"
+            value={selectedProjectType}
+            onChange={setSelectedProjectType}
+            options={projectTypeLabels}
+            placeholder="All Types"
+            className="min-w-[160px] sm:min-w-[200px]"
+          />
+          <ModernDatePicker label="Start date" value={dateFrom} onChange={setDateFrom} placeholder="Start" className="min-w-[140px]" />
+          <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
+        </FilterBar>
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
@@ -125,11 +177,12 @@ const Projects = () => {
         )}
 
         <ProjectTable
-          projects={projects}
+          projects={filteredProjects}
           onDelete={onDelete}
           onEdit={openEditModal}
           isLoading={isLoading}
           title="Project Details"
+          hideFilters={['client', 'projectType']}
         />
       </div>
 

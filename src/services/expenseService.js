@@ -15,13 +15,50 @@ export const getAllExpenses = async () => {
   }
 };
 
+/** Add n months to a YYYY-MM-DD date string, return YYYY-MM-DD */
+function addMonthsToDate(dateStr, monthsToAdd) {
+  if (!dateStr || typeof dateStr !== 'string') return dateStr;
+  const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
+  const date = new Date(y, (m || 1) - 1, d || 1);
+  date.setMonth(date.getMonth() + monthsToAdd);
+  const yy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
+
 export const saveExpense = async (expenseData) => {
   try {
-    const dataWithTimestamp = {
-      ...expenseData,
+    const recurring = !!expenseData.recurring;
+    const recurringMonths = Math.max(0, Math.min(36, Number(expenseData.recurringMonths) || 0));
+    const shouldCreateRecurring = recurring && recurringMonths > 0;
+
+    const baseData = {
+      expenseName: expenseData.expenseName ?? '',
+      date: expenseData.date ?? '',
+      expenseType: expenseData.expenseType ?? '',
+      amount: Number(expenseData.amount) || 0,
+      comment: expenseData.comment ?? '',
       createdAt: new Date().toISOString()
     };
-    const docRef = await addDoc(collection(db, 'expenses'), dataWithTimestamp);
+
+    if (shouldCreateRecurring) {
+      const startDate = (expenseData.date || '').toString().slice(0, 10);
+      const ids = [];
+      for (let i = 0; i < recurringMonths; i++) {
+        const monthDate = addMonthsToDate(startDate, i);
+        const docRef = await addDoc(collection(db, 'expenses'), {
+          ...baseData,
+          date: monthDate,
+          recurring: true,
+          recurringMonths
+        });
+        ids.push(docRef.id);
+      }
+      return ids[0];
+    }
+
+    const docRef = await addDoc(collection(db, 'expenses'), baseData);
     return docRef.id;
   } catch (error) {
     console.error('Error saving expense:', error);

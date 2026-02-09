@@ -146,6 +146,21 @@ const FormModal = ({
             rows={field.rows || 4}
           />
         );
+
+      case 'checkbox':
+        return (
+          <div className={field.className || ''}>
+            <label className="flex items-center gap-2 cursor-pointer mt-5">
+              <input
+                type="checkbox"
+                checked={!!form[field.name]}
+                onChange={(e) => onFieldChange(field.name, e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span className="text-sm font-semibold text-gray-700">{field.label}</span>
+            </label>
+          </div>
+        );
       
       case 'text':
       default:
@@ -193,7 +208,8 @@ const FormModal = ({
         }
       } else {
         currentRow.push(field);
-        if (currentRow.length === 2 || field.fullWidth || index === visibleFields.length - 1) {
+        const isFullWidth = typeof field.fullWidth === 'function' ? field.fullWidth(form) : !!field.fullWidth;
+        if (currentRow.length === 2 || isFullWidth || index === visibleFields.length - 1) {
           rows.push({ type: 'row', fields: currentRow });
           currentRow = [];
         }
@@ -279,16 +295,24 @@ const FormModal = ({
             return <div key={`radio-${rowIndex}`}>{renderRadioGroup(row.field)}</div>;
           }
           
+          const colSpans = row.fields.map((f) => (typeof f.colSpan === 'function' ? f.colSpan(form) : (f.colSpan ?? 1)));
+          const use8020 = row.fields.length === 2 && colSpans[0] === 4 && colSpans[1] === 1;
+          const gridClass = use8020
+            ? 'grid grid-cols-1 md:grid-cols-[4fr_1fr] gap-6 items-center'
+            : 'grid grid-cols-1 md:grid-cols-2 gap-6 items-center';
           return (
-            <div key={`row-${rowIndex}`} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {row.fields.map((field) => (
-                <div
-                  key={field.name}
-                  className={field.colSpan === 2 || field.fullWidth ? 'md:col-span-2' : ''}
-                >
-                  {renderField(field)}
-                </div>
-              ))}
+            <div key={`row-${rowIndex}`} className={gridClass}>
+              {row.fields.map((field) => {
+                const isFullWidth = field.colSpan === 2 || (typeof field.fullWidth === 'function' ? field.fullWidth(form) : !!field.fullWidth);
+                return (
+                  <div
+                    key={field.name}
+                    className={isFullWidth ? 'md:col-span-2' : ''}
+                  >
+                    {renderField(field)}
+                  </div>
+                );
+              })}
             </div>
           );
         })}

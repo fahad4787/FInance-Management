@@ -18,14 +18,19 @@ ChartJS.register(
   Legend
 );
 
+const themePrimary = '#0ea5e9';
+const themeText = '#1e293b';
+const themeMuted = '#64748b';
+const themeGrid = 'rgba(15, 23, 42, 0.06)';
+
 const BarChart = ({ data, labels, title = 'Bar Chart' }) => {
   const chartData = {
     labels: labels,
-    datasets: data.map((dataset, index) => ({
+    datasets: data.map((dataset) => ({
       label: dataset.label,
       data: dataset.values,
-      backgroundColor: dataset.color,
-      borderColor: dataset.color,
+      backgroundColor: dataset.color || themePrimary,
+      borderColor: dataset.color || themePrimary,
       borderWidth: 1
     }))
   };
@@ -39,6 +44,7 @@ const BarChart = ({ data, labels, title = 'Bar Chart' }) => {
         labels: {
           usePointStyle: true,
           padding: 15,
+          color: themeText,
           font: {
             size: 12,
             weight: 'bold'
@@ -49,7 +55,9 @@ const BarChart = ({ data, labels, title = 'Bar Chart' }) => {
         display: false
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+        titleColor: '#f8fafc',
+        bodyColor: '#f8fafc',
         padding: 12,
         titleFont: {
           size: 14,
@@ -58,7 +66,7 @@ const BarChart = ({ data, labels, title = 'Bar Chart' }) => {
         bodyFont: {
           size: 13
         },
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: 'rgba(248, 250, 252, 0.15)',
         borderWidth: 1
       }
     },
@@ -66,10 +74,11 @@ const BarChart = ({ data, labels, title = 'Bar Chart' }) => {
       y: {
         beginAtZero: true,
         grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
+          color: themeGrid,
           drawBorder: false
         },
         ticks: {
+          color: themeMuted,
           font: {
             size: 11
           },
@@ -81,6 +90,7 @@ const BarChart = ({ data, labels, title = 'Bar Chart' }) => {
           display: false
         },
         ticks: {
+          color: themeMuted,
           font: {
             size: 11
           },

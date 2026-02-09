@@ -8,14 +8,22 @@ import {
   removeTransaction
 } from '../store/transactions/transactionsSlice';
 import { fetchExpenses } from '../store/expenses/expensesSlice';
+import { useAuth } from '../contexts/AuthContext';
+import { getTargetAmount, setTargetAmount } from '../services/settingsService';
+import { formatMoney } from '../utils/format';
 import LineChartChartJS from '../components/LineChartChartJS';
 import BarChart from '../components/BarChart';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
-import DropdownField from '../components/DropdownField';
+import FilterBar from '../components/FilterBar';
+import SearchableDropdown from '../components/SearchableDropdown';
 import ModernDatePicker from '../components/ModernDatePicker';
+import StatCard from '../components/StatCard';
+import Modal from '../components/Modal';
+import InputField from '../components/InputField';
 import TransactionTable from '../components/TransactionTable';
 import TransactionFormModal from '../components/TransactionFormModal';
+import { FiDollarSign, FiTarget, FiEdit2 } from 'react-icons/fi';
 
 const defaultForm = {
   client: '',
@@ -72,10 +80,21 @@ const Dashboard = () => {
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [targetAmount, setTargetAmountState] = useState(null);
+  const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
+  const [targetInputValue, setTargetInputValue] = useState('');
+  const [isSavingTarget, setIsSavingTarget] = useState(false);
+
+  const { user } = useAuth();
 
   useEffect(() => {
     document.title = 'Overview | FinHub';
   }, []);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    getTargetAmount(user.uid).then(setTargetAmountState);
+  }, [user?.uid]);
 
   useEffect(() => {
     dispatch(fetchProjects());
@@ -91,10 +110,6 @@ const Dashboard = () => {
       .filter(Boolean);
     return [...new Set(clients)].sort();
   }, [projects]);
-
-  const brokerOptions = useMemo(() => {
-    return clientOptions.map((c) => ({ value: c, label: c }));
-  }, [clientOptions]);
 
   const projectOptions = useMemo(() => {
     const list = projects || [];
@@ -185,6 +200,27 @@ const Dashboard = () => {
 
   const onDelete = async (transactionId) => {
     await dispatch(removeTransaction(transactionId)).unwrap();
+  };
+
+  const openTargetModal = () => {
+    setTargetInputValue(targetAmount != null ? String(targetAmount) : '');
+    setIsTargetModalOpen(true);
+  };
+
+  const closeTargetModal = () => setIsTargetModalOpen(false);
+
+  const onSaveTarget = async () => {
+    if (!user?.uid) return;
+    setIsSavingTarget(true);
+    try {
+      const value = await setTargetAmount(user.uid, targetInputValue);
+      setTargetAmountState(value);
+      closeTargetModal();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingTarget(false);
+    }
   };
 
   const chartData = useMemo(() => {
@@ -292,14 +328,19 @@ const Dashboard = () => {
     };
   }, [filteredTransactions, expenses, selectedProject, dateFrom, dateTo]);
 
-  const { inwardPct, expensePct } = useMemo(() => {
-    const totalInward = (chartData.inward || []).reduce((s, v) => s + (Number(v) || 0), 0);
-    const totalExpense = (chartData.expense || []).reduce((s, v) => s + (Number(v) || 0), 0);
-    const total = totalInward + totalExpense;
-    if (total === 0) return { inwardPct: 0, expensePct: 0 };
+  const { inwardPct, expensePct, totalInward, availableAmount } = useMemo(() => {
+    const inward = (chartData.inward || []).reduce((s, v) => s + (Number(v) || 0), 0);
+    const expense = (chartData.expense || []).reduce((s, v) => s + (Number(v) || 0), 0);
+    const total = inward + expense;
+    const pct = total === 0 ? { inwardPct: 0, expensePct: 0 } : {
+      inwardPct: Math.round((inward / total) * 100),
+      expensePct: Math.round((expense / total) * 100)
+    };
     return {
-      inwardPct: Math.round((totalInward / total) * 100),
-      expensePct: Math.round((totalExpense / total) * 100)
+      ...pct,
+      totalInward: inward,
+      totalExpense: expense,
+      availableAmount: inward - expense
     };
   }, [chartData]);
 
@@ -332,46 +373,68 @@ const Dashboard = () => {
   return (
     <div className="p-6 md:p-8 w-full">
       <div className="w-full space-y-8">
-        <PageHeader
-          title="Overview"
-          actions={<Button onClick={openAddModal}>Add Transaction</Button>}
-        />
+        <PageHeader title="Overview" actions={<Button onClick={openAddModal}>Add Transaction</Button>} />
 
-        <div className="rounded-xl border border-gray-200 bg-white/80 shadow-sm p-4 md:p-5 mb-8">
-          <div className="flex flex-row flex-wrap gap-4 md:gap-5 items-end justify-end">
-            <DropdownField
-              hideLabel
-              value={selectedBroker}
-              onChange={(e) => {
-                setSelectedBroker(e.target.value);
-                setSelectedProjectId('');
-              }}
-              options={brokerOptions}
-              placeholder="All Brokers"
-              className="min-w-[160px] sm:min-w-[200px]"
-            />
-            <DropdownField
-              hideLabel
-              value={selectedProjectId}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-              options={projectOptions}
-              placeholder={selectedBroker ? 'All Projects' : 'Select broker first'}
-              className="min-w-[160px] sm:min-w-[220px]"
-            />
-            <ModernDatePicker
-              label=""
-              value={dateFrom}
-              onChange={setDateFrom}
-              placeholder="From"
-              className="min-w-[130px] sm:min-w-[160px]"
-            />
-            <ModernDatePicker
-              label=""
-              value={dateTo}
-              onChange={setDateTo}
-              placeholder="To"
-              className="min-w-[130px] sm:min-w-[160px]"
-            />
+        <FilterBar>
+          <SearchableDropdown
+            label="Broker"
+            value={selectedBroker}
+            onChange={(v) => {
+              setSelectedBroker(v);
+              setSelectedProjectId('');
+            }}
+            options={clientOptions}
+            placeholder="All Brokers"
+            className="min-w-[160px] sm:min-w-[200px]"
+          />
+          <SearchableDropdown
+            label="Project"
+            value={projectOptions.find((p) => p.value === selectedProjectId)?.label ?? ''}
+            onChange={(label) => setSelectedProjectId(projectOptions.find((p) => p.label === label)?.value ?? '')}
+            options={projectOptions.map((p) => p.label)}
+            placeholder={selectedBroker ? 'All Projects' : 'Select broker first'}
+            className="min-w-[160px] sm:min-w-[220px]"
+          />
+          <ModernDatePicker label="Start date" value={dateFrom} onChange={setDateFrom} placeholder="Start" className="min-w-[140px]" />
+          <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
+        </FilterBar>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-primary-500">
+            <div className="flex items-center gap-2">
+              <span className="text-primary-500"><FiDollarSign className="w-5 h-5" /></span>
+              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Available Amount</p>
+            </div>
+            <p className="mt-2 text-2xl font-bold text-primary-600">{formatMoney(availableAmount)}</p>
+            <p className="mt-1 text-xs text-gray-500">Total Inward − Total Expense (for selected period)</p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-primary-500">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-primary-500"><FiTarget className="w-5 h-5" /></span>
+                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Inward / Target</p>
+              </div>
+              <Button onClick={openTargetModal}>
+                <FiEdit2 className="w-4 h-4" />
+                {targetAmount != null ? 'Edit target' : 'Set target'}
+              </Button>
+            </div>
+            <p className="mt-2 text-2xl font-bold">
+              {targetAmount != null && targetAmount > 0 ? (
+                <>
+                  <span className={totalInward >= targetAmount ? 'text-green-600' : 'text-red-600'}>
+                    {formatMoney(totalInward)}
+                  </span>
+                  <span className="text-gray-500 font-normal"> / </span>
+                  <span className="text-gray-700">{formatMoney(targetAmount)}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-primary-600">{formatMoney(totalInward)}</span>
+                  <span className="block text-sm font-normal text-gray-500 mt-1">Set a target amount to track progress</span>
+                </>
+              )}
+            </p>
           </div>
         </div>
 
@@ -408,6 +471,7 @@ const Dashboard = () => {
                 ? `Transactions – ${selectedBroker}`
                 : 'Recent Transactions'
           }
+          hideFilters={['client', 'project']}
         />
       </div>
 
@@ -422,6 +486,28 @@ const Dashboard = () => {
         projects={projects}
         clientOptions={clientOptions}
       />
+
+      <Modal isOpen={isTargetModalOpen} onClose={closeTargetModal} title="Set Target Amount">
+        <div className="space-y-4">
+          <InputField
+            label="Target Amount"
+            type="number"
+            min="0"
+            step="1"
+            value={targetInputValue}
+            onChange={(e) => setTargetInputValue(e.target.value)}
+            placeholder="Enter target amount"
+          />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button onClick={closeTargetModal} className="bg-gray-200 text-gray-800 hover:bg-gray-300">
+              Cancel
+            </Button>
+            <Button onClick={onSaveTarget} disabled={isSavingTarget}>
+              {isSavingTarget ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

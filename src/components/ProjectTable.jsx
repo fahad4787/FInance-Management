@@ -1,7 +1,7 @@
 import DataTable from './DataTable';
 import { FiUser } from 'react-icons/fi';
 
-const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = 'Saved Projects' }) => {
+const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = 'Saved Projects', additionalFilters = null, hideFilters = [] }) => {
   const columns = [
     { key: 'client', label: 'Broker' },
     { key: 'date', label: 'Date' },
@@ -46,7 +46,7 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
     searchFields: ['client', 'project', 'projectType', 'recruiterName', 'date', 'contractEnding']
   };
 
-  const filters = [
+  const allFilters = [
     {
       key: 'client',
       label: 'Broker',
@@ -60,6 +60,7 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
       type: 'dropdown'
     }
   ];
+  const filters = hideFilters.length ? allFilters.filter((f) => !hideFilters.includes(f.key)) : allFilters;
 
   return (
     <DataTable
@@ -71,6 +72,7 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
       onDelete={onDelete}
       searchConfig={searchConfig}
       filters={filters}
+      additionalFilters={additionalFilters}
       pagination={{ enabled: true, itemsPerPage: 5 }}
     />
   );

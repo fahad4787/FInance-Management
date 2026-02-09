@@ -13,7 +13,9 @@ import Modal from '../components/Modal';
 import InputField from '../components/InputField';
 import TextareaField from '../components/TextareaField';
 import ModernDatePicker from '../components/ModernDatePicker';
-import DropdownField from '../components/DropdownField';
+import FilterBar from '../components/FilterBar';
+import SearchableDropdown from '../components/SearchableDropdown';
+import { getThisMonthRange } from '../utils/date';
 
 const IMPACT_FUND_PERCENT = 0.02;
 
@@ -57,9 +59,10 @@ const ImpactFund = () => {
   const [editingWithdrawalId, setEditingWithdrawalId] = useState(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawNote, setWithdrawNote] = useState('');
+  const { from: defaultFrom, to: defaultTo } = getThisMonthRange();
   const [activeTab, setActiveTab] = useState('contrib');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [dateFrom, setDateFrom] = useState(defaultFrom);
+  const [dateTo, setDateTo] = useState(defaultTo);
   const [selectedBroker, setSelectedBroker] = useState('');
   const [withdrawError, setWithdrawError] = useState('');
 
@@ -95,10 +98,9 @@ const ImpactFund = () => {
     }));
   }, [withdrawals]);
 
-  const brokerOptions = useMemo(() => {
-    const brokers = [...new Set((contributionHistory || []).map((c) => c.client).filter(Boolean))].sort();
-    return brokers.map((b) => ({ value: b, label: b }));
-  }, [contributionHistory]);
+  const brokerNames = useMemo(() =>
+    [...new Set((contributionHistory || []).map((c) => c.client).filter(Boolean))].sort(),
+  [contributionHistory]);
 
   const filteredContributionHistory = useMemo(() => {
     let list = contributionHistory;
@@ -261,10 +263,28 @@ const ImpactFund = () => {
   return (
     <div className="p-6 md:p-8 w-full">
       <div className="w-full space-y-8">
-        <PageHeader
-          title="Impact Fund"
-          actions={<Button variant="danger" onClick={openWithdrawModal} disabled={remaining <= 0}><FiTrendingDown className="w-4 h-4" /> Withdraw</Button>}
-        />
+        <PageHeader title="Impact Fund" actions={<Button variant="danger" onClick={openWithdrawModal} disabled={remaining <= 0}><FiTrendingDown className="w-4 h-4" /> Withdraw</Button>} />
+
+        <FilterBar>
+          <SearchableDropdown
+            label="Broker"
+            value={selectedBroker}
+            onChange={setSelectedBroker}
+            options={brokerNames}
+            placeholder="All Brokers"
+            className="min-w-[160px] sm:min-w-[200px]"
+          />
+          <ModernDatePicker label="Start date" value={dateFrom} onChange={setDateFrom} placeholder="Start" className="min-w-[140px]" />
+          <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
+          {selectedBroker && totalFromSelectedBroker !== null && (
+            <div className="inline-flex items-center gap-2 rounded-lg bg-primary-50 border border-primary-100 px-4 py-2.5">
+              <span className="text-sm text-gray-600">Total from</span>
+              <span className="text-sm font-semibold text-primary-700">{selectedBroker}</span>
+              <span className="text-primary-500">·</span>
+              <span className="text-base font-bold text-primary-600">{formatMoney(totalFromSelectedBroker)}</span>
+            </div>
+          )}
+        </FilterBar>
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
@@ -284,43 +304,6 @@ const ImpactFund = () => {
               borderClassName={card.borderClassName}
             />
           ))}
-        </div>
-
-        <div className="rounded-xl border border-gray-200 bg-white/80 shadow-sm p-4 md:p-5 mb-6">
-          <div className="flex flex-row flex-wrap gap-4 md:gap-5 items-end justify-between">
-            <div className="flex flex-row flex-wrap gap-4 md:gap-5 items-end">
-              <DropdownField
-                hideLabel
-                value={selectedBroker}
-                onChange={(e) => setSelectedBroker(e.target.value)}
-                options={brokerOptions}
-                placeholder="All Brokers"
-                className="min-w-[160px] sm:min-w-[200px]"
-              />
-              <ModernDatePicker
-                label=""
-                value={dateFrom}
-                onChange={setDateFrom}
-                placeholder="From"
-                className="min-w-[130px] sm:min-w-[160px]"
-              />
-              <ModernDatePicker
-                label=""
-                value={dateTo}
-                onChange={setDateTo}
-                placeholder="To"
-                className="min-w-[130px] sm:min-w-[160px]"
-              />
-            </div>
-            {selectedBroker && totalFromSelectedBroker !== null && (
-              <div className="inline-flex items-center gap-2 rounded-lg bg-primary-50 border border-primary-100 px-4 py-2.5">
-                <span className="text-sm text-gray-600">Total from</span>
-                <span className="text-sm font-semibold text-primary-700">{selectedBroker}</span>
-                <span className="text-primary-500">·</span>
-                <span className="text-base font-bold text-primary-600">{formatMoney(totalFromSelectedBroker)}</span>
-              </div>
-            )}
-          </div>
         </div>
 
         <Tabs

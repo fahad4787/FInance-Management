@@ -20,7 +20,7 @@ const computeNetAfterImpactFund = (t) => {
   return netBefore * 0.98;
 };
 
-const TransactionTable = ({ transactions, onDelete, onEdit, isLoading = false, title = 'Transaction Details' }) => {
+const TransactionTable = ({ transactions, onDelete, onEdit, isLoading = false, title = 'Transaction Details', additionalFilters = null, hideFilters = [] }) => {
   const columns = [
     { key: 'client', label: 'Broker' },
     { key: 'project', label: 'Project Name' },
@@ -49,7 +49,7 @@ const TransactionTable = ({ transactions, onDelete, onEdit, isLoading = false, t
     searchFields: ['client', 'project', 'date']
   };
 
-  const filters = [
+  const allFilters = [
     {
       key: 'client',
       label: 'Broker',
@@ -65,6 +65,7 @@ const TransactionTable = ({ transactions, onDelete, onEdit, isLoading = false, t
       icon: <FiFileText className="w-5 h-5 text-gray-400" />
     }
   ];
+  const filters = hideFilters.length ? allFilters.filter((f) => !hideFilters.includes(f.key)) : allFilters;
 
   return (
     <DataTable
@@ -76,7 +77,8 @@ const TransactionTable = ({ transactions, onDelete, onEdit, isLoading = false, t
       onDelete={onDelete}
       searchConfig={searchConfig}
       filters={filters}
-      pagination={{ enabled: true, itemsPerPage: 5 }}
+      additionalFilters={additionalFilters}
+      pagination={{ enabled: true, loadMore: true, itemsPerPage: 30 }}
     />
   );
 };
