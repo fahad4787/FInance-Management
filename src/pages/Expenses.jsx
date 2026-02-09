@@ -49,7 +49,8 @@ const Expenses = () => {
     const typeLabels = {
       'rent': 'Rent',
       'salaries': 'Salaries',
-      'general': 'General'
+      'general': 'General',
+      'fh': 'FH'
     };
     const expenseTypeLabel = typeLabels[expense.expenseType?.toLowerCase()] || expense.expenseType || '';
     setInitialValues({

@@ -13,7 +13,8 @@ const defaultForm = {
 const expenseTypeOptions = [
   { value: 'rent', label: 'Rent' },
   { value: 'salaries', label: 'Salaries' },
-  { value: 'general', label: 'General' }
+  { value: 'general', label: 'General' },
+  { value: 'fh', label: 'FH' }
 ];
 
 const ExpenseFormModal = ({

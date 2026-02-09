@@ -292,31 +292,42 @@ const Dashboard = () => {
     };
   }, [filteredTransactions, expenses, selectedProject, dateFrom, dateTo]);
 
+  const { inwardPct, expensePct } = useMemo(() => {
+    const totalInward = (chartData.inward || []).reduce((s, v) => s + (Number(v) || 0), 0);
+    const totalExpense = (chartData.expense || []).reduce((s, v) => s + (Number(v) || 0), 0);
+    const total = totalInward + totalExpense;
+    if (total === 0) return { inwardPct: 0, expensePct: 0 };
+    return {
+      inwardPct: Math.round((totalInward / total) * 100),
+      expensePct: Math.round((totalExpense / total) * 100)
+    };
+  }, [chartData]);
+
   const lineChartData = useMemo(() => [
     {
-      label: 'Inward',
+      label: `Inward (${inwardPct}%)`,
       values: chartData.inward,
       color: '#10b981'
     },
     {
-      label: 'Expense',
+      label: `Expense (${expensePct}%)`,
       values: chartData.expense,
       color: '#ef4444'
     }
-  ], [chartData]);
+  ], [chartData, inwardPct, expensePct]);
 
   const barChartData = useMemo(() => [
     {
-      label: 'Inward',
+      label: `Inward (${inwardPct}%)`,
       values: chartData.inward,
       color: '#10b981'
     },
     {
-      label: 'Expense',
+      label: `Expense (${expensePct}%)`,
       values: chartData.expense,
       color: '#ef4444'
     }
-  ], [chartData]);
+  ], [chartData, inwardPct, expensePct]);
 
   return (
     <div className="p-6 md:p-8 w-full">
