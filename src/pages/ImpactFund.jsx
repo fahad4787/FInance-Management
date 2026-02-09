@@ -15,30 +15,14 @@ import TextareaField from '../components/TextareaField';
 import ModernDatePicker from '../components/ModernDatePicker';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
-import { getThisMonthRange } from '../utils/date';
+import { filterByDateRange } from '../utils/date';
+import { useDateFilter } from '../hooks/useDateFilter';
 
 const IMPACT_FUND_PERCENT = 0.02;
 
 const toNumber = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
-};
-
-/** Normalize date to YYYY-MM-DD for comparison (handles Firestore Timestamp, Date, string) */
-const normalizeDateToYYYYMMDD = (value) => {
-  if (value == null || value === '') return '';
-  if (typeof value === 'object' && typeof value.toDate === 'function') {
-    const d = value.toDate();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  }
-  if (value instanceof Date) {
-    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
-  }
-  const str = String(value).trim();
-  if (str.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
-  const d = new Date(str);
-  if (Number.isNaN(d.getTime())) return '';
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
 const getTransactionNetAmount = (t) => {
@@ -59,10 +43,8 @@ const ImpactFund = () => {
   const [editingWithdrawalId, setEditingWithdrawalId] = useState(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawNote, setWithdrawNote] = useState('');
-  const { from: defaultFrom, to: defaultTo } = getThisMonthRange();
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = useDateFilter();
   const [activeTab, setActiveTab] = useState('contrib');
-  const [dateFrom, setDateFrom] = useState(defaultFrom);
-  const [dateTo, setDateTo] = useState(defaultTo);
   const [selectedBroker, setSelectedBroker] = useState('');
   const [withdrawError, setWithdrawError] = useState('');
 
@@ -103,25 +85,11 @@ const ImpactFund = () => {
   [contributionHistory]);
 
   const filteredContributionHistory = useMemo(() => {
-    let list = contributionHistory;
+    let list = filterByDateRange(contributionHistory, dateFrom, dateTo, (item) => item.date);
     if (selectedBroker) {
       list = list.filter(
         (item) => (item.client || '').trim().toLowerCase() === selectedBroker.trim().toLowerCase()
       );
-    }
-    if (dateFrom) {
-      const from = normalizeDateToYYYYMMDD(dateFrom);
-      list = list.filter((item) => {
-        const d = normalizeDateToYYYYMMDD(item.date);
-        return d && d >= from;
-      });
-    }
-    if (dateTo) {
-      const to = normalizeDateToYYYYMMDD(dateTo);
-      list = list.filter((item) => {
-        const d = normalizeDateToYYYYMMDD(item.date);
-        return d && d <= to;
-      });
     }
     return list;
   }, [contributionHistory, selectedBroker, dateFrom, dateTo]);
@@ -131,24 +99,10 @@ const ImpactFund = () => {
     return filteredContributionHistory.reduce((sum, c) => sum + c.amount, 0);
   }, [selectedBroker, filteredContributionHistory]);
 
-  const filteredWithdrawalRows = useMemo(() => {
-    let list = withdrawalRows;
-    if (dateFrom) {
-      const from = normalizeDateToYYYYMMDD(dateFrom);
-      list = list.filter((item) => {
-        const d = normalizeDateToYYYYMMDD(item.createdAt);
-        return d && d >= from;
-      });
-    }
-    if (dateTo) {
-      const to = normalizeDateToYYYYMMDD(dateTo);
-      list = list.filter((item) => {
-        const d = normalizeDateToYYYYMMDD(item.createdAt);
-        return d && d <= to;
-      });
-    }
-    return list;
-  }, [withdrawalRows, dateFrom, dateTo]);
+  const filteredWithdrawalRows = useMemo(
+    () => filterByDateRange(withdrawalRows, dateFrom, dateTo, (item) => item.createdAt),
+    [withdrawalRows, dateFrom, dateTo]
+  );
 
   const totalContributions = contributionHistory.reduce((sum, c) => sum + c.amount, 0);
   const totalWithdrawn = (withdrawals || []).reduce((sum, w) => sum + toNumber(w.amount), 0);

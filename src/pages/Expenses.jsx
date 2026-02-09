@@ -13,10 +13,9 @@ import {
   fetchExpenses,
   removeExpense
 } from '../store/expenses/expensesSlice';
-import { normalizeDateToYYYYMMDD, getThisMonthRange } from '../utils/date';
-
-const expenseTypeLabelToValue = { Rent: 'rent', Salaries: 'salaries', General: 'general', FH: 'fh', 'Software Tool': 'software_tool' };
-const expenseTypeOptions = ['Rent', 'Salaries', 'General', 'FH', 'Software Tool'];
+import { filterByDateRange } from '../utils/date';
+import { useDateFilter } from '../hooks/useDateFilter';
+import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_LABEL_TO_VALUE, EXPENSE_TYPE_OPTIONS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
 
 const defaultForm = {
   expenseName: '',
@@ -35,32 +34,16 @@ const Expenses = () => {
   const isLoading = useSelector((state) => state.expenses.isLoading);
   const error = useSelector((state) => state.expenses.error);
 
-  const { from: defaultFrom, to: defaultTo } = getThisMonthRange();
-  const [dateFrom, setDateFrom] = useState(defaultFrom);
-  const [dateTo, setDateTo] = useState(defaultTo);
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = useDateFilter();
   const [selectedType, setSelectedType] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState(null);
   const [initialValues, setInitialValues] = useState(defaultForm);
 
   const filteredExpenses = useMemo(() => {
-    let list = expenses || [];
-    if (dateFrom) {
-      const from = normalizeDateToYYYYMMDD(dateFrom);
-      list = list.filter((e) => {
-        const d = normalizeDateToYYYYMMDD(e.date);
-        return d && d >= from;
-      });
-    }
-    if (dateTo) {
-      const to = normalizeDateToYYYYMMDD(dateTo);
-      list = list.filter((e) => {
-        const d = normalizeDateToYYYYMMDD(e.date);
-        return d && d <= to;
-      });
-    }
+    let list = filterByDateRange(expenses || [], dateFrom, dateTo, (e) => e.date);
     if (selectedType) {
-      const typeValue = expenseTypeLabelToValue[selectedType];
+      const typeValue = EXPENSE_TYPE_LABEL_TO_VALUE[selectedType];
       list = list.filter((e) => (e.expenseType || '').toLowerCase() === typeValue);
     }
     return list;
@@ -80,24 +63,9 @@ const Expenses = () => {
     setIsModalOpen(true);
   };
 
-  const recurringMonthsToLabel = {
-    3: '3 months',
-    6: '6 months',
-    12: '12 months',
-    24: '24 months',
-    36: '36 months'
-  };
-
   const openEditModal = (expense, expenseId) => {
     setEditingExpenseId(expenseId);
-    const typeLabels = {
-      'rent': 'Rent',
-      'salaries': 'Salaries',
-      'general': 'General',
-      'fh': 'FH',
-      'software_tool': 'Software Tool'
-    };
-    const expenseTypeLabel = typeLabels[expense.expenseType?.toLowerCase()] || expense.expenseType || '';
+    const expenseTypeLabel = EXPENSE_TYPE_LABELS[expense.expenseType?.toLowerCase()] || expense.expenseType || '';
     setInitialValues({
       ...defaultForm,
       expenseName: expense.expenseName || '',
@@ -106,7 +74,7 @@ const Expenses = () => {
       amount: expense.amount ?? '',
       comment: expense.comment || '',
       recurring: !!expense.recurring,
-      recurringMonths: recurringMonthsToLabel[expense.recurringMonths] ?? expense.recurringMonths ?? ''
+      recurringMonths: RECURRING_MONTHS_LABELS[expense.recurringMonths] ?? expense.recurringMonths ?? ''
     });
     setIsModalOpen(true);
   };
@@ -140,7 +108,7 @@ const Expenses = () => {
             label="Type"
             value={selectedType}
             onChange={setSelectedType}
-            options={expenseTypeOptions}
+            options={EXPENSE_TYPE_OPTIONS}
             placeholder="All Types"
             className="min-w-[160px] sm:min-w-[200px]"
           />

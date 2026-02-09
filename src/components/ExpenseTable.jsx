@@ -1,15 +1,7 @@
 import { FiFileText } from 'react-icons/fi';
 import DataTable from './DataTable';
-
 import { formatMoney } from '../utils/format';
-
-const recurringMonthsToLabel = {
-  3: '3 months',
-  6: '6 months',
-  12: '12 months',
-  24: '24 months',
-  36: '36 months'
-};
+import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_COLORS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
 
 const ExpenseTable = ({ expenses, onDelete, onEdit, isLoading = false, title = 'Expense Details', additionalFilters = null, hideFilters = [] }) => {
   const columns = [
@@ -20,26 +12,13 @@ const ExpenseTable = ({ expenses, onDelete, onEdit, isLoading = false, title = '
       label: 'Type',
       render: (value, row) => {
         if (!value) return '-';
-        const typeLabels = {
-          'rent': 'Rent',
-          'salaries': 'Salaries',
-          'general': 'General',
-          'fh': 'FH',
-          'software_tool': 'Software Tool'
-        };
-        const typeColors = {
-          'rent': 'bg-red-100 text-red-800',
-          'salaries': 'bg-blue-100 text-blue-800',
-          'general': 'bg-gray-100 text-gray-800',
-          'fh': 'bg-amber-100 text-amber-800',
-          'software_tool': 'bg-violet-100 text-violet-800'
-        };
-        let label = typeLabels[value?.toLowerCase()] || value;
-        if (value?.toLowerCase() === 'software_tool' && row.recurring && row.recurringMonths) {
-          const period = recurringMonthsToLabel[row.recurringMonths] ?? `${row.recurringMonths} months`;
+        const key = value?.toLowerCase();
+        let label = EXPENSE_TYPE_LABELS[key] || value;
+        if (key === 'software_tool' && row.recurring && row.recurringMonths) {
+          const period = RECURRING_MONTHS_LABELS[row.recurringMonths] ?? `${row.recurringMonths} months`;
           label = `Software Tool (${period})`;
         }
-        const colorClass = typeColors[value?.toLowerCase()] || 'bg-gray-100 text-gray-800';
+        const colorClass = EXPENSE_TYPE_COLORS[key] || 'bg-gray-100 text-gray-800';
         return (
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold ${colorClass}`}>
             {label}

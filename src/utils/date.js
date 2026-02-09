@@ -31,3 +31,29 @@ export const getThisMonthRange = () => {
   const to = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
   return { from, to };
 };
+
+/** Short month names for charts/labels */
+export const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * Filter a list by date range (inclusive). getDate(item) should return the item's date (any format supported by normalizeDateToYYYYMMDD).
+ */
+export const filterByDateRange = (list, dateFrom, dateTo, getDate) => {
+  if (!list || !Array.isArray(list)) return [];
+  let result = list;
+  if (dateFrom) {
+    const from = normalizeDateToYYYYMMDD(dateFrom) || '';
+    result = result.filter((item) => {
+      const d = normalizeDateToYYYYMMDD(getDate(item));
+      return d && d >= from;
+    });
+  }
+  if (dateTo) {
+    const to = normalizeDateToYYYYMMDD(dateTo) || '';
+    result = result.filter((item) => {
+      const d = normalizeDateToYYYYMMDD(getDate(item));
+      return d && d <= to;
+    });
+  }
+  return result;
+};

@@ -11,6 +11,7 @@ import { fetchExpenses } from '../store/expenses/expensesSlice';
 import { useAuth } from '../contexts/AuthContext';
 import { getTargetAmount, setTargetAmount } from '../services/settingsService';
 import { formatMoney } from '../utils/format';
+import { normalizeDateToYYYYMMDD, MONTH_NAMES } from '../utils/date';
 import LineChartChartJS from '../components/LineChartChartJS';
 import BarChart from '../components/BarChart';
 import PageHeader from '../components/PageHeader';
@@ -35,32 +36,6 @@ const defaultForm = {
   brokerageAmount: '',
   additionalCharges: ''
 };
-
-/** Normalize any date value to YYYY-MM-DD for reliable comparison (handles Firestore Timestamp, Date, string) */
-function normalizeDateToYYYYMMDD(value) {
-  if (value == null || value === '') return '';
-  if (typeof value === 'object' && typeof value.toDate === 'function') {
-    const d = value.toDate();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-  if (value instanceof Date) {
-    const y = value.getFullYear();
-    const m = String(value.getMonth() + 1).padStart(2, '0');
-    const day = String(value.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-  const str = String(value).trim();
-  if (str.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
-  const d = new Date(str);
-  if (Number.isNaN(d.getTime())) return '';
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -228,8 +203,6 @@ const Dashboard = () => {
       const n = Number(v);
       return Number.isFinite(n) ? n : 0;
     };
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
     let labels = [];
     let monthlyInward = [];
     let monthlyExpense = [];
@@ -239,7 +212,7 @@ const Dashboard = () => {
       const start = new Date(dateFrom);
       const end = new Date(dateTo);
       if (start > end) {
-        labels = monthNames;
+        labels = MONTH_NAMES;
         monthlyInward = new Array(12).fill(0);
         monthlyExpense = new Array(12).fill(0);
       } else {
@@ -254,7 +227,7 @@ const Dashboard = () => {
           const mEnd = y === endYear ? endMonth : 11;
           for (let m = mStart; m <= mEnd; m++) {
             monthsRange.push({ year: y, month: m });
-            labels.push(sameYear ? monthNames[m] : `${monthNames[m]} ${String(y).slice(-2)}`);
+            labels.push(sameYear ? MONTH_NAMES[m] : `${MONTH_NAMES[m]} ${String(y).slice(-2)}`);
           }
         }
         monthlyInward = new Array(monthsRange.length).fill(0);
@@ -288,7 +261,7 @@ const Dashboard = () => {
       }
     } else {
       const currentYear = new Date().getFullYear();
-      labels = monthNames;
+      labels = MONTH_NAMES;
       monthlyInward = new Array(12).fill(0);
       monthlyExpense = new Array(12).fill(0);
 

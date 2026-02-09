@@ -16,9 +16,8 @@ import {
   fetchTransactions,
   removeTransaction
 } from '../store/transactions/transactionsSlice';
-import { normalizeDateToYYYYMMDD, getThisMonthRange } from '../utils/date';
-
-const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+import { normalizeDateToYYYYMMDD, filterByDateRange, MONTH_NAMES } from '../utils/date';
+import { useDateFilter } from '../hooks/useDateFilter';
 
 const defaultForm = {
   client: '',
@@ -39,9 +38,7 @@ const Transactions = () => {
   const isLoading = useSelector((state) => state.transactions.isLoading);
   const error = useSelector((state) => state.transactions.error);
 
-  const { from: defaultFrom, to: defaultTo } = getThisMonthRange();
-  const [dateFrom, setDateFrom] = useState(defaultFrom);
-  const [dateTo, setDateTo] = useState(defaultTo);
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = useDateFilter();
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,24 +46,8 @@ const Transactions = () => {
   const [initialValues, setInitialValues] = useState(defaultForm);
 
   const filteredTransactions = useMemo(() => {
-    let list = transactions || [];
-    if (dateFrom) {
-      const from = normalizeDateToYYYYMMDD(dateFrom);
-      list = list.filter((t) => {
-        const d = normalizeDateToYYYYMMDD(t.date);
-        return d && d >= from;
-      });
-    }
-    if (dateTo) {
-      const to = normalizeDateToYYYYMMDD(dateTo);
-      list = list.filter((t) => {
-        const d = normalizeDateToYYYYMMDD(t.date);
-        return d && d <= to;
-      });
-    }
-    if (selectedBroker) {
-      list = list.filter((t) => (t.client || '').trim() === selectedBroker);
-    }
+    let list = filterByDateRange(transactions || [], dateFrom, dateTo, (t) => t.date);
+    if (selectedBroker) list = list.filter((t) => (t.client || '').trim() === selectedBroker);
     if (selectedProjectId) {
       const [client, project] = selectedProjectId.split('|');
       list = list.filter((t) => (t.client || '').trim() === client && (t.project || '').trim() === project);
@@ -91,7 +72,7 @@ const Transactions = () => {
           const mStart = y === startYear ? startMonth : 0;
           const mEnd = y === endYear ? endMonth : 11;
           for (let m = mStart; m <= mEnd; m++) {
-            labels.push(sameYear ? monthNames[m] : `${monthNames[m]} ${String(y).slice(-2)}`);
+            labels.push(sameYear ? MONTH_NAMES[m] : `${MONTH_NAMES[m]} ${String(y).slice(-2)}`);
             monthsRange.push({ year: y, month: m });
           }
         }

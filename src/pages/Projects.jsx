@@ -8,7 +8,8 @@ import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import ProjectTable from '../components/ProjectTable';
 import ProjectFormModal from '../components/ProjectFormModal';
-import { normalizeDateToYYYYMMDD, getThisMonthRange } from '../utils/date';
+import { filterByDateRange } from '../utils/date';
+import { useDateFilter } from '../hooks/useDateFilter';
 
 const Projects = () => {
   const dispatch = useDispatch();
@@ -18,9 +19,7 @@ const Projects = () => {
 
   const projectTypeLabels = ['Full time', 'Part time', 'Contract'];
 
-  const { from: defaultFrom, to: defaultTo } = getThisMonthRange();
-  const [dateFrom, setDateFrom] = useState(defaultFrom);
-  const [dateTo, setDateTo] = useState(defaultTo);
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = useDateFilter();
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectType, setSelectedProjectType] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,27 +38,9 @@ const Projects = () => {
   });
 
   const filteredProjects = useMemo(() => {
-    let list = projects || [];
-    if (dateFrom) {
-      const from = normalizeDateToYYYYMMDD(dateFrom);
-      list = list.filter((p) => {
-        const d = normalizeDateToYYYYMMDD(p.date);
-        return d && d >= from;
-      });
-    }
-    if (dateTo) {
-      const to = normalizeDateToYYYYMMDD(dateTo);
-      list = list.filter((p) => {
-        const d = normalizeDateToYYYYMMDD(p.date);
-        return d && d <= to;
-      });
-    }
-    if (selectedBroker) {
-      list = list.filter((p) => (p.client || '').trim() === selectedBroker);
-    }
-    if (selectedProjectType) {
-      list = list.filter((p) => (p.projectType || '').trim() === selectedProjectType);
-    }
+    let list = filterByDateRange(projects || [], dateFrom, dateTo, (p) => p.date);
+    if (selectedBroker) list = list.filter((p) => (p.client || '').trim() === selectedBroker);
+    if (selectedProjectType) list = list.filter((p) => (p.projectType || '').trim() === selectedProjectType);
     return list;
   }, [projects, dateFrom, dateTo, selectedBroker, selectedProjectType]);
 
