@@ -73,7 +73,6 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
       searchConfig={searchConfig}
       filters={filters}
       additionalFilters={additionalFilters}
-      pagination={{ enabled: true, itemsPerPage: 5 }}
     />
   );
 };

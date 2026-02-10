@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FiSearch, FiChevronDown, FiFileText, FiMoreVertical } from 'react-icons/fi';
 import SearchableDropdown from './SearchableDropdown';
 import Loader from './Loader';
@@ -20,24 +20,16 @@ const DataTable = ({
   },
   filters = [],
   additionalFilters = null,
-  pagination = {
-    enabled: true,
-    itemsPerPage: 5
-  },
   emptyTitle = 'No Data Yet',
   emptyDescription = 'Get started by adding your first entry',
   titleActions = null
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValues, setFilterValues] = useState({});
-  const [currentPage, setCurrentPage] = useState(1);
   const [openDropdownIndex, setOpenDropdownIndex] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const loadMore = pagination.loadMore === true;
-  const itemsPerPage = pagination.enabled ? pagination.itemsPerPage : data.length;
-  const [visibleCount, setVisibleCount] = useState(loadMore ? itemsPerPage : data.length);
 
   const filteredData = data.filter((item) => {
     if (searchConfig.enabled && searchTerm) {
@@ -55,15 +47,7 @@ const DataTable = ({
     });
   });
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = loadMore ? 0 : (currentPage - 1) * itemsPerPage;
-  const endIndex = loadMore ? visibleCount : startIndex + itemsPerPage;
-  const currentData = filteredData.slice(startIndex, endIndex);
-  const hasMore = loadMore && visibleCount < filteredData.length;
-
-  useEffect(() => {
-    if (loadMore) setVisibleCount(itemsPerPage);
-  }, [loadMore, itemsPerPage, filteredData.length]);
+  const currentData = filteredData;
 
   const getFilterOptions = (filter) => {
     if (filter.options) return filter.options;
@@ -129,10 +113,7 @@ const DataTable = ({
                 type="text"
                 placeholder={searchConfig.placeholder}
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2.5 pl-10 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
               />
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -148,10 +129,7 @@ const DataTable = ({
               <SearchableDropdown
                 label={filter.label}
                 value={filterValues[filter.key] === 'All' ? '' : filterValues[filter.key] || ''}
-                onChange={(value) => {
-                  setFilterValues(prev => ({ ...prev, [filter.key]: value || 'All' }));
-                  setCurrentPage(1);
-                }}
+                onChange={(value) => setFilterValues(prev => ({ ...prev, [filter.key]: value || 'All' }))}
                 options={getFilterOptions(filter).filter(opt => opt !== 'All')}
                 placeholder={filter.placeholder || `All ${filter.label}s`}
                 leftIcon={filter.icon}
@@ -164,10 +142,7 @@ const DataTable = ({
                 <div className="relative">
                   <select
                     value={filterValues[filter.key] || 'All'}
-                    onChange={(e) => {
-                      setFilterValues(prev => ({ ...prev, [filter.key]: e.target.value }));
-                      setCurrentPage(1);
-                    }}
+                    onChange={(e) => setFilterValues(prev => ({ ...prev, [filter.key]: e.target.value }))}
                     className="w-full px-4 py-2.5 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 appearance-none bg-white pr-10 cursor-pointer text-slate-700"
                   >
                     {getFilterOptions(filter).map(option => (
@@ -219,8 +194,7 @@ const DataTable = ({
               </thead>
               <tbody>
                 {currentData.map((item, localIndex) => {
-                    const filteredIndex = startIndex + localIndex;
-                    const uniqueId = item.id || `${localIndex}-${filteredIndex}`;
+                    const uniqueId = item.id ?? `row-${localIndex}`;
                     const hasRowAction = onEdit || onDelete || (onApprove && getCanApprove && getCanApprove(item));
                     const isEven = localIndex % 2 === 0;
                     return (
@@ -276,8 +250,8 @@ const DataTable = ({
               >
                 {(() => {
                   const item = currentData.find((_, idx) => {
-                    const uniqueId = currentData[idx].id || `${idx}-${startIndex + idx}`;
-                    return uniqueId === openDropdownIndex;
+                    const id = currentData[idx].id ?? `row-${idx}`;
+                    return id === openDropdownIndex;
                   });
                   const canApprove = item && onApprove && getCanApprove && getCanApprove(item);
                   return (
@@ -326,46 +300,6 @@ const DataTable = ({
             </>
           )}
 
-          {pagination.enabled && (loadMore ? (
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-sm text-slate-600">
-                Showing 1 to {Math.min(visibleCount, filteredData.length)} of {filteredData.length} entries
-              </div>
-              {hasMore && (
-                <button
-                  onClick={() => setVisibleCount(prev => prev + itemsPerPage)}
-                  className="px-5 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 font-semibold transition-colors shadow-sm"
-                >
-                  Load more
-                </button>
-              )}
-            </div>
-          ) : totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm text-slate-600">
-                Showing {startIndex + 1} to {Math.min(endIndex, filteredData.length)} of {filteredData.length} entries
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 border-2 border-slate-300 rounded-xl hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-                >
-                  Previous
-                </button>
-                <span className="px-4 py-2 text-slate-700 font-semibold">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 border-2 border-slate-300 rounded-xl hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          ))}
         </>
       )}
 

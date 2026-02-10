@@ -277,7 +277,6 @@ const ImpactFund = () => {
                 searchFields: ['client', 'project', 'date']
               }}
               filters={[]}
-              pagination={{ enabled: true, itemsPerPage: 10 }}
               emptyTitle="No contributions yet"
               emptyDescription="Add transactions to see 2% Impact Fund contributions here."
             />
@@ -296,7 +295,6 @@ const ImpactFund = () => {
                 searchFields: ['description']
               }}
               filters={[]}
-              pagination={{ enabled: true, itemsPerPage: 10 }}
               emptyTitle="No withdrawals yet"
               emptyDescription="Use Withdraw to record a withdrawal from the Impact Fund."
             />

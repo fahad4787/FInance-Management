@@ -196,7 +196,6 @@ const PendingRequests = () => {
               isLoading={isLoadingT}
               searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
               filters={[]}
-              pagination={{ enabled: true, itemsPerPage: 10 }}
               emptyTitle="No pending transactions"
               emptyDescription="Transactions added by the other user will appear here for approval"
               titleActions={
@@ -216,7 +215,6 @@ const PendingRequests = () => {
               isLoading={isLoadingE}
               searchConfig={{ enabled: true, placeholder: 'Search by name, type, date...', searchFields: ['expenseName', 'expenseType', 'date'] }}
               filters={[]}
-              pagination={{ enabled: true, itemsPerPage: 10 }}
               emptyTitle="No pending expenses"
               emptyDescription="Expenses added by the other user will appear here for approval"
               titleActions={
@@ -236,7 +234,6 @@ const PendingRequests = () => {
               isLoading={isLoadingP}
               searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
               filters={[]}
-              pagination={{ enabled: true, itemsPerPage: 10 }}
               emptyTitle="No pending projects"
               emptyDescription="Projects added by the other user will appear here for approval"
               titleActions={

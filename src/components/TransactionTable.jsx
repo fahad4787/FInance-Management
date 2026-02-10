@@ -77,7 +77,6 @@ const TransactionTable = ({ transactions, onDelete, onEdit, isLoading = false, t
       searchConfig={searchConfig}
       filters={filters}
       additionalFilters={additionalFilters}
-      pagination={{ enabled: true, loadMore: true, itemsPerPage: 30 }}
     />
   );
 };
