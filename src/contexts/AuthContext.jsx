@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import { MAX_USERS } from '../constants/app';
 
 const AuthContext = createContext(null);
 
@@ -43,13 +44,25 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const signup = async (email, password) => {
+    const configRef = doc(db, 'app', 'config');
+    const configSnap = await getDoc(configRef);
+    const data = configSnap.exists() ? configSnap.data() : {};
+    const userCount = data.userCount ?? (data.hasUsers ? 1 : 0);
+    if (userCount >= MAX_USERS) {
+      const err = new Error('Maximum number of accounts reached.');
+      err.code = 'auth/max-users';
+      throw err;
+    }
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const u = userCredential.user;
     await setDoc(doc(db, 'users', u.uid), {
       email: u.email ?? '',
       createdAt: serverTimestamp()
     });
-    await setDoc(doc(db, 'app', 'config'), { hasUsers: true }, { merge: true });
+    await setDoc(configRef, {
+      hasUsers: true,
+      userCount: userCount + 1
+    }, { merge: true });
     return userCredential;
   };
 

@@ -7,7 +7,7 @@ import PasswordField from '../../components/PasswordField';
 import Button from '../../components/Button';
 import AuthCard from '../../components/AuthCard';
 
-const Login = () => {
+const Login = ({ showSignupLink = false }) => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
@@ -77,6 +77,14 @@ const Login = () => {
         <Button type="submit" fullWidth disabled={submitting}>
           {submitting ? 'Signing in...' : 'Sign in'}
         </Button>
+        {showSignupLink && (
+          <p className="mt-4 text-center text-sm text-gray-600">
+            Need a second account?{' '}
+            <Link to="/signup" className="font-semibold text-primary-600 hover:text-primary-700">
+              Create account
+            </Link>
+          </p>
+        )}
       </form>
     </AuthCard>
   );

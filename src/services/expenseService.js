@@ -1,5 +1,6 @@
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { ENTRY_STATUS } from '../constants/app';
 
 export const getAllExpenses = async () => {
   try {
@@ -33,12 +34,16 @@ export const saveExpense = async (expenseData) => {
     const recurringMonths = Math.max(0, Math.min(36, Number(expenseData.recurringMonths) || 0));
     const shouldCreateRecurring = recurring && recurringMonths > 0;
 
+    const createdBy = expenseData.createdBy ?? null;
+    const status = createdBy ? ENTRY_STATUS.PENDING : ENTRY_STATUS.APPROVED;
     const baseData = {
       expenseName: expenseData.expenseName ?? '',
       date: expenseData.date ?? '',
       expenseType: expenseData.expenseType ?? '',
       amount: Number(expenseData.amount) || 0,
       comment: expenseData.comment ?? '',
+      createdBy,
+      status,
       createdAt: new Date().toISOString()
     };
 
@@ -83,6 +88,20 @@ export const deleteExpense = async (expenseId) => {
     await deleteDoc(doc(db, 'expenses', expenseId));
   } catch (error) {
     console.error('Error deleting expense:', error);
+    throw error;
+  }
+};
+
+export const approveExpense = async (expenseId, approvedBy) => {
+  try {
+    await updateDoc(doc(db, 'expenses', expenseId), {
+      status: ENTRY_STATUS.APPROVED,
+      approvedBy,
+      approvedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error approving expense:', error);
     throw error;
   }
 };

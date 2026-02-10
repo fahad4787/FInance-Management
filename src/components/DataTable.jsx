@@ -11,6 +11,8 @@ const DataTable = ({
   isLoading = false,
   onEdit,
   onDelete,
+  onApprove,
+  getCanApprove,
   searchConfig = {
     enabled: true,
     placeholder: 'Search...',
@@ -23,7 +25,8 @@ const DataTable = ({
     itemsPerPage: 5
   },
   emptyTitle = 'No Data Yet',
-  emptyDescription = 'Get started by adding your first entry'
+  emptyDescription = 'Get started by adding your first entry',
+  titleActions = null
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValues, setFilterValues] = useState({});
@@ -100,9 +103,12 @@ const DataTable = ({
 
   return (
     <div className="bg-white p-8 rounded-xl shadow-lg border-l-4 border-primary-500">
-      <div className="mb-6">
-        <h3 className="text-2xl font-bold text-gray-800 mb-2">{title}</h3>
-        <div className="w-32 h-0.5 bg-gradient-to-r from-primary-400 to-transparent"></div>
+      <div className="mb-6 flex flex-row flex-wrap justify-between items-start gap-4">
+        <div>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">{title}</h3>
+          <div className="w-32 h-0.5 bg-gradient-to-r from-primary-400 to-transparent"></div>
+        </div>
+        {titleActions && <div className="flex-shrink-0">{titleActions}</div>}
       </div>
 
       <div className="mb-6 flex flex-col md:flex-row gap-4">
@@ -199,7 +205,7 @@ const DataTable = ({
                       {column.label}
                     </th>
                   ))}
-                  {(onEdit || onDelete) && (
+                  {(onEdit || onDelete || onApprove) && (
                     <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700 capitalize whitespace-nowrap">Actions</th>
                   )}
                 </tr>
@@ -208,6 +214,7 @@ const DataTable = ({
                 {currentData.map((item, localIndex) => {
                     const filteredIndex = startIndex + localIndex;
                     const uniqueId = item.id || `${localIndex}-${filteredIndex}`;
+                    const hasRowAction = onEdit || onDelete || (onApprove && getCanApprove && getCanApprove(item));
                     return (
                       <tr key={uniqueId} className="border-b border-gray-100 hover:bg-gray-50">
                         {columns.map((column) => (
@@ -218,8 +225,9 @@ const DataTable = ({
                             {column.render ? column.render(item[column.key], item) : (item[column.key] || '-')}
                           </td>
                         ))}
-                        {(onEdit || onDelete) && (
+                        {(onEdit || onDelete || onApprove) && (
                           <td className="text-center py-3 px-4">
+                            {hasRowAction ? (
                             <div className="relative inline-block">
                               <button
                                 onClick={(e) => {
@@ -235,6 +243,7 @@ const DataTable = ({
                                 <FiMoreVertical className="w-5 h-5 text-gray-600" />
                               </button>
                             </div>
+                            ) : null}
                           </td>
                         )}
                       </tr>
@@ -257,40 +266,54 @@ const DataTable = ({
                   right: `${dropdownPosition.right}px`
                 }}
               >
-                {onEdit && (
-                  <button
-                    onClick={() => {
-                      const item = currentData.find((_, idx) => {
-                        const uniqueId = currentData[idx].id || `${idx}-${startIndex + idx}`;
-                        return uniqueId === openDropdownIndex;
-                      });
-                      if (item) {
-                        onEdit(item, item.id);
-                      }
-                      setOpenDropdownIndex(null);
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg font-semibold"
-                  >
-                    Edit
-                  </button>
-                )}
-                {onDelete && (
-                  <button
-                    onClick={() => {
-                      const item = currentData.find((_, idx) => {
-                        const uniqueId = currentData[idx].id || `${idx}-${startIndex + idx}`;
-                        return uniqueId === openDropdownIndex;
-                      });
-                      if (item) {
-                        setDeleteTarget({ id: item.id, item });
-                        setOpenDropdownIndex(null);
-                      }
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-semibold ${onEdit ? 'rounded-b-lg' : 'rounded-lg'}`}
-                  >
-                    Delete
-                  </button>
-                )}
+                {(() => {
+                  const item = currentData.find((_, idx) => {
+                    const uniqueId = currentData[idx].id || `${idx}-${startIndex + idx}`;
+                    return uniqueId === openDropdownIndex;
+                  });
+                  const canApprove = item && onApprove && getCanApprove && getCanApprove(item);
+                  return (
+                    <>
+                      {onEdit && (
+                        <button
+                          onClick={() => {
+                            if (item) onEdit(item, item.id);
+                            setOpenDropdownIndex(null);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg font-semibold"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {canApprove && (
+                        <button
+                          onClick={() => {
+                            if (item) {
+                              onApprove(item.id);
+                              setOpenDropdownIndex(null);
+                            }
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-green-50 font-semibold ${!onEdit ? 'rounded-t-lg' : ''}`}
+                        >
+                          Approve
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          onClick={() => {
+                            if (item) {
+                              setDeleteTarget({ id: item.id, item });
+                              setOpenDropdownIndex(null);
+                            }
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-semibold ${!onEdit && !canApprove ? 'rounded-t-lg' : ''} rounded-b-lg`}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </>
           )}

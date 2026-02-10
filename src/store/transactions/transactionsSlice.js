@@ -3,7 +3,8 @@ import {
   getAllTransactions as getAllTransactionsService,
   saveTransaction as saveTransactionService,
   updateTransaction as updateTransactionService,
-  deleteTransaction as deleteTransactionService
+  deleteTransaction as deleteTransactionService,
+  approveTransaction as approveTransactionService
 } from '../../services/transactionService';
 
 export const fetchTransactions = createAsyncThunk('transactions/fetchAll', async () => {
@@ -34,6 +35,14 @@ export const removeTransaction = createAsyncThunk(
   }
 );
 
+export const approveTransaction = createAsyncThunk(
+  'transactions/approve',
+  async ({ transactionId, approvedBy }, { dispatch }) => {
+    await approveTransactionService(transactionId, approvedBy);
+    await dispatch(fetchTransactions());
+  }
+);
+
 const transactionsSlice = createSlice({
   name: 'transactions',
   initialState: {
@@ -60,7 +69,8 @@ const transactionsSlice = createSlice({
         (action) =>
           action.type.startsWith('transactions/create/') ||
           action.type.startsWith('transactions/edit/') ||
-          action.type.startsWith('transactions/delete/'),
+          action.type.startsWith('transactions/delete/') ||
+          action.type.startsWith('transactions/approve/'),
         (state, action) => {
           if (action.type.endsWith('/pending')) {
             state.isLoading = true;

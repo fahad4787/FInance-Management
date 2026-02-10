@@ -32,6 +32,19 @@ export const getThisMonthRange = () => {
   return { from, to };
 };
 
+/** Return { from, to } as YYYY-MM-DD for the previous month */
+export const getPreviousMonthRange = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  const prevY = m === 0 ? y - 1 : y;
+  const prevM = m === 0 ? 11 : m - 1;
+  const from = `${prevY}-${String(prevM + 1).padStart(2, '0')}-01`;
+  const lastDay = new Date(prevY, prevM + 1, 0).getDate();
+  const to = `${prevY}-${String(prevM + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  return { from, to };
+};
+
 /** Short month names for charts/labels */
 export const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 

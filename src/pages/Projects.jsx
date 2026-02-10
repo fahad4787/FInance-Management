@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useAuth } from '../contexts/AuthContext';
 import { createProject, editProject, fetchProjects, removeProject } from '../store/projects/projectsSlice';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
@@ -10,9 +11,11 @@ import ProjectTable from '../components/ProjectTable';
 import ProjectFormModal from '../components/ProjectFormModal';
 import { filterByDateRange } from '../utils/date';
 import { useDateFilter } from '../hooks/useDateFilter';
+import { isApproved } from '../constants/app';
 
 const Projects = () => {
   const dispatch = useDispatch();
+  const { user } = useAuth();
   const projects = useSelector((state) => state.projects.items);
   const isLoading = useSelector((state) => state.projects.isLoading);
   const error = useSelector((state) => state.projects.error);
@@ -43,6 +46,11 @@ const Projects = () => {
     if (selectedProjectType) list = list.filter((p) => (p.projectType || '').trim() === selectedProjectType);
     return list;
   }, [projects, dateFrom, dateTo, selectedBroker, selectedProjectType]);
+
+  const approvedForTable = useMemo(
+    () => (filteredProjects || []).filter(isApproved),
+    [filteredProjects]
+  );
 
   useEffect(() => {
     document.title = 'Projects | FinHub';
@@ -107,14 +115,11 @@ const Projects = () => {
   const closeModal = () => setIsModalOpen(false);
 
   const onSubmit = async (values) => {
-    const projectData = {
-      ...values
-    };
-
     if (editingProjectId) {
-      await dispatch(editProject({ projectId: editingProjectId, projectData })).unwrap();
+      await dispatch(editProject({ projectId: editingProjectId, projectData: { ...values } })).unwrap();
       setEditingProjectId(null);
     } else {
+      const projectData = user?.uid ? { ...values, createdBy: user.uid } : { ...values };
       await dispatch(createProject(projectData)).unwrap();
     }
 
@@ -158,7 +163,7 @@ const Projects = () => {
         )}
 
         <ProjectTable
-          projects={filteredProjects}
+          projects={approvedForTable}
           onDelete={onDelete}
           onEdit={openEditModal}
           isLoading={isLoading}

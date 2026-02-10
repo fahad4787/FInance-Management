@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useAuth } from '../contexts/AuthContext';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import ModernDatePicker from '../components/ModernDatePicker';
@@ -17,6 +18,7 @@ import {
   removeTransaction
 } from '../store/transactions/transactionsSlice';
 import { normalizeDateToYYYYMMDD, filterByDateRange, MONTH_NAMES } from '../utils/date';
+import { isApproved } from '../constants/app';
 import { useDateFilter } from '../hooks/useDateFilter';
 
 const defaultForm = {
@@ -32,6 +34,7 @@ const defaultForm = {
 
 const Transactions = () => {
   const dispatch = useDispatch();
+  const { user } = useAuth();
 
   const projects = useSelector((state) => state.projects.items);
   const transactions = useSelector((state) => state.transactions.items);
@@ -55,8 +58,17 @@ const Transactions = () => {
     return list;
   }, [transactions, dateFrom, dateTo, selectedBroker, selectedProjectId]);
 
+  const approvedForCharts = useMemo(
+    () => (filteredTransactions || []).filter(isApproved),
+    [filteredTransactions]
+  );
+  const approvedForTable = useMemo(
+    () => (filteredTransactions || []).filter(isApproved),
+    [filteredTransactions]
+  );
+
   const monthlyTrendData = useMemo(() => {
-    const list = filteredTransactions || [];
+    const list = approvedForCharts;
     let labels = [];
     let monthsRange = [];
     if (dateFrom && dateTo) {
@@ -90,10 +102,10 @@ const Transactions = () => {
       }
     }
     return { labels: [], values: [] };
-  }, [filteredTransactions, dateFrom, dateTo]);
+  }, [approvedForCharts, dateFrom, dateTo]);
 
   const projectChartData = useMemo(() => {
-    const list = filteredTransactions || [];
+    const list = approvedForCharts;
     const byProject = {};
     list.forEach((t) => {
       const netBefore = Number.isFinite(Number(t.totalAmount)) ? Number(t.totalAmount) : (Number(t.amount) || 0) - (Number(t.brokerageAmount) || 0) - (Number(t.additionalCharges) || 0);
@@ -107,7 +119,7 @@ const Transactions = () => {
       labels,
       data: [{ label: 'Amount', values, color: '#0ea5e9' }]
     };
-  }, [filteredTransactions]);
+  }, [approvedForCharts]);
 
   useEffect(() => {
     document.title = 'Transactions | FinHub';
@@ -167,7 +179,8 @@ const Transactions = () => {
       ).unwrap();
       setEditingTransactionId(null);
     } else {
-      await dispatch(createTransaction(transactionData)).unwrap();
+      const payload = user?.uid ? { ...transactionData, createdBy: user.uid } : transactionData;
+      await dispatch(createTransaction(payload)).unwrap();
     }
 
     setIsModalOpen(false);
@@ -233,7 +246,7 @@ const Transactions = () => {
         </div>
 
         <TransactionTable
-          transactions={filteredTransactions}
+          transactions={approvedForTable}
           onDelete={onDelete}
           onEdit={openEditModal}
           isLoading={isLoading}

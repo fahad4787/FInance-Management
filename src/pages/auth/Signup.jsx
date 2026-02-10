@@ -59,6 +59,7 @@ const Signup = () => {
       const code = err.code;
       let message = 'Sign up failed.';
       if (code === 'auth/email-already-in-use') message = 'This email is already registered.';
+      else if (code === 'auth/max-users') message = err.message || 'Maximum number of accounts reached.';
       else if (code === 'auth/too-many-requests') message = 'Too many attempts. Please try again later.';
       else if (code === 'auth/network-request-failed') message = 'Network error. Check your connection.';
       else if (err.message) message = err.message;

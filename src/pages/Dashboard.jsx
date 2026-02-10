@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getTargetAmount, setTargetAmount } from '../services/settingsService';
 import { formatMoney } from '../utils/format';
 import { normalizeDateToYYYYMMDD, MONTH_NAMES } from '../utils/date';
+import { isApproved } from '../constants/app';
 import LineChartChartJS from '../components/LineChartChartJS';
 import BarChart from '../components/BarChart';
 import PageHeader from '../components/PageHeader';
@@ -136,6 +137,12 @@ const Dashboard = () => {
     return list;
   }, [transactions, selectedProject, selectedBroker, dateFrom, dateTo]);
 
+  const approvedTransactions = useMemo(
+    () => (filteredTransactions || []).filter(isApproved),
+    [filteredTransactions]
+  );
+  const approvedExpenses = useMemo(() => (expenses || []).filter(isApproved), [expenses]);
+
   const openAddModal = () => {
     setEditingTransactionId(null);
     setInitialValues(defaultForm);
@@ -167,7 +174,8 @@ const Dashboard = () => {
       ).unwrap();
       setEditingTransactionId(null);
     } else {
-      await dispatch(createTransaction(transactionData)).unwrap();
+      const payload = user?.uid ? { ...transactionData, createdBy: user.uid } : transactionData;
+      await dispatch(createTransaction(payload)).unwrap();
     }
 
     setIsModalOpen(false);
@@ -233,7 +241,7 @@ const Dashboard = () => {
         monthlyInward = new Array(monthsRange.length).fill(0);
         monthlyExpense = new Array(monthsRange.length).fill(0);
 
-        filteredTransactions.forEach((transaction) => {
+        approvedTransactions.forEach((transaction) => {
           const tDate = normalizeDateToYYYYMMDD(transaction.date);
           if (!tDate) return;
           const d = new Date(tDate);
@@ -249,7 +257,7 @@ const Dashboard = () => {
         });
 
         if (!selectedProject) {
-          (expenses || []).forEach((expense) => {
+          approvedExpenses.forEach((expense) => {
             const eDate = normalizeDateToYYYYMMDD(expense.date);
             if (!eDate) return;
             const d = new Date(eDate);
@@ -265,7 +273,7 @@ const Dashboard = () => {
       monthlyInward = new Array(12).fill(0);
       monthlyExpense = new Array(12).fill(0);
 
-      filteredTransactions.forEach((transaction) => {
+      approvedTransactions.forEach((transaction) => {
         const tDate = normalizeDateToYYYYMMDD(transaction.date);
         if (!tDate) return;
         const date = new Date(tDate);
@@ -282,7 +290,7 @@ const Dashboard = () => {
       });
 
       if (!selectedProject) {
-        (expenses || []).forEach((expense) => {
+        approvedExpenses.forEach((expense) => {
           const eDate = normalizeDateToYYYYMMDD(expense.date);
           if (!eDate) return;
           const date = new Date(eDate);
@@ -299,7 +307,7 @@ const Dashboard = () => {
       inward: monthlyInward,
       expense: monthlyExpense
     };
-  }, [filteredTransactions, expenses, selectedProject, dateFrom, dateTo]);
+  }, [approvedTransactions, approvedExpenses, selectedProject, dateFrom, dateTo]);
 
   const { inwardPct, expensePct, totalInward, availableAmount } = useMemo(() => {
     const inward = (chartData.inward || []).reduce((s, v) => s + (Number(v) || 0), 0);
@@ -433,7 +441,7 @@ const Dashboard = () => {
         </div>
 
         <TransactionTable
-          transactions={filteredTransactions}
+          transactions={approvedTransactions}
           onDelete={onDelete}
           onEdit={openEditModal}
           isLoading={isLoading}

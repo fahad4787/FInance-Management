@@ -1,5 +1,6 @@
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { ENTRY_STATUS } from '../constants/app';
 
 export const getAllProjects = async () => {
   try {
@@ -17,8 +18,12 @@ export const getAllProjects = async () => {
 
 export const saveProject = async (projectData) => {
   try {
+    const createdBy = projectData.createdBy ?? null;
+    const status = createdBy ? ENTRY_STATUS.PENDING : ENTRY_STATUS.APPROVED;
     const dataWithTimestamp = {
       ...projectData,
+      createdBy,
+      status,
       createdAt: new Date().toISOString()
     };
     const docRef = await addDoc(collection(db, 'projects'), dataWithTimestamp);
@@ -46,6 +51,20 @@ export const deleteProject = async (projectId) => {
     await deleteDoc(doc(db, 'projects', projectId));
   } catch (error) {
     console.error('Error deleting project:', error);
+    throw error;
+  }
+};
+
+export const approveProject = async (projectId, approvedBy) => {
+  try {
+    await updateDoc(doc(db, 'projects', projectId), {
+      status: ENTRY_STATUS.APPROVED,
+      approvedBy,
+      approvedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error approving project:', error);
     throw error;
   }
 };

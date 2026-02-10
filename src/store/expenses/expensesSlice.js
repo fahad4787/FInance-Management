@@ -3,7 +3,8 @@ import {
   getAllExpenses as getAllExpensesService,
   saveExpense as saveExpenseService,
   updateExpense as updateExpenseService,
-  deleteExpense as deleteExpenseService
+  deleteExpense as deleteExpenseService,
+  approveExpense as approveExpenseService
 } from '../../services/expenseService';
 
 export const fetchExpenses = createAsyncThunk('expenses/fetchAll', async () => {
@@ -34,6 +35,14 @@ export const removeExpense = createAsyncThunk(
   }
 );
 
+export const approveExpense = createAsyncThunk(
+  'expenses/approve',
+  async ({ expenseId, approvedBy }, { dispatch }) => {
+    await approveExpenseService(expenseId, approvedBy);
+    await dispatch(fetchExpenses());
+  }
+);
+
 const expensesSlice = createSlice({
   name: 'expenses',
   initialState: {
@@ -60,7 +69,8 @@ const expensesSlice = createSlice({
         (action) =>
           action.type.startsWith('expenses/create/') ||
           action.type.startsWith('expenses/edit/') ||
-          action.type.startsWith('expenses/delete/'),
+          action.type.startsWith('expenses/delete/') ||
+          action.type.startsWith('expenses/approve/'),
         (state, action) => {
           if (action.type.endsWith('/pending')) {
             state.isLoading = true;

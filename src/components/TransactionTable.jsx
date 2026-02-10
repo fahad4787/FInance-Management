@@ -14,7 +14,6 @@ const computeNetTotal = (t) => {
   return amount - brokerageAmount - additionalCharges;
 };
 
-/** Net after 2% Impact Fund (matches Add/Edit Transaction summary "Total Amount (Net)") */
 const computeNetAfterImpactFund = (t) => {
   const netBefore = Number.isFinite(Number(t.totalAmount)) ? Number(t.totalAmount) : computeNetTotal(t);
   return netBefore * 0.98;

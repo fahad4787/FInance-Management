@@ -1,17 +1,27 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FiHome, FiFileText, FiRepeat, FiTrendingDown, FiDollarSign, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiFileText, FiRepeat, FiTrendingDown, FiDollarSign, FiInbox, FiLogOut } from 'react-icons/fi';
+import { useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
+import { isApproved } from '../constants/app';
 
 const Sidebar = ({ isOpen = true }) => {
   const location = useLocation();
   const { logout } = useAuth();
+  const transactions = useSelector((state) => state.transactions.items) || [];
+  const expenses = useSelector((state) => state.expenses.items) || [];
+  const projects = useSelector((state) => state.projects.items) || [];
+  const pendingCount = [transactions, expenses, projects].reduce(
+    (sum, list) => sum + list.filter((item) => !isApproved(item)).length,
+    0
+  );
 
   const menuItems = [
     { path: '/', label: 'Dashboard', icon: <FiHome className="w-5 h-5" /> },
     { path: '/projects', label: 'Projects', icon: <FiFileText className="w-5 h-5" /> },
     { path: '/transactions', label: 'Transactions', icon: <FiRepeat className="w-5 h-5" /> },
     { path: '/expenses', label: 'Expenses', icon: <FiTrendingDown className="w-5 h-5" /> },
+    { path: '/pending', label: 'Pending', icon: <FiInbox className="w-5 h-5" />, badge: pendingCount },
     { path: '/impact-fund', label: 'Impact Fund', icon: <FiDollarSign className="w-5 h-5" /> }
   ];
 
@@ -31,6 +41,7 @@ const Sidebar = ({ isOpen = true }) => {
         <nav className={`flex-1 p-4 space-y-2 ${!isOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const count = item.badge ?? 0;
             return (
               <Link
                 key={item.path}
@@ -42,7 +53,16 @@ const Sidebar = ({ isOpen = true }) => {
                 }`}
               >
                 {item.icon}
-                {isOpen && <span>{item.label}</span>}
+                {isOpen && (
+                  <>
+                    <span className="flex-1">{item.label}</span>
+                    {count > 0 && (
+                      <span className="min-w-[1.25rem] px-1.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800">
+                        {count}
+                      </span>
+                    )}
+                  </>
+                )}
               </Link>
             );
           })}

@@ -3,7 +3,8 @@ import {
   getAllProjects as getAllProjectsService,
   saveProject as saveProjectService,
   updateProject as updateProjectService,
-  deleteProject as deleteProjectService
+  deleteProject as deleteProjectService,
+  approveProject as approveProjectService
 } from '../../services/projectService';
 
 export const fetchProjects = createAsyncThunk('projects/fetchAll', async () => {
@@ -27,6 +28,14 @@ export const removeProject = createAsyncThunk('projects/delete', async (projectI
   await deleteProjectService(projectId);
   await dispatch(fetchProjects());
 });
+
+export const approveProject = createAsyncThunk(
+  'projects/approve',
+  async ({ projectId, approvedBy }, { dispatch }) => {
+    await approveProjectService(projectId, approvedBy);
+    await dispatch(fetchProjects());
+  }
+);
 
 const projectsSlice = createSlice({
   name: 'projects',
@@ -54,7 +63,8 @@ const projectsSlice = createSlice({
         (action) =>
           action.type.startsWith('projects/create/') ||
           action.type.startsWith('projects/edit/') ||
-          action.type.startsWith('projects/delete/'),
+          action.type.startsWith('projects/delete/') ||
+          action.type.startsWith('projects/approve/'),
         (state, action) => {
           if (action.type.endsWith('/pending')) {
             state.isLoading = true;

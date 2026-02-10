@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useAuth } from '../contexts/AuthContext';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import ModernDatePicker from '../components/ModernDatePicker';
@@ -15,6 +16,7 @@ import {
 } from '../store/expenses/expensesSlice';
 import { filterByDateRange } from '../utils/date';
 import { useDateFilter } from '../hooks/useDateFilter';
+import { isApproved } from '../constants/app';
 import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_LABEL_TO_VALUE, EXPENSE_TYPE_OPTIONS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
 
 const defaultForm = {
@@ -29,6 +31,7 @@ const defaultForm = {
 
 const Expenses = () => {
   const dispatch = useDispatch();
+  const { user } = useAuth();
 
   const expenses = useSelector((state) => state.expenses.items);
   const isLoading = useSelector((state) => state.expenses.isLoading);
@@ -48,6 +51,11 @@ const Expenses = () => {
     }
     return list;
   }, [expenses, dateFrom, dateTo, selectedType]);
+
+  const approvedForTable = useMemo(
+    () => (filteredExpenses || []).filter(isApproved),
+    [filteredExpenses]
+  );
 
   useEffect(() => {
     document.title = 'Expenses | FinHub';
@@ -88,7 +96,8 @@ const Expenses = () => {
       ).unwrap();
       setEditingExpenseId(null);
     } else {
-      await dispatch(createExpense(expenseData)).unwrap();
+      const payload = user?.uid ? { ...expenseData, createdBy: user.uid } : expenseData;
+      await dispatch(createExpense(payload)).unwrap();
     }
 
     setIsModalOpen(false);
@@ -123,7 +132,7 @@ const Expenses = () => {
         )}
 
         <ExpenseTable
-          expenses={filteredExpenses}
+          expenses={approvedForTable}
           onDelete={onDelete}
           onEdit={openEditModal}
           isLoading={isLoading}
