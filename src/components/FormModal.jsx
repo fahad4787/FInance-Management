@@ -42,11 +42,11 @@ const FormModal = ({
   const onFieldChange = (fieldName, value) => {
     setForm((prev) => {
       let updated = { ...prev, [fieldName]: value };
-      
+
       if (customFieldChange) {
         updated = customFieldChange(updated, fieldName, value) || updated;
       }
-      
+
       if (autoFillLogic && autoFillLogic.triggerField === fieldName && value) {
         const autoFillData = autoFillLogic.getAutoFillData(value);
         if (autoFillData) {
@@ -57,7 +57,7 @@ const FormModal = ({
           });
         }
       }
-      
+
       return updated;
     });
   };
@@ -83,7 +83,7 @@ const FormModal = ({
         return (
           <div className={field.className || ''}>
             {field.label && (
-              <div className="text-sm font-semibold mb-2.5 text-gray-700 capitalize tracking-wide">
+              <div className="text-sm font-semibold mb-2.5 text-slate-700 capitalize tracking-wide">
                 {field.label}
               </div>
             )}
@@ -99,7 +99,7 @@ const FormModal = ({
             leftIcon={field.icon}
           />
         );
-      
+
       case 'dropdown':
         return (
           <DropdownField
@@ -108,7 +108,7 @@ const FormModal = ({
             hidePlaceholder={field.hidePlaceholder}
           />
         );
-      
+
       case 'date':
         return (
           <ModernDatePicker
@@ -116,7 +116,7 @@ const FormModal = ({
             onChange={(val) => onFieldChange(field.name, val)}
           />
         );
-      
+
       case 'display':
         return (
           <InputField
@@ -155,13 +155,13 @@ const FormModal = ({
                 type="checkbox"
                 checked={!!form[field.name]}
                 onChange={(e) => onFieldChange(field.name, e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
               />
-              <span className="text-sm font-semibold text-gray-700">{field.label}</span>
+              <span className="text-sm font-semibold text-slate-700">{field.label}</span>
             </label>
           </div>
         );
-      
+
       case 'text':
       default:
         return (
@@ -221,8 +221,8 @@ const FormModal = ({
 
   const renderRadioGroup = (field) => {
     return (
-      <div className="space-y-4 pt-4 border-t border-gray-200">
-        <label className="text-sm font-semibold text-gray-700 capitalize tracking-wide block">
+      <div className="space-y-4 pt-4 border-t border-slate-200">
+        <label className="text-sm font-semibold text-slate-700 capitalize tracking-wide block">
           {field.dynamicLabel ? field.dynamicLabel(form) : field.label}
         </label>
         <div className="flex gap-6">
@@ -234,9 +234,9 @@ const FormModal = ({
                 value={option.value}
                 checked={form[field.name] === option.value}
                 onChange={(e) => onFieldChange(field.name, e.target.value)}
-                className="w-4 h-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                className="w-4 h-4 text-primary-600 focus:ring-primary-500 border-slate-300"
               />
-              <span className="text-sm font-medium text-gray-700">{option.label}</span>
+              <span className="text-sm font-medium text-slate-700">{option.label}</span>
             </label>
           ))}
         </div>
@@ -270,9 +270,9 @@ const FormModal = ({
         {rows.map((row, rowIndex) => {
           if (row.type === 'section') {
             return (
-              <div key={`section-${rowIndex}`} className="space-y-4 pt-4 border-t border-gray-200">
+              <div key={`section-${rowIndex}`} className="space-y-4 pt-4 border-t border-slate-200">
                 {row.field.title && (
-                  <h3 className="text-lg font-semibold text-gray-800">{row.field.title}</h3>
+                  <h3 className="text-lg font-semibold text-slate-800">{row.field.title}</h3>
                 )}
                 {row.field.fields && row.field.fields.map((field, idx) => (
                   <div key={field.name || idx} className={field.fullWidth ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-6'}>
@@ -290,11 +290,11 @@ const FormModal = ({
               </div>
             );
           }
-          
+
           if (row.type === 'radio-group') {
             return <div key={`radio-${rowIndex}`}>{renderRadioGroup(row.field)}</div>;
           }
-          
+
           const colSpans = row.fields.map((f) => (typeof f.colSpan === 'function' ? f.colSpan(form) : (f.colSpan ?? 1)));
           const use8020 = row.fields.length === 2 && colSpans[0] === 4 && colSpans[1] === 1;
           const gridClass = use8020
@@ -317,17 +317,18 @@ const FormModal = ({
           );
         })}
 
-        <div className="flex gap-4 pt-4 border-t border-gray-200">
-          <button
+        <div className="flex gap-4 pt-4 border-t border-slate-200">
+          <Button
+            variant="secondary"
             onClick={() => {
               setForm(normalizedInitialValues);
               onClose();
             }}
-            className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors border-2 border-gray-300"
+            className="flex-1"
           >
             Cancel
-          </button>
-          <Button onClick={handleSave} fullWidth disabled={isSaving}>
+          </Button>
+          <Button onClick={handleSave} className="flex-1" disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save'}
           </Button>
         </div>

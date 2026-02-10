@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import { FiBarChart2 } from 'react-icons/fi';
 
 ChartJS.register(
   CategoryScale,
@@ -18,7 +19,7 @@ ChartJS.register(
   Legend
 );
 
-const themePrimary = '#0ea5e9';
+const themePrimary = '#10b981';
 const themeText = '#1e293b';
 const themeMuted = '#64748b';
 const themeGrid = 'rgba(15, 23, 42, 0.06)';
@@ -31,43 +32,42 @@ const BarChart = ({ data, labels, title = 'Bar Chart' }) => {
       data: dataset.values,
       backgroundColor: dataset.color || themePrimary,
       borderColor: dataset.color || themePrimary,
-      borderWidth: 1
+      borderWidth: 0,
+      borderRadius: { topLeft: 8, topRight: 8 },
+      borderSkipped: false
     }))
   };
 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: { top: 8, right: 8, bottom: 4, left: 4 }
+    },
     plugins: {
       legend: {
         position: 'top',
+        align: 'end',
         labels: {
           usePointStyle: true,
-          padding: 15,
+          pointStyle: 'circle',
+          padding: 20,
           color: themeText,
-          font: {
-            size: 12,
-            weight: 'bold'
-          }
+          font: { family: 'inherit', size: 12, weight: '600' }
         }
       },
-      title: {
-        display: false
-      },
       tooltip: {
-        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+        backgroundColor: 'rgba(15, 23, 42, 0.92)',
         titleColor: '#f8fafc',
-        bodyColor: '#f8fafc',
-        padding: 12,
-        titleFont: {
-          size: 14,
-          weight: 'bold'
-        },
-        bodyFont: {
-          size: 13
-        },
-        borderColor: 'rgba(248, 250, 252, 0.15)',
-        borderWidth: 1
+        bodyColor: '#e2e8f0',
+        padding: 14,
+        titleFont: { size: 13, weight: 'bold' },
+        bodyFont: { size: 13 },
+        borderColor: 'rgba(248, 250, 252, 0.12)',
+        borderWidth: 1,
+        cornerRadius: 12,
+        displayColors: true,
+        boxPadding: 6
       }
     },
     scales: {
@@ -75,14 +75,14 @@ const BarChart = ({ data, labels, title = 'Bar Chart' }) => {
         beginAtZero: true,
         grid: {
           color: themeGrid,
-          drawBorder: false
+          drawBorder: false,
+          lineWidth: 1
         },
         ticks: {
           color: themeMuted,
-          font: {
-            size: 11
-          },
-          padding: 10
+          font: { size: 11 },
+          padding: 12,
+          maxTicksLimit: 6
         }
       },
       x: {
@@ -91,18 +91,23 @@ const BarChart = ({ data, labels, title = 'Bar Chart' }) => {
         },
         ticks: {
           color: themeMuted,
-          font: {
-            size: 11
-          },
-          padding: 10
+          font: { size: 11 },
+          padding: 12,
+          maxRotation: 45
         }
       }
     }
   };
 
   return (
-    <div className="w-full bg-white p-6 rounded-xl shadow-lg border-l-4 border-primary-500 h-[400px]">
-      <div className="h-full">
+    <div className="w-full bg-white rounded-2xl shadow-panel overflow-hidden border border-slate-200/80 ring-1 ring-slate-200/50 border-t-4 border-t-primary-500">
+      <div className="px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80 flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary-600">
+          <FiBarChart2 className="w-5 h-5" />
+        </div>
+        <h3 className="text-lg font-bold text-slate-800 tracking-tight">{title}</h3>
+      </div>
+      <div className="p-5 h-[380px]">
         <Bar data={chartData} options={options} />
       </div>
     </div>

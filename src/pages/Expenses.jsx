@@ -18,6 +18,8 @@ import { filterByDateRange } from '../utils/date';
 import { useDateFilter } from '../hooks/useDateFilter';
 import { isApproved } from '../constants/app';
 import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_LABEL_TO_VALUE, EXPENSE_TYPE_OPTIONS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
+import ErrorAlert from '../components/ErrorAlert';
+import PageContainer from '../components/PageContainer';
 
 const defaultForm = {
   expenseName: '',
@@ -108,9 +110,8 @@ const Expenses = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 w-full">
-      <div className="w-full space-y-8">
-        <PageHeader title="Expenses" actions={<Button onClick={openAddModal}>Add Expense</Button>} />
+    <PageContainer>
+      <PageHeader title="Expenses" actions={<Button onClick={openAddModal}>Add Expense</Button>} />
 
         <FilterBar>
           <SearchableDropdown
@@ -125,11 +126,7 @@ const Expenses = () => {
           <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
         </FilterBar>
 
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            {error}
-          </div>
-        )}
+        <ErrorAlert message={error} />
 
         <ExpenseTable
           expenses={approvedForTable}
@@ -137,11 +134,10 @@ const Expenses = () => {
           onEdit={openEditModal}
           isLoading={isLoading}
           title="Expense Details"
-          hideFilters={['expenseType']}
-        />
-      </div>
+            hideFilters={['expenseType']}
+          />
 
-      <ExpenseFormModal
+        <ExpenseFormModal
         key={editingExpenseId || 'new'}
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -150,7 +146,7 @@ const Expenses = () => {
         onSubmit={onSubmit}
         isSaving={isLoading}
       />
-    </div>
+    </PageContainer>
   );
 };
 

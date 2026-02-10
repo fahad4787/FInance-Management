@@ -6,6 +6,7 @@ import InputField from '../../components/InputField';
 import PasswordField from '../../components/PasswordField';
 import Button from '../../components/Button';
 import AuthCard from '../../components/AuthCard';
+import ErrorAlert from '../../components/ErrorAlert';
 
 const PASSWORD_RULES = [
   { key: 'length', label: 'At least 8 characters', test: (p) => p.length >= 8 },
@@ -72,11 +73,7 @@ const Signup = () => {
   return (
     <AuthCard title="Create account">
       <form onSubmit={handleSubmit} className="space-y-5">
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            {error}
-          </div>
-        )}
+        <ErrorAlert message={error} />
         <InputField
           label="Email"
           type="email"

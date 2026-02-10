@@ -20,6 +20,9 @@ import {
 import { normalizeDateToYYYYMMDD, filterByDateRange, MONTH_NAMES } from '../utils/date';
 import { isApproved } from '../constants/app';
 import { useDateFilter } from '../hooks/useDateFilter';
+import { useClientOptions } from '../hooks/useClientOptions';
+import ErrorAlert from '../components/ErrorAlert';
+import PageContainer from '../components/PageContainer';
 
 const defaultForm = {
   client: '',
@@ -117,7 +120,7 @@ const Transactions = () => {
     const values = labels.map((k) => byProject[k]);
     return {
       labels,
-      data: [{ label: 'Amount', values, color: '#0ea5e9' }]
+      data: [{ label: 'Amount', values, color: '#10b981' }]
     };
   }, [approvedForCharts]);
 
@@ -130,14 +133,7 @@ const Transactions = () => {
     dispatch(fetchTransactions());
   }, [dispatch]);
 
-  const clientOptions = useMemo(() => {
-    const clients = (projects || [])
-      .map((p) => p.client)
-      .filter(Boolean)
-      .map((c) => String(c).trim())
-      .filter(Boolean);
-    return [...new Set(clients)].sort();
-  }, [projects]);
+  const clientOptions = useClientOptions(projects);
 
   const projectOptions = useMemo(() => {
     const list = projects || [];
@@ -191,9 +187,8 @@ const Transactions = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 w-full">
-      <div className="w-full space-y-8">
-        <PageHeader
+    <PageContainer>
+      <PageHeader
           title="Transactions"
           actions={<Button onClick={openAddModal}>Add Transaction</Button>}
         />
@@ -222,28 +217,26 @@ const Transactions = () => {
           <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
         </FilterBar>
 
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            {error}
-          </div>
-        )}
+        <ErrorAlert message={error} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {monthlyTrendData.labels.length > 0 && (
-            <LineChartChartJS
-              data={[{ label: 'Transactions (Net)', values: monthlyTrendData.values, color: '#0ea5e9' }]}
-              labels={monthlyTrendData.labels}
-              title="Monthly Trend"
-            />
-          )}
-          {projectChartData.labels.length > 0 && (
-            <BarChart
-              data={projectChartData.data}
-              labels={projectChartData.labels}
-              title="Transactions by Project"
-            />
-          )}
-        </div>
+        {(monthlyTrendData.labels.length > 0 && monthlyTrendData.values.some((v) => v > 0)) || projectChartData.labels.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {monthlyTrendData.labels.length > 0 && monthlyTrendData.values.some((v) => v > 0) && (
+              <LineChartChartJS
+                data={[{ label: 'Transactions (Net)', values: monthlyTrendData.values, color: '#10b981' }]}
+                labels={monthlyTrendData.labels}
+                title="Monthly Trend"
+              />
+            )}
+            {projectChartData.labels.length > 0 && (
+              <BarChart
+                data={projectChartData.data}
+                labels={projectChartData.labels}
+                title="Transactions by Project"
+              />
+            )}
+          </div>
+        ) : null}
 
         <TransactionTable
           transactions={approvedForTable}
@@ -253,7 +246,6 @@ const Transactions = () => {
           title="Transaction Details"
           hideFilters={['client', 'project']}
         />
-      </div>
 
       <TransactionFormModal
         key={editingTransactionId || 'new'}
@@ -266,7 +258,7 @@ const Transactions = () => {
         projects={projects}
         clientOptions={clientOptions}
       />
-    </div>
+    </PageContainer>
   );
 };
 

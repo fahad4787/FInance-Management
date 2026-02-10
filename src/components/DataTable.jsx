@@ -71,50 +71,57 @@ const DataTable = ({
     return uniqueValues;
   };
 
+  const tableHeader = (
+    <div className="flex items-center gap-3">
+      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary-600">
+        <FiFileText className="w-5 h-5" />
+      </div>
+      <div>
+        <h3 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h3>
+        <p className="text-sm text-slate-500 mt-0.5">Search and filter below</p>
+      </div>
+    </div>
+  );
+
+  const tableCardClass = 'bg-white rounded-2xl shadow-panel overflow-hidden border border-slate-200/80 ring-1 ring-slate-200/50 border-t-4 border-t-primary-500';
+
   if (isLoading) {
     return (
-      <div className="bg-white p-12 rounded-xl shadow-lg border-l-4 border-primary-500">
-        <div className="mb-6">
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">{title}</h3>
-          <div className="w-32 h-0.5 bg-gradient-to-r from-primary-400 to-transparent"></div>
+      <div className={`${tableCardClass} p-8 md:p-12`}>
+        <div className="px-6 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80">{tableHeader}</div>
+        <div className="p-8">
+          <Loader />
         </div>
-        <Loader />
       </div>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className="bg-white p-12 rounded-xl shadow-lg border-l-4 border-primary-500">
-        <div className="mb-6">
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">{title}</h3>
-          <div className="w-32 h-0.5 bg-gradient-to-r from-primary-400 to-transparent"></div>
-        </div>
-        <div className="text-center py-16">
-          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
-            <FiFileText className="w-12 h-12 text-gray-400" />
+      <div className={`${tableCardClass} p-8 md:p-12`}>
+        <div className="px-6 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80">{tableHeader}</div>
+        <div className="text-center py-16 px-6">
+          <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-primary-100 flex items-center justify-center">
+            <FiFileText className="w-10 h-10 text-primary-500" />
           </div>
-          <h4 className="text-xl font-semibold text-gray-700 mb-2">{emptyTitle}</h4>
-          <p className="text-gray-500 mb-6">{emptyDescription}</p>
+          <h4 className="text-lg font-bold text-slate-800 mb-2">{emptyTitle}</h4>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto">{emptyDescription}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-lg border-l-4 border-primary-500">
-      <div className="mb-6 flex flex-row flex-wrap justify-between items-start gap-4">
-        <div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">{title}</h3>
-          <div className="w-32 h-0.5 bg-gradient-to-r from-primary-400 to-transparent"></div>
-        </div>
+    <div className={tableCardClass}>
+      <div className="px-6 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80 flex flex-row flex-wrap justify-between items-center gap-4">
+        {tableHeader}
         {titleActions && <div className="flex-shrink-0">{titleActions}</div>}
       </div>
 
-      <div className="mb-6 flex flex-col md:flex-row gap-4">
+      <div className="p-4 md:p-5 bg-slate-100/60 border-b border-slate-200/80 flex flex-col md:flex-row gap-4">
         {searchConfig.enabled && (
           <div className="flex-1">
-            <label className="text-sm font-semibold mb-2.5 text-gray-700 capitalize tracking-wide block">
+            <label className="text-sm font-semibold mb-2.5 text-slate-700 capitalize tracking-wide block">
               Search
             </label>
             <div className="relative">
@@ -126,10 +133,10 @@ const DataTable = ({
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full px-4 py-2.5 pl-10 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary-500"
+                className="w-full px-4 py-2.5 pl-10 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
               />
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <FiSearch className="w-5 h-5 text-gray-400" />
+                <FiSearch className="w-5 h-5 text-slate-400" />
               </div>
             </div>
           </div>
@@ -151,7 +158,7 @@ const DataTable = ({
               />
             ) : (
               <div>
-                <label className="text-sm font-semibold mb-2.5 text-gray-700 capitalize tracking-wide block">
+                <label className="text-sm font-semibold mb-2.5 text-slate-700 capitalize tracking-wide block">
                   {filter.label}
                 </label>
                 <div className="relative">
@@ -161,14 +168,14 @@ const DataTable = ({
                       setFilterValues(prev => ({ ...prev, [filter.key]: e.target.value }));
                       setCurrentPage(1);
                     }}
-                    className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary-500 appearance-none bg-white pr-10 cursor-pointer text-gray-700"
+                    className="w-full px-4 py-2.5 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 appearance-none bg-white pr-10 cursor-pointer text-slate-700"
                   >
                     {getFilterOptions(filter).map(option => (
                       <option key={option} value={option}>{option}</option>
                     ))}
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <FiChevronDown className="w-5 h-5 text-gray-400" />
+                    <FiChevronDown className="w-5 h-5 text-slate-400" />
                   </div>
                 </div>
               </div>
@@ -185,28 +192,28 @@ const DataTable = ({
 
       {currentData.length === 0 ? (
         <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <FiSearch className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center">
+            <FiSearch className="w-8 h-8 text-slate-400" />
           </div>
-          <p className="text-gray-600 font-semibold">No results found</p>
-          <p className="text-gray-500 text-sm mt-1">Try adjusting your search or filter</p>
+          <p className="text-slate-600 font-semibold">No results found</p>
+          <p className="text-slate-500 text-sm mt-1">Try adjusting your search or filter</p>
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto relative">
+          <div className="overflow-x-auto px-4 py-2">
             <table className="w-full min-w-max">
               <thead>
-                <tr className="border-b-2 border-gray-200">
+                <tr className="bg-slate-100 border-b-2 border-slate-200">
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`py-3 px-4 text-sm font-semibold text-gray-700 capitalize whitespace-nowrap ${column.align || 'text-center'} ${column.className || ''}`}
+                      className={`py-3.5 px-4 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap ${column.align || 'text-center'} ${column.className || ''}`}
                     >
                       {column.label}
                     </th>
                   ))}
                   {(onEdit || onDelete || onApprove) && (
-                    <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700 capitalize whitespace-nowrap">Actions</th>
+                    <th className="text-center py-3.5 px-4 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Actions</th>
                   )}
                 </tr>
               </thead>
@@ -215,12 +222,13 @@ const DataTable = ({
                     const filteredIndex = startIndex + localIndex;
                     const uniqueId = item.id || `${localIndex}-${filteredIndex}`;
                     const hasRowAction = onEdit || onDelete || (onApprove && getCanApprove && getCanApprove(item));
+                    const isEven = localIndex % 2 === 0;
                     return (
-                      <tr key={uniqueId} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr key={uniqueId} className={`border-b border-slate-100 ${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-primary-50/60 transition-colors`}>
                         {columns.map((column) => (
                           <td
                             key={column.key}
-                            className={`py-3 px-4 text-gray-700 whitespace-nowrap ${column.align || 'text-center'} ${column.className || ''}`}
+                            className={`py-3 px-4 text-slate-700 whitespace-nowrap ${column.align || 'text-center'} ${column.className || ''}`}
                           >
                             {column.render ? column.render(item[column.key], item) : (item[column.key] || '-')}
                           </td>
@@ -238,9 +246,9 @@ const DataTable = ({
                                   });
                                   setOpenDropdownIndex(openDropdownIndex === uniqueId ? null : uniqueId);
                                 }}
-                                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                                className="p-2 rounded-xl hover:bg-primary-100 text-slate-600 hover:text-primary-700 transition-colors"
                               >
-                                <FiMoreVertical className="w-5 h-5 text-gray-600" />
+                                <FiMoreVertical className="w-5 h-5 text-slate-600" />
                               </button>
                             </div>
                             ) : null}
@@ -260,7 +268,7 @@ const DataTable = ({
                 onClick={() => setOpenDropdownIndex(null)}
               ></div>
               <div
-                className="fixed w-32 bg-white rounded-lg shadow-lg border-2 border-gray-200 z-50"
+                className="fixed w-36 bg-white rounded-xl shadow-modal border border-slate-200 z-50 py-1"
                 style={{
                   top: `${dropdownPosition.top}px`,
                   right: `${dropdownPosition.right}px`
@@ -280,7 +288,7 @@ const DataTable = ({
                             if (item) onEdit(item, item.id);
                             setOpenDropdownIndex(null);
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg font-semibold"
+                          className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-t-xl font-semibold"
                         >
                           Edit
                         </button>
@@ -306,7 +314,7 @@ const DataTable = ({
                               setOpenDropdownIndex(null);
                             }
                           }}
-                          className={`w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-semibold ${!onEdit && !canApprove ? 'rounded-t-lg' : ''} rounded-b-lg`}
+                          className={`w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-semibold ${!onEdit && !canApprove ? 'rounded-t-xl' : ''} rounded-b-xl`}
                         >
                           Delete
                         </button>
@@ -320,13 +328,13 @@ const DataTable = ({
 
           {pagination.enabled && (loadMore ? (
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-slate-600">
                 Showing 1 to {Math.min(visibleCount, filteredData.length)} of {filteredData.length} entries
               </div>
               {hasMore && (
                 <button
                   onClick={() => setVisibleCount(prev => prev + itemsPerPage)}
-                  className="px-5 py-2.5 bg-primary-500 text-white rounded-lg hover:bg-primary-600 font-semibold transition-colors"
+                  className="px-5 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 font-semibold transition-colors shadow-sm"
                 >
                   Load more
                 </button>
@@ -334,24 +342,24 @@ const DataTable = ({
             </div>
           ) : totalPages > 1 && (
             <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-slate-600">
                 Showing {startIndex + 1} to {Math.min(endIndex, filteredData.length)} of {filteredData.length} entries
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                  className="px-4 py-2 border-2 border-slate-300 rounded-xl hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                 >
                   Previous
                 </button>
-                <span className="px-4 py-2 text-gray-700 font-semibold">
+                <span className="px-4 py-2 text-slate-700 font-semibold">
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                  className="px-4 py-2 border-2 border-slate-300 rounded-xl hover:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                 >
                   Next
                 </button>

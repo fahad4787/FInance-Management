@@ -10,6 +10,9 @@ import { fetchTransactions, approveTransaction } from '../store/transactions/tra
 import { fetchExpenses, approveExpense } from '../store/expenses/expensesSlice';
 import { fetchProjects, approveProject } from '../store/projects/projectsSlice';
 import { EXPENSE_TYPE_LABELS } from '../constants/expenseTypes';
+import ErrorAlert from '../components/ErrorAlert';
+import PageContainer from '../components/PageContainer';
+import Tabs from '../components/Tabs';
 
 const toNumber = (v) => {
   const n = Number(v);
@@ -81,6 +84,7 @@ const PendingRequests = () => {
   };
 
   const [approvingAll, setApprovingAll] = useState({ t: false, e: false, p: false });
+  const [activeTab, setActiveTab] = useState('transactions');
 
   const approvableTransactionIds = pendingTransactions.filter(canApproveTransaction).map((t) => t.id);
   const approvableExpenseIds = pendingExpenses.filter(canApproveExpense).map((e) => e.id);
@@ -170,89 +174,83 @@ const PendingRequests = () => {
     ...(approvableProjectIds.length > 0 ? [actionColumn('_approve', canApproveProject, onApproveProject)] : [])
   ];
 
-  const anyError = errorT || errorE || errorP;
+  const pendingTabs = [
+    { id: 'transactions', label: 'Transactions', badge: pendingTransactions.length },
+    { id: 'expenses', label: 'Expenses', badge: pendingExpenses.length },
+    { id: 'projects', label: 'Projects', badge: pendingProjects.length }
+  ];
 
   return (
-    <div className="p-6 md:p-8 w-full">
-      <div className="w-full space-y-8">
-        <PageHeader title="Pending Requests" />
+    <PageContainer>
+      <PageHeader title="Pending Requests" />
 
-        {anyError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            {[errorT, errorE, errorP].filter(Boolean).join(' ')}
-          </div>
-        )}
+      <ErrorAlert messages={[errorT, errorE, errorP].filter(Boolean)} />
 
-        <DataTable
-          data={pendingTransactions}
-          columns={transactionColumns}
-          title="Pending Transactions"
-          isLoading={isLoadingT}
-          searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
-          filters={[]}
-          pagination={{ enabled: true, itemsPerPage: 10 }}
-          emptyTitle="No pending transactions"
-          emptyDescription="Transactions added by the other user will appear here for approval"
-          titleActions={
-            approvableTransactionIds.length > 0 ? (
-              <Button
-                onClick={onApproveAllTransactions}
-                disabled={approvingAll.t}
-                size="sm"
-              >
-                {approvingAll.t ? 'Approving…' : `Approve all (${approvableTransactionIds.length})`}
-              </Button>
-            ) : null
-          }
-        />
-
-        <DataTable
-          data={pendingExpenses}
-          columns={expenseColumns}
-          title="Pending Expenses"
-          isLoading={isLoadingE}
-          searchConfig={{ enabled: true, placeholder: 'Search by name, type, date...', searchFields: ['expenseName', 'expenseType', 'date'] }}
-          filters={[]}
-          pagination={{ enabled: true, itemsPerPage: 10 }}
-          emptyTitle="No pending expenses"
-          emptyDescription="Expenses added by the other user will appear here for approval"
-          titleActions={
-            approvableExpenseIds.length > 0 ? (
-              <Button
-                onClick={onApproveAllExpenses}
-                disabled={approvingAll.e}
-                size="sm"
-              >
-                {approvingAll.e ? 'Approving…' : `Approve all (${approvableExpenseIds.length})`}
-              </Button>
-            ) : null
-          }
-        />
-
-        <DataTable
-          data={pendingProjects}
-          columns={projectColumns}
-          title="Pending Projects"
-          isLoading={isLoadingP}
-          searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
-          filters={[]}
-          pagination={{ enabled: true, itemsPerPage: 10 }}
-          emptyTitle="No pending projects"
-          emptyDescription="Projects added by the other user will appear here for approval"
-          titleActions={
-            approvableProjectIds.length > 0 ? (
-              <Button
-                onClick={onApproveAllProjects}
-                disabled={approvingAll.p}
-                size="sm"
-              >
-                {approvingAll.p ? 'Approving…' : `Approve all (${approvableProjectIds.length})`}
-              </Button>
-            ) : null
-          }
-        />
+      <div className="space-y-0">
+        <Tabs tabs={pendingTabs} activeId={activeTab} onChange={setActiveTab}>
+          {activeTab === 'transactions' && (
+            <DataTable
+              data={pendingTransactions}
+              columns={transactionColumns}
+              title="Pending Transactions"
+              isLoading={isLoadingT}
+              searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
+              filters={[]}
+              pagination={{ enabled: true, itemsPerPage: 10 }}
+              emptyTitle="No pending transactions"
+              emptyDescription="Transactions added by the other user will appear here for approval"
+              titleActions={
+                approvableTransactionIds.length > 0 ? (
+                  <Button onClick={onApproveAllTransactions} disabled={approvingAll.t} size="sm">
+                    {approvingAll.t ? 'Approving…' : `Approve all (${approvableTransactionIds.length})`}
+                  </Button>
+                ) : null
+              }
+            />
+          )}
+          {activeTab === 'expenses' && (
+            <DataTable
+              data={pendingExpenses}
+              columns={expenseColumns}
+              title="Pending Expenses"
+              isLoading={isLoadingE}
+              searchConfig={{ enabled: true, placeholder: 'Search by name, type, date...', searchFields: ['expenseName', 'expenseType', 'date'] }}
+              filters={[]}
+              pagination={{ enabled: true, itemsPerPage: 10 }}
+              emptyTitle="No pending expenses"
+              emptyDescription="Expenses added by the other user will appear here for approval"
+              titleActions={
+                approvableExpenseIds.length > 0 ? (
+                  <Button onClick={onApproveAllExpenses} disabled={approvingAll.e} size="sm">
+                    {approvingAll.e ? 'Approving…' : `Approve all (${approvableExpenseIds.length})`}
+                  </Button>
+                ) : null
+              }
+            />
+          )}
+          {activeTab === 'projects' && (
+            <DataTable
+              data={pendingProjects}
+              columns={projectColumns}
+              title="Pending Projects"
+              isLoading={isLoadingP}
+              searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
+              filters={[]}
+              pagination={{ enabled: true, itemsPerPage: 10 }}
+              emptyTitle="No pending projects"
+              emptyDescription="Projects added by the other user will appear here for approval"
+              titleActions={
+                approvableProjectIds.length > 0 ? (
+                  <Button onClick={onApproveAllProjects} disabled={approvingAll.p} size="sm">
+                    {approvingAll.p ? 'Approving…' : `Approve all (${approvableProjectIds.length})`}
+                  </Button>
+                ) : null
+              }
+            />
+          )}
+        </Tabs>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

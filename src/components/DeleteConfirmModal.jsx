@@ -21,14 +21,14 @@ const DeleteConfirmModal = ({
           <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
             <FiAlertTriangle className="w-6 h-6 text-red-600" />
           </div>
-          <p className="text-gray-700 mb-0">{message}</p>
+          <p className="text-slate-700 mb-0">{message}</p>
         </div>
         <div className="flex gap-3 pt-2">
           <button
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors border-2 border-gray-300 disabled:opacity-50"
+            className="flex-1 px-6 py-3 bg-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-300 transition-colors border-2 border-slate-300 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -36,7 +36,7 @@ const DeleteConfirmModal = ({
             type="button"
             onClick={handleConfirm}
             disabled={isDeleting}
-            className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg border-2 border-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl border-2 border-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isDeleting ? 'Deleting...' : 'Delete'}
           </button>

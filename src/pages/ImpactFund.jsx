@@ -17,6 +17,8 @@ import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import { filterByDateRange } from '../utils/date';
 import { useDateFilter } from '../hooks/useDateFilter';
+import ErrorAlert from '../components/ErrorAlert';
+import PageContainer from '../components/PageContainer';
 
 const IMPACT_FUND_PERCENT = 0.02;
 
@@ -215,9 +217,8 @@ const ImpactFund = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 w-full">
-      <div className="w-full space-y-8">
-        <PageHeader title="Impact Fund" actions={<Button variant="danger" onClick={openWithdrawModal} disabled={remaining <= 0}><FiTrendingDown className="w-4 h-4" /> Withdraw</Button>} />
+    <PageContainer>
+      <PageHeader title="Impact Fund" actions={<Button variant="danger" onClick={openWithdrawModal} disabled={remaining <= 0}><FiTrendingDown className="w-4 h-4" /> Withdraw</Button>} />
 
         <FilterBar>
           <SearchableDropdown
@@ -231,8 +232,8 @@ const ImpactFund = () => {
           <ModernDatePicker label="Start date" value={dateFrom} onChange={setDateFrom} placeholder="Start" className="min-w-[140px]" />
           <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
           {selectedBroker && totalFromSelectedBroker !== null && (
-            <div className="inline-flex items-center gap-2 rounded-lg bg-primary-50 border border-primary-100 px-4 py-2.5">
-              <span className="text-sm text-gray-600">Total from</span>
+            <div className="inline-flex items-center gap-2 rounded-xl bg-primary-50 border border-primary-200/80 px-4 py-2.5">
+              <span className="text-sm text-slate-600">Total from</span>
               <span className="text-sm font-semibold text-primary-700">{selectedBroker}</span>
               <span className="text-primary-500">·</span>
               <span className="text-base font-bold text-primary-600">{formatMoney(totalFromSelectedBroker)}</span>
@@ -240,11 +241,7 @@ const ImpactFund = () => {
           )}
         </FilterBar>
 
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            {error}
-          </div>
-        )}
+        <ErrorAlert message={error} />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {statCards.map((card) => (
@@ -303,9 +300,8 @@ const ImpactFund = () => {
               emptyTitle="No withdrawals yet"
               emptyDescription="Use Withdraw to record a withdrawal from the Impact Fund."
             />
-          )}
-        </Tabs>
-      </div>
+            )}
+          </Tabs>
 
       <Modal
         isOpen={isWithdrawModalOpen}
@@ -347,7 +343,7 @@ const ImpactFund = () => {
             <button
               type="button"
               onClick={() => { setIsWithdrawModalOpen(false); setEditingWithdrawalId(null); setWithdrawError(''); }}
-              className="flex-1 px-4 py-2.5 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50"
+              className="flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-300 text-slate-700 font-semibold hover:bg-slate-50"
             >
               Cancel
             </button>
@@ -360,7 +356,7 @@ const ImpactFund = () => {
           </div>
         </form>
       </Modal>
-    </div>
+    </PageContainer>
   );
 };
 

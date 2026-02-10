@@ -11,7 +11,10 @@ import ProjectTable from '../components/ProjectTable';
 import ProjectFormModal from '../components/ProjectFormModal';
 import { filterByDateRange } from '../utils/date';
 import { useDateFilter } from '../hooks/useDateFilter';
+import { useClientOptions } from '../hooks/useClientOptions';
 import { isApproved } from '../constants/app';
+import ErrorAlert from '../components/ErrorAlert';
+import PageContainer from '../components/PageContainer';
 
 const Projects = () => {
   const dispatch = useDispatch();
@@ -66,14 +69,7 @@ const Projects = () => {
     { value: 'Contract', label: 'Contract' }
   ];
 
-  const clientOptions = useMemo(() => {
-    const clients = projects
-      .map(p => p.client)
-      .filter(Boolean)
-      .map((c) => String(c).trim())
-      .filter(Boolean);
-    return [...new Set(clients)].sort();
-  }, [projects]);
+  const clientOptions = useClientOptions(projects);
 
   const openAddModal = () => {
     setEditingProjectId(null);
@@ -131,9 +127,8 @@ const Projects = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 w-full">
-      <div className="w-full space-y-8">
-        <PageHeader title="Projects" actions={<Button onClick={openAddModal}>Add Project</Button>} />
+    <PageContainer>
+      <PageHeader title="Projects" actions={<Button onClick={openAddModal}>Add Project</Button>} />
 
         <FilterBar>
           <SearchableDropdown
@@ -156,11 +151,7 @@ const Projects = () => {
           <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
         </FilterBar>
 
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            {error}
-          </div>
-        )}
+        <ErrorAlert message={error} />
 
         <ProjectTable
           projects={approvedForTable}
@@ -170,7 +161,6 @@ const Projects = () => {
           title="Project Details"
           hideFilters={['client', 'projectType']}
         />
-      </div>
 
       <ProjectFormModal
         key={editingProjectId || 'new'}
@@ -184,7 +174,7 @@ const Projects = () => {
         isSaving={isLoading}
         projects={projects}
       />
-    </div>
+    </PageContainer>
   );
 };
 

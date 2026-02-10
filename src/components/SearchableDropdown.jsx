@@ -74,7 +74,7 @@ const SearchableDropdown = ({
 
   return (
     <div className={`flex flex-col relative ${className}`} ref={dropdownRef}>
-      <label className="text-sm font-semibold mb-2.5 text-gray-700 capitalize tracking-wide">
+      <label className="text-sm font-semibold mb-2.5 text-slate-700 capitalize tracking-wide">
         {label}
       </label>
       <div className="relative">
@@ -91,20 +91,20 @@ const SearchableDropdown = ({
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           placeholder={placeholder}
-          className={`w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary-500 bg-white pr-10 ${leftIcon ? 'pl-10' : ''}`}
+          className={`w-full px-4 py-2.5 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 bg-white pr-10 ${leftIcon ? 'pl-10' : ''}`}
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-          <FiChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <FiChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </div>
 
       {isOpen && filteredOptions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto top-full">
+        <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-panel max-h-60 overflow-auto top-full py-1">
           {placeholder.includes('All') && (
             <button
               type="button"
               onClick={handleClear}
-              className="w-full text-left px-4 py-2.5 hover:bg-primary-50 hover:text-primary-700 transition-colors border-b border-gray-200 font-semibold"
+              className="w-full text-left px-4 py-2.5 hover:bg-primary-50 hover:text-primary-700 transition-colors border-b border-slate-200 font-semibold"
             >
               All
             </button>
@@ -114,7 +114,7 @@ const SearchableDropdown = ({
               key={index}
               type="button"
               onClick={() => handleSelectOption(option)}
-              className="w-full text-left px-4 py-2.5 hover:bg-primary-50 hover:text-primary-700 transition-colors border-b border-gray-100 last:border-b-0"
+              className="w-full text-left px-4 py-2.5 hover:bg-primary-50 hover:text-primary-700 transition-colors border-b border-slate-100 last:border-b-0"
             >
               {option}
             </button>

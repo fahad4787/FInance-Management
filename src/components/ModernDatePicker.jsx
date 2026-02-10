@@ -48,7 +48,7 @@ const ModernDatePicker = ({
       {label && (
         <label
           htmlFor={inputId}
-          className="text-sm font-semibold mb-2.5 text-gray-700 capitalize tracking-wide"
+          className="text-sm font-semibold mb-2.5 text-slate-700 capitalize tracking-wide"
         >
           {label}
         </label>

@@ -26,19 +26,19 @@ const Sidebar = ({ isOpen = true }) => {
   ];
 
   return (
-    <div
-      className={`bg-white shadow-lg border-r border-gray-200 fixed left-0 top-0 h-full z-40 transition-all duration-300 ${
+    <aside
+      className={`fixed left-0 top-0 h-full z-40 transition-all duration-300 ${
         isOpen ? 'w-64' : 'w-0 overflow-hidden'
       }`}
     >
-      <div className="flex flex-col h-full">
-        <div className={`p-6 border-b border-gray-200 ${!isOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+      <div className="h-full flex flex-col bg-slate-800 shadow-xl border-r border-slate-700/50">
+        <div className={`p-6 border-b border-slate-700/50 ${!isOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
           <Link to="/" className="flex items-center">
-            <Logo />
+            <Logo variant="light" />
           </Link>
         </div>
-        
-        <nav className={`flex-1 p-4 space-y-2 ${!isOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+
+        <nav className={`flex-1 p-4 space-y-1 ${!isOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
             const count = item.badge ?? 0;
@@ -46,10 +46,10 @@ const Sidebar = ({ isOpen = true }) => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
                   isActive
-                    ? 'bg-primary-50 text-primary-600 border-l-4 border-primary-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-primary-600'
+                    ? 'bg-primary-500/20 text-primary-400 border-l-4 border-primary-500'
+                    : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
                 }`}
               >
                 {item.icon}
@@ -57,7 +57,7 @@ const Sidebar = ({ isOpen = true }) => {
                   <>
                     <span className="flex-1">{item.label}</span>
                     {count > 0 && (
-                      <span className="min-w-[1.25rem] px-1.5 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800">
+                      <span className="min-w-[1.25rem] px-1.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
                         {count}
                       </span>
                     )}
@@ -67,19 +67,20 @@ const Sidebar = ({ isOpen = true }) => {
             );
           })}
         </nav>
-        <div className={`p-4 border-t border-gray-200 ${!isOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
+
+        <div className={`p-4 border-t border-slate-700/50 ${!isOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
           <button
             type="button"
             onClick={logout}
             aria-label="Sign out"
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-lg font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors"
           >
             <FiLogOut className="w-5 h-5" />
             {isOpen && <span>Sign out</span>}
           </button>
         </div>
       </div>
-    </div>
+    </aside>
   );
 };
 

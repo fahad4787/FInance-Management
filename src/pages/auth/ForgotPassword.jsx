@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import InputField from '../../components/InputField';
 import Button from '../../components/Button';
 import AuthCard from '../../components/AuthCard';
+import ErrorAlert from '../../components/ErrorAlert';
 
 const ForgotPassword = () => {
   const { resetPassword } = useAuth();
@@ -41,13 +42,9 @@ const ForgotPassword = () => {
   return (
     <AuthCard title="Reset password">
       <form onSubmit={handleSubmit} className="space-y-5">
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            {error}
-          </div>
-        )}
+        <ErrorAlert message={error} />
         {success && (
-          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
+          <div className="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800" role="status">
             Check your email for a link to reset your password.
           </div>
         )}
@@ -62,7 +59,7 @@ const ForgotPassword = () => {
         <Button type="submit" fullWidth disabled={submitting}>
           {submitting ? 'Sending...' : 'Send reset link'}
         </Button>
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-slate-600">
           <Link to="/" className="font-semibold text-primary-600 hover:text-primary-700">
             Back to Sign in
           </Link>

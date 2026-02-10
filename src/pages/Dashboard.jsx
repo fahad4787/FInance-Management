@@ -13,14 +13,17 @@ import { getTargetAmount, setTargetAmount } from '../services/settingsService';
 import { formatMoney } from '../utils/format';
 import { normalizeDateToYYYYMMDD, MONTH_NAMES } from '../utils/date';
 import { isApproved } from '../constants/app';
+import { useClientOptions } from '../hooks/useClientOptions';
 import LineChartChartJS from '../components/LineChartChartJS';
 import BarChart from '../components/BarChart';
 import PageHeader from '../components/PageHeader';
+import PageContainer from '../components/PageContainer';
 import Button from '../components/Button';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import ModernDatePicker from '../components/ModernDatePicker';
 import StatCard from '../components/StatCard';
+import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
 import InputField from '../components/InputField';
 import TransactionTable from '../components/TransactionTable';
@@ -78,14 +81,7 @@ const Dashboard = () => {
     dispatch(fetchExpenses());
   }, [dispatch]);
 
-  const clientOptions = useMemo(() => {
-    const clients = (projects || [])
-      .map((p) => p.client)
-      .filter(Boolean)
-      .map((c) => String(c).trim())
-      .filter(Boolean);
-    return [...new Set(clients)].sort();
-  }, [projects]);
+  const clientOptions = useClientOptions(projects);
 
   const projectOptions = useMemo(() => {
     const list = projects || [];
@@ -325,36 +321,17 @@ const Dashboard = () => {
     };
   }, [chartData]);
 
-  const lineChartData = useMemo(() => [
-    {
-      label: `Inward (${inwardPct}%)`,
-      values: chartData.inward,
-      color: '#10b981'
-    },
-    {
-      label: `Expense (${expensePct}%)`,
-      values: chartData.expense,
-      color: '#ef4444'
-    }
-  ], [chartData, inwardPct, expensePct]);
-
-  const barChartData = useMemo(() => [
-    {
-      label: `Inward (${inwardPct}%)`,
-      values: chartData.inward,
-      color: '#10b981'
-    },
-    {
-      label: `Expense (${expensePct}%)`,
-      values: chartData.expense,
-      color: '#ef4444'
-    }
-  ], [chartData, inwardPct, expensePct]);
+  const chartSeries = useMemo(
+    () => [
+      { label: `Inward (${inwardPct}%)`, values: chartData.inward, color: '#10b981' },
+      { label: `Expense (${expensePct}%)`, values: chartData.expense, color: '#ef4444' }
+    ],
+    [chartData, inwardPct, expensePct]
+  );
 
   return (
-    <div className="p-6 md:p-8 w-full">
-      <div className="w-full space-y-8">
-        <PageHeader title="Overview" actions={<Button onClick={openAddModal}>Add Transaction</Button>} />
+    <PageContainer>
+      <PageHeader title="Overview" actions={<Button onClick={openAddModal}>Add Transaction</Button>} />
 
         <FilterBar>
           <SearchableDropdown
@@ -381,21 +358,21 @@ const Dashboard = () => {
         </FilterBar>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-primary-500">
-            <div className="flex items-center gap-2">
-              <span className="text-primary-500"><FiDollarSign className="w-5 h-5" /></span>
-              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Available Amount</p>
-            </div>
-            <p className="mt-2 text-2xl font-bold text-primary-600">{formatMoney(availableAmount)}</p>
-            <p className="mt-1 text-xs text-gray-500">Total Inward − Total Expense (for selected period)</p>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-primary-500">
+          <StatCard
+            label="Available Amount"
+            value={formatMoney(availableAmount)}
+            icon={<FiDollarSign className="w-5 h-5" />}
+            valueClassName="text-primary-600"
+            iconClassName="text-primary-500"
+            borderClassName="border-primary-500"
+          />
+          <div className="bg-white rounded-2xl shadow-panel overflow-hidden border-t-4 border-primary-500 p-6">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-primary-500"><FiTarget className="w-5 h-5" /></span>
-                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Inward / Target</p>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary-100 text-primary-600"><FiTarget className="w-5 h-5" /></span>
+                <p className="text-sm font-bold text-slate-600 uppercase tracking-wider">Total Inward / Target</p>
               </div>
-              <Button onClick={openTargetModal}>
+              <Button onClick={openTargetModal} size="sm">
                 <FiEdit2 className="w-4 h-4" />
                 {targetAmount != null ? 'Edit target' : 'Set target'}
               </Button>
@@ -403,38 +380,32 @@ const Dashboard = () => {
             <p className="mt-2 text-2xl font-bold">
               {targetAmount != null && targetAmount > 0 ? (
                 <>
-                  <span className={totalInward >= targetAmount ? 'text-green-600' : 'text-red-600'}>
+                  <span className={totalInward >= targetAmount ? 'text-emerald-600' : 'text-red-600'}>
                     {formatMoney(totalInward)}
                   </span>
-                  <span className="text-gray-500 font-normal"> / </span>
-                  <span className="text-gray-700">{formatMoney(targetAmount)}</span>
+                  <span className="text-slate-500 font-normal"> / </span>
+                  <span className="text-slate-700">{formatMoney(targetAmount)}</span>
                 </>
               ) : (
                 <>
                   <span className="text-primary-600">{formatMoney(totalInward)}</span>
-                  <span className="block text-sm font-normal text-gray-500 mt-1">Set a target amount to track progress</span>
+                  <span className="block text-sm font-normal text-slate-500 mt-1">Set a target amount to track progress</span>
                 </>
               )}
             </p>
           </div>
         </div>
 
-        {(projectsError || transactionsError || expensesError) && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
-            {projectsError && <p>{projectsError}</p>}
-            {transactionsError && <p>{transactionsError}</p>}
-            {expensesError && <p>{expensesError}</p>}
-          </div>
-        )}
-        
+        <ErrorAlert messages={[projectsError, transactionsError, expensesError].filter(Boolean)} />
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <LineChartChartJS
-            data={lineChartData}
+            data={chartSeries}
             labels={chartData.labels}
             title="Monthly Trends"
           />
           <BarChart
-            data={barChartData}
+            data={chartSeries}
             labels={chartData.labels}
             title="Monthly Comparison"
           />
@@ -454,7 +425,6 @@ const Dashboard = () => {
           }
           hideFilters={['client', 'project']}
         />
-      </div>
 
       <TransactionFormModal
         key={editingTransactionId || 'new'}
@@ -480,7 +450,7 @@ const Dashboard = () => {
             placeholder="Enter target amount"
           />
           <div className="flex justify-end gap-2 pt-2">
-            <Button onClick={closeTargetModal} className="bg-gray-200 text-gray-800 hover:bg-gray-300">
+            <Button variant="secondary" onClick={closeTargetModal}>
               Cancel
             </Button>
             <Button onClick={onSaveTarget} disabled={isSavingTarget}>
@@ -489,7 +459,7 @@ const Dashboard = () => {
           </div>
         </div>
       </Modal>
-    </div>
+    </PageContainer>
   );
 };
 
