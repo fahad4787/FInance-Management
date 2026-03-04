@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
-import ModernDatePicker from '../components/ModernDatePicker';
+import DateFilterControls from '../components/DateFilterControls';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import BarChart from '../components/BarChart';
@@ -44,7 +44,8 @@ const Transactions = () => {
   const isLoading = useSelector((state) => state.transactions.isLoading);
   const error = useSelector((state) => state.transactions.error);
 
-  const { dateFrom, setDateFrom, dateTo, setDateTo } = useDateFilter();
+  const dateFilter = useDateFilter();
+  const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -213,8 +214,7 @@ const Transactions = () => {
             placeholder={selectedBroker ? 'All Projects' : 'Select broker first'}
             className="min-w-[160px] sm:min-w-[220px]"
           />
-          <ModernDatePicker label="Start date" value={dateFrom} onChange={setDateFrom} placeholder="Start" className="min-w-[140px]" />
-          <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
+          <DateFilterControls {...dateFilter} />
         </FilterBar>
 
         <ErrorAlert message={error} />

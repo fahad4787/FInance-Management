@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { createProject, editProject, fetchProjects, removeProject } from '../store/projects/projectsSlice';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
-import ModernDatePicker from '../components/ModernDatePicker';
+import DateFilterControls from '../components/DateFilterControls';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import ProjectTable from '../components/ProjectTable';
@@ -25,7 +25,8 @@ const Projects = () => {
 
   const projectTypeLabels = ['Full time', 'Part time', 'Contract'];
 
-  const { dateFrom, setDateFrom, dateTo, setDateTo } = useDateFilter();
+  const dateFilter = useDateFilter();
+  const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectType, setSelectedProjectType] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -147,8 +148,7 @@ const Projects = () => {
             placeholder="All Types"
             className="min-w-[160px] sm:min-w-[200px]"
           />
-          <ModernDatePicker label="Start date" value={dateFrom} onChange={setDateFrom} placeholder="Start" className="min-w-[140px]" />
-          <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
+          <DateFilterControls {...dateFilter} />
         </FilterBar>
 
         <ErrorAlert message={error} />

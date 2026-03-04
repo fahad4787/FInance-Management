@@ -14,6 +14,7 @@ import { formatMoney } from '../utils/format';
 import { normalizeDateToYYYYMMDD, MONTH_NAMES } from '../utils/date';
 import { isApproved } from '../constants/app';
 import { useClientOptions } from '../hooks/useClientOptions';
+import { useDateFilter } from '../hooks/useDateFilter';
 import LineChartChartJS from '../components/LineChartChartJS';
 import BarChart from '../components/BarChart';
 import PageHeader from '../components/PageHeader';
@@ -21,7 +22,7 @@ import PageContainer from '../components/PageContainer';
 import Button from '../components/Button';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
-import ModernDatePicker from '../components/ModernDatePicker';
+import DateFilterControls from '../components/DateFilterControls';
 import StatCard from '../components/StatCard';
 import ErrorAlert from '../components/ErrorAlert';
 import Modal from '../components/Modal';
@@ -57,8 +58,8 @@ const Dashboard = () => {
   const [initialValues, setInitialValues] = useState(defaultForm);
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const dateFilter = useDateFilter();
+  const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [targetAmount, setTargetAmountState] = useState(null);
   const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
   const [targetInputValue, setTargetInputValue] = useState('');
@@ -353,8 +354,7 @@ const Dashboard = () => {
             placeholder={selectedBroker ? 'All Projects' : 'Select broker first'}
             className="min-w-[160px] sm:min-w-[220px]"
           />
-          <ModernDatePicker label="Start date" value={dateFrom} onChange={setDateFrom} placeholder="Start" className="min-w-[140px]" />
-          <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
+          <DateFilterControls {...dateFilter} />
         </FilterBar>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

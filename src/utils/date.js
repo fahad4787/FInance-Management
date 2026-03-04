@@ -32,6 +32,16 @@ export const getThisMonthRange = () => {
   return { from, to };
 };
 
+/** Return { from, to } as YYYY-MM-DD for the given year (Jan 1 - Dec 31) */
+export const getYearRange = (year) => {
+  const y = Number(year);
+  if (!Number.isFinite(y)) return { from: '', to: '' };
+  return {
+    from: `${y}-01-01`,
+    to: `${y}-12-31`
+  };
+};
+
 /** Return { from, to } as YYYY-MM-DD for the previous month */
 export const getPreviousMonthRange = () => {
   const d = new Date();

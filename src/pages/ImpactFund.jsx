@@ -12,7 +12,7 @@ import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import InputField from '../components/InputField';
 import TextareaField from '../components/TextareaField';
-import ModernDatePicker from '../components/ModernDatePicker';
+import DateFilterControls from '../components/DateFilterControls';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import { filterByDateRange } from '../utils/date';
@@ -45,7 +45,8 @@ const ImpactFund = () => {
   const [editingWithdrawalId, setEditingWithdrawalId] = useState(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawNote, setWithdrawNote] = useState('');
-  const { dateFrom, setDateFrom, dateTo, setDateTo } = useDateFilter();
+  const dateFilter = useDateFilter();
+  const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [activeTab, setActiveTab] = useState('contrib');
   const [selectedBroker, setSelectedBroker] = useState('');
   const [withdrawError, setWithdrawError] = useState('');
@@ -229,8 +230,7 @@ const ImpactFund = () => {
             placeholder="All Brokers"
             className="min-w-[160px] sm:min-w-[200px]"
           />
-          <ModernDatePicker label="Start date" value={dateFrom} onChange={setDateFrom} placeholder="Start" className="min-w-[140px]" />
-          <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
+          <DateFilterControls {...dateFilter} />
           {selectedBroker && totalFromSelectedBroker !== null && (
             <div className="inline-flex items-center gap-2 rounded-xl bg-primary-50 border border-primary-200/80 px-4 py-2.5">
               <span className="text-sm text-slate-600">Total from</span>

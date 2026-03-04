@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
-import ModernDatePicker from '../components/ModernDatePicker';
+import DateFilterControls from '../components/DateFilterControls';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import ExpenseTable from '../components/ExpenseTable';
@@ -39,7 +39,8 @@ const Expenses = () => {
   const isLoading = useSelector((state) => state.expenses.isLoading);
   const error = useSelector((state) => state.expenses.error);
 
-  const { dateFrom, setDateFrom, dateTo, setDateTo } = useDateFilter();
+  const dateFilter = useDateFilter();
+  const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [selectedType, setSelectedType] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState(null);
@@ -122,8 +123,7 @@ const Expenses = () => {
             placeholder="All Types"
             className="min-w-[160px] sm:min-w-[200px]"
           />
-          <ModernDatePicker label="Start date" value={dateFrom} onChange={setDateFrom} placeholder="Start" className="min-w-[140px]" />
-          <ModernDatePicker label="End date" value={dateTo} onChange={setDateTo} placeholder="End" className="min-w-[140px]" />
+          <DateFilterControls {...dateFilter} />
         </FilterBar>
 
         <ErrorAlert message={error} />
