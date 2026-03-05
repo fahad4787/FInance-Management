@@ -4,12 +4,16 @@ import { useAuth } from '../contexts/AuthContext';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import DataTable from '../components/DataTable';
+import TransactionFormModal from '../components/TransactionFormModal';
+import ExpenseFormModal from '../components/ExpenseFormModal';
+import ProjectFormModal from '../components/ProjectFormModal';
 import { formatMoney } from '../utils/format';
 import { isApproved, ENTRY_STATUS } from '../constants/app';
-import { fetchTransactions, approveTransaction } from '../store/transactions/transactionsSlice';
-import { fetchExpenses, approveExpense } from '../store/expenses/expensesSlice';
-import { fetchProjects, approveProject } from '../store/projects/projectsSlice';
-import { EXPENSE_TYPE_LABELS } from '../constants/expenseTypes';
+import { fetchTransactions, approveTransaction, editTransaction } from '../store/transactions/transactionsSlice';
+import { fetchExpenses, approveExpense, editExpense } from '../store/expenses/expensesSlice';
+import { fetchProjects, approveProject, editProject } from '../store/projects/projectsSlice';
+import { useClientOptions } from '../hooks/useClientOptions';
+import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_COLORS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
 import Tabs from '../components/Tabs';
@@ -24,6 +28,46 @@ const computeNetAfterImpactFund = (t) => {
   return netBefore * 0.98;
 };
 
+const defaultTransactionForm = {
+  client: '',
+  project: '',
+  date: '',
+  amount: '',
+  brokerageType: 'percentage',
+  brokerageValue: '',
+  brokerageAmount: '',
+  additionalCharges: ''
+};
+
+const defaultExpenseForm = {
+  expenseName: '',
+  date: '',
+  expenseType: '',
+  amount: '',
+  comment: '',
+  recurring: false,
+  recurringMonths: ''
+};
+
+const defaultProjectForm = {
+  client: '',
+  date: '',
+  project: '',
+  projectType: '',
+  totalMonthlyHours: '',
+  hourlyRate: '',
+  recruiterName: '',
+  contractEnding: '',
+  brokerageType: 'percentage',
+  brokerageValue: ''
+};
+
+const projectTypeOptions = [
+  { value: 'Full time', label: 'Full time' },
+  { value: 'Part time', label: 'Part time' },
+  { value: 'Contract', label: 'Contract' }
+];
+
 const PendingRequests = () => {
   const dispatch = useDispatch();
   const { user } = useAuth();
@@ -37,6 +81,15 @@ const PendingRequests = () => {
   const errorT = useSelector((state) => state.transactions.error);
   const errorE = useSelector((state) => state.expenses.error);
   const errorP = useSelector((state) => state.projects.error);
+
+  const clientOptions = useClientOptions(projects);
+
+  const [editingTransactionId, setEditingTransactionId] = useState(null);
+  const [editingExpenseId, setEditingExpenseId] = useState(null);
+  const [editingProjectId, setEditingProjectId] = useState(null);
+  const [initialValuesTransaction, setInitialValuesTransaction] = useState(defaultTransactionForm);
+  const [initialValuesExpense, setInitialValuesExpense] = useState(defaultExpenseForm);
+  const [initialValuesProject, setInitialValuesProject] = useState(defaultProjectForm);
 
   const pendingTransactions = useMemo(
     () => (transactions || []).filter((t) => !isApproved(t)),
@@ -124,34 +177,95 @@ const PendingRequests = () => {
     }
   };
 
-  const approveButton = (item, canApprove, onApprove) =>
-    canApprove(item) ? (
-      <button
-        type="button"
-        onClick={() => onApprove(item.id)}
-        className="px-3 py-1.5 text-sm font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-      >
-        Approve
-      </button>
-    ) : null;
+  const openEditTransaction = (transaction) => {
+    setInitialValuesTransaction({
+      ...defaultTransactionForm,
+      client: transaction.client || '',
+      project: transaction.project || '',
+      date: transaction.date || '',
+      amount: transaction.amount ?? '',
+      brokerageType: transaction.brokerageType || 'percentage',
+      brokerageValue: transaction.brokerageValue ?? '',
+      brokerageAmount: transaction.brokerageAmount ?? '',
+      additionalCharges: transaction.additionalCharges ?? ''
+    });
+    setEditingTransactionId(transaction.id);
+  };
 
-  const actionColumn = (key, canApprove, onApprove) => ({
-    key,
-    label: 'Action',
-    render: (_, item) => approveButton(item, canApprove, onApprove)
-  });
+  const openEditExpense = (expense) => {
+    const expenseTypeLabel = EXPENSE_TYPE_LABELS[expense.expenseType?.toLowerCase()] || expense.expenseType || '';
+    setInitialValuesExpense({
+      ...defaultExpenseForm,
+      expenseName: expense.expenseName || '',
+      date: expense.date || '',
+      expenseType: expenseTypeLabel,
+      amount: expense.amount ?? '',
+      comment: expense.comment || '',
+      recurring: !!expense.recurring,
+      recurringMonths: RECURRING_MONTHS_LABELS[expense.recurringMonths] ?? expense.recurringMonths ?? ''
+    });
+    setEditingExpenseId(expense.id);
+  };
+
+  const openEditProject = (project) => {
+    setInitialValuesProject({
+      ...defaultProjectForm,
+      client: project.client || '',
+      date: project.date || '',
+      project: project.project || '',
+      projectType: project.projectType || '',
+      totalMonthlyHours: project.totalMonthlyHours || '',
+      hourlyRate: project.hourlyRate || '',
+      recruiterName: project.recruiterName || '',
+      contractEnding: project.contractEnding || '',
+      brokerageType: project.brokerageType || 'percentage',
+      brokerageValue: project.brokerageValue || ''
+    });
+    setEditingProjectId(project.id);
+  };
+
+  const closeEditTransaction = () => setEditingTransactionId(null);
+  const closeEditExpense = () => setEditingExpenseId(null);
+  const closeEditProject = () => setEditingProjectId(null);
+
+  const submitEditTransaction = async (transactionData) => {
+    if (!editingTransactionId) return;
+    await dispatch(editTransaction({ transactionId: editingTransactionId, transactionData })).unwrap();
+    setEditingTransactionId(null);
+  };
+
+  const submitEditExpense = async (expenseData) => {
+    if (!editingExpenseId) return;
+    await dispatch(editExpense({ expenseId: editingExpenseId, expenseData })).unwrap();
+    setEditingExpenseId(null);
+  };
+
+  const submitEditProject = async (projectData) => {
+    if (!editingProjectId) return;
+    await dispatch(editProject({ projectId: editingProjectId, projectData: { ...projectData } })).unwrap();
+    setEditingProjectId(null);
+  };
 
   const transactionColumns = [
     { key: 'client', label: 'Broker' },
-    { key: 'project', label: 'Project' },
+    { key: 'project', label: 'Project Name' },
     { key: 'date', label: 'Date' },
     { key: 'amount', label: 'Amount', render: (v) => formatMoney(v) },
+    {
+      key: 'brokerageDisplay',
+      label: 'Brokerage',
+      render: (_, t) => {
+        if (t.brokerageType === 'percentage') return `${t.brokerageValue || 0}%`;
+        return formatMoney(t.brokerageValue);
+      }
+    },
+    { key: 'brokerageAmount', label: 'Brokerage Amount', render: (v) => formatMoney(v) },
+    { key: 'additionalCharges', label: 'Additional Charges', render: (v) => formatMoney(v) },
     {
       key: 'totalAmount',
       label: 'Total (Net)',
       render: (_, t) => formatMoney(computeNetAfterImpactFund(t))
-    },
-    ...(approvableTransactionIds.length > 0 ? [actionColumn('_approve', canApproveTransaction, onApproveTransaction)] : [])
+    }
   ];
 
   const expenseColumns = [
@@ -160,18 +274,62 @@ const PendingRequests = () => {
     {
       key: 'expenseType',
       label: 'Type',
-      render: (v) => (v ? (EXPENSE_TYPE_LABELS[v?.toLowerCase()] || v) : '-')
+      render: (value, row) => {
+        if (!value) return '-';
+        const key = value?.toLowerCase();
+        let label = EXPENSE_TYPE_LABELS[key] || value;
+        if (key === 'software_tool' && row.recurring && row.recurringMonths) {
+          const period = RECURRING_MONTHS_LABELS[row.recurringMonths] ?? `${row.recurringMonths} months`;
+          label = `Software Tool (${period})`;
+        }
+        const colorClass = EXPENSE_TYPE_COLORS[key] || 'bg-gray-100 text-gray-800';
+        return (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold ${colorClass}`}>
+            {label}
+          </span>
+        );
+      }
     },
     { key: 'amount', label: 'Amount', render: (v) => formatMoney(v) },
-    ...(approvableExpenseIds.length > 0 ? [actionColumn('_approve', canApproveExpense, onApproveExpense)] : [])
+    { key: 'comment', label: 'Comment/Remark' }
   ];
 
   const projectColumns = [
     { key: 'client', label: 'Broker' },
-    { key: 'project', label: 'Project Name' },
     { key: 'date', label: 'Date' },
-    { key: 'projectType', label: 'Type' },
-    ...(approvableProjectIds.length > 0 ? [actionColumn('_approve', canApproveProject, onApproveProject)] : [])
+    { key: 'project', label: 'Project Name' },
+    {
+      key: 'projectType',
+      label: 'Project Type',
+      render: (value) => {
+        if (!value) return '-';
+        const typeColors = {
+          'Full time': 'bg-blue-100 text-blue-800',
+          'Part time': 'bg-green-100 text-green-800',
+          Contract: 'bg-purple-100 text-purple-800'
+        };
+        const colorClass = typeColors[value] || 'bg-gray-100 text-gray-800';
+        return (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorClass}`}>
+            {value}
+          </span>
+        );
+      }
+    },
+    { key: 'totalMonthlyHours', label: 'Monthly Hours' },
+    { key: 'hourlyRate', label: 'Hourly Rate' },
+    { key: 'recruiterName', label: 'Recruiter Name' },
+    { key: 'contractEnding', label: 'End Date' },
+    {
+      key: 'brokerage',
+      label: 'Brokerage',
+      render: (_, project) => {
+        if (!project.brokerageValue) return '-';
+        return project.brokerageType === 'percentage'
+          ? `${project.brokerageValue}%`
+          : `$${project.brokerageValue}`;
+      }
+    }
   ];
 
   const pendingTabs = [
@@ -194,6 +352,9 @@ const PendingRequests = () => {
               columns={transactionColumns}
               title="Pending Transactions"
               isLoading={isLoadingT}
+              onEdit={(item) => openEditTransaction(item)}
+              onApprove={(id) => onApproveTransaction(id)}
+              getCanApprove={canApproveTransaction}
               searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
               filters={[]}
               emptyTitle="No pending transactions"
@@ -213,6 +374,9 @@ const PendingRequests = () => {
               columns={expenseColumns}
               title="Pending Expenses"
               isLoading={isLoadingE}
+              onEdit={(item) => openEditExpense(item)}
+              onApprove={(id) => onApproveExpense(id)}
+              getCanApprove={canApproveExpense}
               searchConfig={{ enabled: true, placeholder: 'Search by name, type, date...', searchFields: ['expenseName', 'expenseType', 'date'] }}
               filters={[]}
               emptyTitle="No pending expenses"
@@ -232,6 +396,9 @@ const PendingRequests = () => {
               columns={projectColumns}
               title="Pending Projects"
               isLoading={isLoadingP}
+              onEdit={(item) => openEditProject(item)}
+              onApprove={(id) => onApproveProject(id)}
+              getCanApprove={canApproveProject}
               searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
               filters={[]}
               emptyTitle="No pending projects"
@@ -247,6 +414,41 @@ const PendingRequests = () => {
           )}
         </Tabs>
       </div>
+
+      <TransactionFormModal
+        key={editingTransactionId || 'new'}
+        isOpen={!!editingTransactionId}
+        onClose={closeEditTransaction}
+        title="Edit Transaction"
+        initialValues={initialValuesTransaction}
+        onSubmit={submitEditTransaction}
+        isSaving={isLoadingT}
+        projects={projects}
+        clientOptions={clientOptions}
+      />
+
+      <ExpenseFormModal
+        key={editingExpenseId || 'new'}
+        isOpen={!!editingExpenseId}
+        onClose={closeEditExpense}
+        title="Edit Expense"
+        initialValues={initialValuesExpense}
+        onSubmit={submitEditExpense}
+        isSaving={isLoadingE}
+      />
+
+      <ProjectFormModal
+        key={editingProjectId || 'new'}
+        isOpen={!!editingProjectId}
+        onClose={closeEditProject}
+        title="Edit Project"
+        clientOptions={clientOptions}
+        projectTypeOptions={projectTypeOptions}
+        initialValues={initialValuesProject}
+        onSubmit={submitEditProject}
+        isSaving={isLoadingP}
+        projects={projects}
+      />
     </PageContainer>
   );
 };
