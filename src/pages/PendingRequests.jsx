@@ -54,6 +54,7 @@ const defaultProjectForm = {
   date: '',
   project: '',
   projectType: '',
+  projectStatus: 'active',
   totalMonthlyHours: '',
   hourlyRate: '',
   recruiterName: '',
@@ -214,6 +215,7 @@ const PendingRequests = () => {
       date: project.date || '',
       project: project.project || '',
       projectType: project.projectType || '',
+      projectStatus: project.projectStatus || 'active',
       totalMonthlyHours: project.totalMonthlyHours || '',
       hourlyRate: project.hourlyRate || '',
       recruiterName: project.recruiterName || '',
@@ -312,6 +314,20 @@ const PendingRequests = () => {
         return (
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorClass}`}>
             {value}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'projectStatus',
+      label: 'Status',
+      render: (value) => {
+        const status = value || 'active';
+        const isActive = status === 'active';
+        const colorClass = isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700';
+        return (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorClass}`}>
+            {isActive ? 'Active' : 'Inactive'}
           </span>
         );
       }

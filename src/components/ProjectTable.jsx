@@ -24,6 +24,20 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
         );
       }
     },
+    {
+      key: 'projectStatus',
+      label: 'Status',
+      render: (value) => {
+        const status = value || 'active';
+        const isActive = status === 'active';
+        const colorClass = isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700';
+        return (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorClass}`}>
+            {isActive ? 'Active' : 'Inactive'}
+          </span>
+        );
+      }
+    },
     { key: 'totalMonthlyHours', label: 'Monthly Hours' },
     { key: 'hourlyRate', label: 'Hourly Rate' },
     { key: 'recruiterName', label: 'Recruiter Name' },

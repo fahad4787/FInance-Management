@@ -29,7 +29,7 @@ import Modal from '../components/Modal';
 import InputField from '../components/InputField';
 import TransactionTable from '../components/TransactionTable';
 import TransactionFormModal from '../components/TransactionFormModal';
-import { FiDollarSign, FiTarget, FiEdit2 } from 'react-icons/fi';
+import { FiDollarSign, FiTarget, FiEdit2, FiBriefcase } from 'react-icons/fi';
 
 const defaultForm = {
   client: '',
@@ -306,6 +306,10 @@ const Dashboard = () => {
     };
   }, [approvedTransactions, approvedExpenses, selectedProject, dateFrom, dateTo]);
 
+  const activeProjectCount = useMemo(() => {
+    return (projects || []).filter((p) => (p.projectStatus || 'active') === 'active').length;
+  }, [projects]);
+
   const { inwardPct, expensePct, totalInward, availableAmount } = useMemo(() => {
     const inward = (chartData.inward || []).reduce((s, v) => s + (Number(v) || 0), 0);
     const expense = (chartData.expense || []).reduce((s, v) => s + (Number(v) || 0), 0);
@@ -357,11 +361,19 @@ const Dashboard = () => {
           <DateFilterControls {...dateFilter} />
         </FilterBar>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard
             label="Available Amount"
             value={formatMoney(availableAmount)}
             icon={<FiDollarSign className="w-5 h-5" />}
+            valueClassName="text-primary-600"
+            iconClassName="text-primary-500"
+            borderClassName="border-primary-500"
+          />
+          <StatCard
+            label="Active Projects"
+            value={activeProjectCount}
+            icon={<FiBriefcase className="w-5 h-5" />}
             valueClassName="text-primary-600"
             iconClassName="text-primary-500"
             borderClassName="border-primary-500"

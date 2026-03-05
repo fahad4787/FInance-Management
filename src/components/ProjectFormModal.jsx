@@ -15,6 +15,7 @@ const defaultForm = {
   date: '',
   project: '',
   projectType: 'Full time',
+  projectStatus: 'active',
   totalMonthlyHours: '',
   hourlyRate: '',
   recruiterName: '',
@@ -41,6 +42,7 @@ const ProjectFormModal = ({
     ...(initialValues || {}),
     date: (initialValues && initialValues.date) ? initialValues.date : today,
     projectType: (initialValues && initialValues.projectType !== undefined && initialValues.projectType !== '') ? initialValues.projectType : 'Full time',
+    projectStatus: (initialValues && initialValues.projectStatus) ? initialValues.projectStatus : 'active',
     contractEnding: (initialValues && initialValues.contractEnding) ? initialValues.contractEnding : contractEndingDefault
   };
 
@@ -97,6 +99,16 @@ const ProjectFormModal = ({
       name: 'projectType',
       label: 'Project Type',
       options: projectTypeOptions,
+      hidePlaceholder: true
+    },
+    {
+      type: 'dropdown',
+      name: 'projectStatus',
+      label: 'Status',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' }
+      ],
       hidePlaceholder: true
     },
     {
