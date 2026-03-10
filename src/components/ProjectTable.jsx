@@ -1,5 +1,6 @@
 import DataTable from './DataTable';
 import { FiUser } from 'react-icons/fi';
+import { PROJECT_TYPE_COLORS } from '../constants/projectTypes';
 
 const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = 'Saved Projects', additionalFilters = null, hideFilters = [] }) => {
   const columns = [
@@ -11,12 +12,7 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
       label: 'Project Type',
       render: (value) => {
         if (!value) return '-';
-        const typeColors = {
-          'Full time': 'bg-blue-100 text-blue-800',
-          'Part time': 'bg-green-100 text-green-800',
-          'Contract': 'bg-purple-100 text-purple-800'
-        };
-        const colorClass = typeColors[value] || 'bg-gray-100 text-gray-800';
+        const colorClass = PROJECT_TYPE_COLORS[value] || 'bg-gray-100 text-gray-800';
         return (
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorClass}`}>
             {value}

@@ -13,6 +13,7 @@ import { filterByDateRange } from '../utils/date';
 import { useDateFilter } from '../hooks/useDateFilter';
 import { useClientOptions } from '../hooks/useClientOptions';
 import { isApproved } from '../constants/app';
+import { PROJECT_TYPE_OPTIONS, PROJECT_TYPE_LABELS } from '../constants/projectTypes';
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
 
@@ -22,8 +23,6 @@ const Projects = () => {
   const projects = useSelector((state) => state.projects.items);
   const isLoading = useSelector((state) => state.projects.isLoading);
   const error = useSelector((state) => state.projects.error);
-
-  const projectTypeLabels = ['Full time', 'Part time', 'Contract'];
 
   const dateFilter = useDateFilter();
   const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
@@ -64,12 +63,6 @@ const Projects = () => {
   useEffect(() => {
     dispatch(fetchProjects());
   }, [dispatch]);
-
-  const projectTypeOptions = [
-    { value: 'Full time', label: 'Full time' },
-    { value: 'Part time', label: 'Part time' },
-    { value: 'Contract', label: 'Contract' }
-  ];
 
   const clientOptions = useClientOptions(projects);
 
@@ -147,7 +140,7 @@ const Projects = () => {
             label="Project Type"
             value={selectedProjectType}
             onChange={setSelectedProjectType}
-            options={projectTypeLabels}
+            options={PROJECT_TYPE_LABELS}
             placeholder="All Types"
             className="min-w-[160px] sm:min-w-[200px]"
           />
@@ -171,7 +164,7 @@ const Projects = () => {
         onClose={closeModal}
         title={editingProjectId ? 'Edit Project' : 'Add Project'}
         clientOptions={clientOptions}
-        projectTypeOptions={projectTypeOptions}
+        projectTypeOptions={PROJECT_TYPE_OPTIONS}
         initialValues={initialValues}
         onSubmit={onSubmit}
         isSaving={isLoading}

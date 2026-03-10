@@ -14,6 +14,7 @@ import { fetchExpenses, approveExpense, editExpense } from '../store/expenses/ex
 import { fetchProjects, approveProject, editProject } from '../store/projects/projectsSlice';
 import { useClientOptions } from '../hooks/useClientOptions';
 import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_COLORS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
+import { PROJECT_TYPE_OPTIONS, PROJECT_TYPE_COLORS } from '../constants/projectTypes';
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
 import Tabs from '../components/Tabs';
@@ -62,12 +63,6 @@ const defaultProjectForm = {
   brokerageType: 'percentage',
   brokerageValue: ''
 };
-
-const projectTypeOptions = [
-  { value: 'Full time', label: 'Full time' },
-  { value: 'Part time', label: 'Part time' },
-  { value: 'Contract', label: 'Contract' }
-];
 
 const PendingRequests = () => {
   const dispatch = useDispatch();
@@ -305,12 +300,7 @@ const PendingRequests = () => {
       label: 'Project Type',
       render: (value) => {
         if (!value) return '-';
-        const typeColors = {
-          'Full time': 'bg-blue-100 text-blue-800',
-          'Part time': 'bg-green-100 text-green-800',
-          Contract: 'bg-purple-100 text-purple-800'
-        };
-        const colorClass = typeColors[value] || 'bg-gray-100 text-gray-800';
+        const colorClass = PROJECT_TYPE_COLORS[value] || 'bg-gray-100 text-gray-800';
         return (
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorClass}`}>
             {value}
@@ -459,7 +449,7 @@ const PendingRequests = () => {
         onClose={closeEditProject}
         title="Edit Project"
         clientOptions={clientOptions}
-        projectTypeOptions={projectTypeOptions}
+        projectTypeOptions={PROJECT_TYPE_OPTIONS}
         initialValues={initialValuesProject}
         onSubmit={submitEditProject}
         isSaving={isLoadingP}

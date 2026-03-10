@@ -1,17 +1,19 @@
 import { useState, useCallback, useMemo } from 'react';
-import { getYearRange } from '../utils/date';
+import { getYearRange, getThisMonthRange } from '../utils/date';
 
 const currentYear = new Date().getFullYear();
 
-/**
- * Shared hook for date filter with modes: all (no filter), yearly (select year), or date range.
- * Default: empty dates, show all data.
- */
-export const useDateFilter = () => {
-  const [dateMode, setDateMode] = useState('range'); // 'all' | 'yearly' | 'range'
+const getDefaultMonthRange = () => {
+  const { from, to } = getThisMonthRange();
+  return { from, to };
+};
+
+export const useDateFilter = (options = {}) => {
+  const { defaultToCurrentMonth = false } = options;
+  const [dateMode, setDateMode] = useState('range');
   const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [dateFrom, setDateFrom] = useState(() => (defaultToCurrentMonth ? getDefaultMonthRange().from : ''));
+  const [dateTo, setDateTo] = useState(() => (defaultToCurrentMonth ? getDefaultMonthRange().to : ''));
 
   const clearAll = useCallback(() => {
     setDateMode('all');

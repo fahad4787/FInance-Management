@@ -11,8 +11,9 @@ import { fetchExpenses } from '../store/expenses/expensesSlice';
 import { useAuth } from '../contexts/AuthContext';
 import { getTargetAmount, setTargetAmount } from '../services/settingsService';
 import { formatMoney } from '../utils/format';
-import { normalizeDateToYYYYMMDD, MONTH_NAMES } from '../utils/date';
+import { normalizeDateToYYYYMMDD, MONTH_NAMES, getThisMonthRange, getPreviousMonthRange, getMonthRangeFromDate, getPreviousMonthRangeFrom } from '../utils/date';
 import { isApproved } from '../constants/app';
+import { isDashboardActiveProject, DASHBOARD_ACTIVE_PROJECT_TYPES, PROJECT_TYPE_COLORS } from '../constants/projectTypes';
 import { useClientOptions } from '../hooks/useClientOptions';
 import { useDateFilter } from '../hooks/useDateFilter';
 import LineChartChartJS from '../components/LineChartChartJS';
@@ -29,7 +30,7 @@ import Modal from '../components/Modal';
 import InputField from '../components/InputField';
 import TransactionTable from '../components/TransactionTable';
 import TransactionFormModal from '../components/TransactionFormModal';
-import { FiDollarSign, FiTarget, FiEdit2, FiBriefcase } from 'react-icons/fi';
+import { FiDollarSign, FiTarget, FiEdit2, FiBriefcase, FiTrendingUp } from 'react-icons/fi';
 
 const defaultForm = {
   client: '',
@@ -58,8 +59,9 @@ const Dashboard = () => {
   const [initialValues, setInitialValues] = useState(defaultForm);
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
-  const dateFilter = useDateFilter();
-  const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
+  const dateFilter = useDateFilter({ defaultToCurrentMonth: true });
+  const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo, dateMode, selectedYear } = dateFilter;
+  const currentYear = new Date().getFullYear();
   const [targetAmount, setTargetAmountState] = useState(null);
   const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
   const [targetInputValue, setTargetInputValue] = useState('');
@@ -307,8 +309,83 @@ const Dashboard = () => {
   }, [approvedTransactions, approvedExpenses, selectedProject, dateFrom, dateTo]);
 
   const activeProjectCount = useMemo(() => {
-    return (projects || []).filter((p) => (p.projectStatus || 'active') === 'active').length;
+    return (projects || []).filter(isDashboardActiveProject).length;
   }, [projects]);
+
+  const activeProjectCountByType = useMemo(() => {
+    const active = (projects || []).filter(isDashboardActiveProject);
+    const byType = {};
+    DASHBOARD_ACTIVE_PROJECT_TYPES.forEach((type) => {
+      byType[type] = active.filter((p) => (p.projectType || '').trim() === type).length;
+    });
+    return DASHBOARD_ACTIVE_PROJECT_TYPES.map((type) => ({
+      label: type,
+      value: byType[type] || 0,
+      className: PROJECT_TYPE_COLORS[type] || 'bg-slate-100 text-slate-700'
+    })).filter((chip) => chip.value > 0);
+  }, [projects]);
+
+  const nextMonthInward = useMemo(() => {
+    const toNum = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const actualThisMonth = getThisMonthRange();
+    let thisMonth;
+    let prevMonth;
+    const useActualCurrentMonth = !dateFrom || (dateMode === 'yearly' && selectedYear === currentYear);
+    if (useActualCurrentMonth) {
+      thisMonth = actualThisMonth;
+      prevMonth = getPreviousMonthRange();
+    } else {
+      const anchorDate = dateTo || dateFrom;
+      const selected = getMonthRangeFromDate(anchorDate);
+      if (selected) {
+        thisMonth = { from: selected.from, to: selected.to };
+        prevMonth = getPreviousMonthRangeFrom(selected.year, selected.month);
+      } else {
+        thisMonth = actualThisMonth;
+        prevMonth = getPreviousMonthRange();
+      }
+    }
+    let txForRecent = (transactions || []).filter(isApproved);
+    if (selectedProject) {
+      txForRecent = txForRecent.filter(
+        (t) =>
+          (t.client || '').trim().toLowerCase() === (selectedProject.client || '').trim().toLowerCase() &&
+          (t.project || '').trim().toLowerCase() === (selectedProject.project || '').trim().toLowerCase()
+      );
+    } else if (selectedBroker) {
+      txForRecent = txForRecent.filter(
+        (t) => (t.client || '').trim().toLowerCase() === selectedBroker.trim().toLowerCase()
+      );
+    }
+    const txInRecentMonths = txForRecent.filter((t) => {
+      const d = normalizeDateToYYYYMMDD(t.date);
+      if (!d) return false;
+      return (d >= thisMonth.from && d <= thisMonth.to) || (d >= prevMonth.from && d <= prevMonth.to);
+    });
+    const recentProjectKeys = new Set(
+      txInRecentMonths.map((t) => `${(t.client || '').trim().toLowerCase()}|${(t.project || '').trim().toLowerCase()}`)
+    );
+    const inactiveRecent = (projects || []).filter(
+      (p) =>
+        (p.projectStatus || 'active') === 'inactive' &&
+        recentProjectKeys.has(`${(p.client || '').trim().toLowerCase()}|${(p.project || '').trim().toLowerCase()}`)
+    );
+    let inactiveSum = 0;
+    inactiveRecent.forEach((p) => {
+      const hours = toNum(p.totalMonthlyHours);
+      const rate = toNum(p.hourlyRate);
+      const gross = hours * rate;
+      const isPct = (p.brokerageType || 'percentage') === 'percentage';
+      const brokerage = isPct ? gross * (toNum(p.brokerageValue) / 100) : toNum(p.brokerageValue);
+      inactiveSum += gross - brokerage;
+    });
+    const totalInwardFromRange = (chartData.inward || []).reduce((s, v) => s + (toNum(v) || 0), 0);
+    if (totalInwardFromRange <= 0) return inactiveSum;
+    return Math.max(0, totalInwardFromRange - inactiveSum);
+  }, [transactions, selectedProject, selectedBroker, projects, chartData, dateFrom, dateTo, dateMode, selectedYear, currentYear]);
 
   const { inwardPct, expensePct, totalInward, availableAmount } = useMemo(() => {
     const inward = (chartData.inward || []).reduce((s, v) => s + (Number(v) || 0), 0);
@@ -361,7 +438,7 @@ const Dashboard = () => {
           <DateFilterControls {...dateFilter} />
         </FilterBar>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             label="Available Amount"
             value={formatMoney(availableAmount)}
@@ -377,6 +454,15 @@ const Dashboard = () => {
             valueClassName="text-primary-600"
             iconClassName="text-primary-500"
             borderClassName="border-primary-500"
+            chips={activeProjectCountByType}
+          />
+          <StatCard
+            label="Next Month Inward"
+            value={formatMoney(nextMonthInward)}
+            icon={<FiTrendingUp className="w-5 h-5" />}
+            valueClassName="text-primary-600"
+            iconClassName="text-primary-500"
+            borderClassName="border-primary-500"
           />
           <div className="bg-white rounded-2xl shadow-panel overflow-hidden border-t-4 border-primary-500 p-6">
             <div className="flex items-center justify-between gap-2">
@@ -384,10 +470,14 @@ const Dashboard = () => {
                 <span className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary-100 text-primary-600"><FiTarget className="w-5 h-5" /></span>
                 <p className="text-sm font-bold text-slate-600 uppercase tracking-wider">Total Inward / Target</p>
               </div>
-              <Button onClick={openTargetModal} size="sm">
-                <FiEdit2 className="w-4 h-4" />
-                {targetAmount != null ? 'Edit target' : 'Set target'}
-              </Button>
+              <button
+                type="button"
+                onClick={openTargetModal}
+                className="p-2 rounded-xl hover:bg-primary-100 text-primary-600 transition-colors"
+                aria-label={targetAmount != null ? 'Edit target' : 'Set target'}
+              >
+                <FiEdit2 className="w-5 h-5" />
+              </button>
             </div>
             <p className="mt-2 text-2xl font-bold">
               {targetAmount != null && targetAmount > 0 ? (

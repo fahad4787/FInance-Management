@@ -37,6 +37,8 @@ const computeTotalAmount = ({ amount, brokerageAmount, additionalCharges, broker
   return a - bAmt - charges;
 };
 
+const isActiveProject = (p) => (p.projectStatus || 'active') === 'active';
+
 const TransactionFormModal = ({
   isOpen,
   onClose,
@@ -54,6 +56,16 @@ const TransactionFormModal = ({
     date: (initialValues && initialValues.date) ? initialValues.date : today
   };
 
+  const activeProjects = useMemo(
+    () => (projects || []).filter(isActiveProject),
+    [projects]
+  );
+
+  const activeClientOptions = useMemo(
+    () => [...new Set(activeProjects.map((p) => p.client).filter(Boolean).map((c) => String(c).trim()))].sort(),
+    [activeProjects]
+  );
+
   const uniqueProjectsForBroker = (broker, currentProjects) => {
     if (!broker) return [];
     const items = currentProjects
@@ -66,8 +78,8 @@ const TransactionFormModal = ({
   };
 
   const findLatestProjectByBrokerAndProject = (broker, projectName) => {
-    if (!broker || !projectName || !projects?.length) return null;
-    const matches = projects
+    if (!broker || !projectName || !activeProjects?.length) return null;
+    const matches = activeProjects
       .filter((p) =>
         (p.client || '').trim().toLowerCase() === broker.trim().toLowerCase() &&
         (p.project || '').trim().toLowerCase() === projectName.trim().toLowerCase()
@@ -111,15 +123,15 @@ const TransactionFormModal = ({
       type: 'searchable-dropdown',
       name: 'client',
       label: 'Broker',
-      options: clientOptions,
-      placeholder: clientOptions.length > 0 ? 'Type or select broker...' : 'Enter broker name...',
+      options: activeClientOptions,
+      placeholder: activeClientOptions.length > 0 ? 'Type or select broker...' : 'Enter broker name...',
       icon: <FiUser className="w-5 h-5 text-gray-400" />
     },
     {
       type: 'searchable-dropdown',
       name: 'project',
       label: 'Project Name',
-      options: (form) => uniqueProjectsForBroker(form.client, projects),
+      options: (form) => uniqueProjectsForBroker(form.client, activeProjects),
       placeholder: (form) => form.client ? 'Type or select project...' : 'Select broker first...',
       icon: <FiFileText className="w-5 h-5 text-gray-400" />
     },
@@ -205,7 +217,7 @@ const TransactionFormModal = ({
         );
       }
     }
-  ], [clientOptions, projects, today]);
+  ], [activeClientOptions, activeProjects, today]);
 
   const handleSubmit = async (values) => {
     const brokerageAmount = computeBrokerageAmount(values);
