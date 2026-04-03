@@ -240,6 +240,27 @@ const ProjectAllocation = () => {
     <PageContainer>
       <PageHeader title="Project Allocation" actions={<Button onClick={openAddModal}>Add Project</Button>} />
 
+      {brokerTotals.length > 0 && (
+        <div className="pb-4 border-b border-slate-200/70 -mt-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">By broker</p>
+          <div className="flex flex-wrap gap-2">
+            {brokerTotals.map(({ broker, amount }) => (
+              <span
+                key={broker}
+                className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200/90 bg-white py-1 pl-2.5 pr-2 text-[11px] shadow-sm ring-1 ring-slate-100/80"
+                title={`${broker} — ${formatMoney(amount)}`}
+              >
+                <span className="truncate font-semibold text-primary-800 max-w-[7.5rem] sm:max-w-[9rem]">
+                  {broker}
+                </span>
+                <span className="h-2.5 w-px shrink-0 bg-slate-200" aria-hidden />
+                <span className="shrink-0 tabular-nums font-semibold text-slate-800">{formatMoney(amount)}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           label="Total Monthly Amount"
@@ -266,21 +287,6 @@ const ProjectAllocation = () => {
           borderClassName={remainingAmount >= 0 ? 'border-emerald-500' : 'border-red-500'}
         />
       </div>
-
-      {brokerTotals.length > 0 && (
-        <div className="-mt-2 pt-1 border-t border-slate-200/70">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">By broker</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
-            {brokerTotals.map(({ broker, amount }) => (
-              <span key={broker} className="inline-flex items-baseline gap-1 tabular-nums">
-                <span className="truncate max-w-[10rem] font-semibold text-primary-700">{broker}</span>
-                <span className="text-slate-300">·</span>
-                <span className="font-semibold text-slate-700">{formatMoney(amount)}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       <ErrorAlert message={error} />
 
