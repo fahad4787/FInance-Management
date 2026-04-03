@@ -1,6 +1,6 @@
 import { FiX } from 'react-icons/fi';
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+const Modal = ({ isOpen, onClose, title, children, panelClassName = 'max-w-2xl' }) => {
   if (!isOpen) return null;
 
   return (
@@ -10,7 +10,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col rounded-2xl shadow-modal ring-1 ring-slate-200/80"
+        className={`bg-white w-full ${panelClassName} max-h-[90vh] overflow-hidden flex flex-col rounded-2xl shadow-modal ring-1 ring-slate-200/80`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Emerald header bar */}

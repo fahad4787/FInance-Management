@@ -2,6 +2,7 @@ import DataTable from './DataTable';
 import { FiUser } from 'react-icons/fi';
 import { PROJECT_TYPE_COLORS } from '../constants/projectTypes';
 import { isContractEndingWithinMonthsBefore } from '../utils/date';
+import { formatMoney } from '../utils/format';
 
 const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = 'Saved Projects', additionalFilters = null, hideFilters = [] }) => {
   const columns = [
@@ -47,6 +48,15 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
         return project.brokerageType === 'percentage'
           ? `${project.brokerageValue}%`
           : `$${project.brokerageValue}`;
+      }
+    },
+    {
+      key: 'taxAmount',
+      label: 'Tax',
+      render: (value) => {
+        const n = Number(value);
+        if (value === '' || value == null || !Number.isFinite(n) || n === 0) return '-';
+        return formatMoney(n);
       }
     }
   ];

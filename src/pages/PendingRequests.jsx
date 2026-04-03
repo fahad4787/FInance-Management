@@ -61,7 +61,8 @@ const defaultProjectForm = {
   recruiterName: '',
   contractEnding: '',
   brokerageType: 'percentage',
-  brokerageValue: ''
+  brokerageValue: '',
+  taxAmount: ''
 };
 
 const PendingRequests = () => {
@@ -216,7 +217,8 @@ const PendingRequests = () => {
       recruiterName: project.recruiterName || '',
       contractEnding: project.contractEnding || '',
       brokerageType: project.brokerageType || 'percentage',
-      brokerageValue: project.brokerageValue || ''
+      brokerageValue: project.brokerageValue || '',
+      taxAmount: project.taxAmount ?? ''
     });
     setEditingProjectId(project.id);
   };
@@ -334,6 +336,15 @@ const PendingRequests = () => {
         return project.brokerageType === 'percentage'
           ? `${project.brokerageValue}%`
           : `$${project.brokerageValue}`;
+      }
+    },
+    {
+      key: 'taxAmount',
+      label: 'Tax',
+      render: (value) => {
+        const n = Number(value);
+        if (value === '' || value == null || !Number.isFinite(n) || n === 0) return '-';
+        return formatMoney(n);
       }
     }
   ];

@@ -21,7 +21,8 @@ const defaultForm = {
   recruiterName: '',
   contractEnding: '',
   brokerageType: 'percentage',
-  brokerageValue: ''
+  brokerageValue: '',
+  taxAmount: ''
 };
 
 const ProjectFormModal = ({
@@ -66,6 +67,7 @@ const ProjectFormModal = ({
       if (latestProject) {
         form.brokerageValue = latestProject.brokerageValue || '';
         form.brokerageType = latestProject.brokerageType || 'percentage';
+        form.taxAmount = latestProject.taxAmount ?? '';
       }
     }
     if (fieldName === 'projectType' && value === 'Full time') {
@@ -84,15 +86,15 @@ const ProjectFormModal = ({
       icon: <FiUser className="w-5 h-5 text-gray-400" />
     },
     {
+      type: 'text',
+      name: 'project',
+      label: 'Project Name'
+    },
+    {
       type: 'date',
       name: 'date',
       label: 'Date',
       defaultValue: today
-    },
-    {
-      type: 'text',
-      name: 'project',
-      label: 'Project Name'
     },
     {
       type: 'dropdown',
@@ -113,6 +115,20 @@ const ProjectFormModal = ({
     },
     {
       type: 'number',
+      name: 'taxAmount',
+      label: 'Tax amount ($)',
+      placeholder: '0',
+      icon: <HiOutlineCurrencyDollar className="w-5 h-5 text-gray-400" />
+    },
+    {
+      type: 'date',
+      name: 'contractEnding',
+      label: 'End Date',
+      defaultValue: getDateSixMonthsFromNow(),
+      showWhen: (form) => form.projectType !== 'Full time'
+    },
+    {
+      type: 'number',
       name: 'totalMonthlyHours',
       label: 'Total Monthly Hours'
     },
@@ -125,13 +141,6 @@ const ProjectFormModal = ({
       type: 'text',
       name: 'recruiterName',
       label: 'Recruiter Name'
-    },
-    {
-      type: 'date',
-      name: 'contractEnding',
-      label: 'End Date',
-      defaultValue: getDateSixMonthsFromNow(),
-      showWhen: (form) => form.projectType !== 'Full time'
     },
     {
       type: 'radio-group',
@@ -164,6 +173,7 @@ const ProjectFormModal = ({
       onSubmit={onSubmit}
       isSaving={isSaving}
       onFieldChange={handleFieldChange}
+      columnsPerRow={3}
     />
   );
 };

@@ -1,30 +1,22 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { FiDollarSign, FiTrendingUp, FiPieChart, FiMenu, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
-import { fetchProjects } from '../store/projects/projectsSlice';
+import { fetchProjects, createProject } from '../store/projects/projectsSlice';
 import { formatMoney } from '../utils/format';
+import { getProjectMonthlyAllocationAmount } from '../utils/project';
 import { isApproved } from '../constants/app';
+import { PROJECT_TYPE_OPTIONS } from '../constants/projectTypes';
+import { useAuth } from '../contexts/AuthContext';
+import { useClientOptions } from '../hooks/useClientOptions';
 import PageContainer from '../components/PageContainer';
 import PageHeader from '../components/PageHeader';
 import StatCard from '../components/StatCard';
 import ErrorAlert from '../components/ErrorAlert';
 import Loader from '../components/Loader';
-
-const toNumber = (v) => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-};
+import Button from '../components/Button';
+import ProjectFormModal from '../components/ProjectFormModal';
 
 const projectKey = (p) => `${(p.client || '').trim().toLowerCase()}|${(p.project || '').trim().toLowerCase()}`;
-
-const getProjectCost = (p) => {
-  const hours = toNumber(p.totalMonthlyHours);
-  const rate = toNumber(p.hourlyRate);
-  const gross = hours * rate;
-  const isPercentage = (p.brokerageType || 'percentage') === 'percentage';
-  const brokerage = isPercentage ? gross * (toNumber(p.brokerageValue) / 100) : toNumber(p.brokerageValue);
-  return Math.max(0, gross - brokerage);
-};
 
 const ProjectCard = ({ project, isDragging, onDragStart, onDragEnd, moveButton }) => (
   <div
@@ -77,13 +69,30 @@ const DropZone = ({ children, onDragOver, onDrop, onDragLeave, isOver, label }) 
 
 const ProjectAllocation = () => {
   const dispatch = useDispatch();
+  const { user } = useAuth();
   const projects = useSelector((state) => state.projects.items);
   const isLoading = useSelector((state) => state.projects.isLoading);
   const error = useSelector((state) => state.projects.error);
+  const clientOptions = useClientOptions(projects);
 
   const [allocatedKeys, setAllocatedKeys] = useState([]);
   const [draggedKey, setDraggedKey] = useState(null);
   const [dragOverZone, setDragOverZone] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [initialValues, setInitialValues] = useState({
+    client: '',
+    date: '',
+    project: '',
+    projectType: '',
+    projectStatus: 'active',
+    totalMonthlyHours: '',
+    hourlyRate: '',
+    recruiterName: '',
+    contractEnding: '',
+    brokerageType: 'percentage',
+    brokerageValue: '',
+    taxAmount: ''
+  });
 
   useEffect(() => {
     document.title = 'Project Allocation | FinHub';
@@ -98,13 +107,24 @@ const ProjectAllocation = () => {
     return list
       .map((p) => {
         const key = projectKey(p);
-        const cost = getProjectCost(p);
+        const cost = getProjectMonthlyAllocationAmount(p);
         return { ...p, key, cost };
       })
       .filter((p) => p.cost > 0);
   }, [projects]);
 
   const totalAmount = useMemo(() => projectsWithCost.reduce((s, p) => s + p.cost, 0), [projectsWithCost]);
+
+  const brokerTotals = useMemo(() => {
+    const map = new Map();
+    for (const p of projectsWithCost) {
+      const broker = (p.client || '').trim() || '—';
+      map.set(broker, (map.get(broker) || 0) + p.cost);
+    }
+    return [...map.entries()]
+      .map(([broker, amount]) => ({ broker, amount }))
+      .sort((a, b) => a.broker.localeCompare(b.broker, undefined, { sensitivity: 'base' }));
+  }, [projectsWithCost]);
 
   const { leftItems, rightItems, allocatedSum } = useMemo(() => {
     const allocatedSet = new Set(allocatedKeys);
@@ -176,6 +196,35 @@ const ProjectAllocation = () => {
     setAllocatedKeys((prev) => prev.filter((k) => k !== key));
   }, []);
 
+  const openAddModal = () => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 6);
+    const contractEndingDefault = d.toISOString().slice(0, 10);
+    setInitialValues({
+      client: '',
+      date: '',
+      project: '',
+      projectType: '',
+      projectStatus: 'active',
+      totalMonthlyHours: '',
+      hourlyRate: '',
+      recruiterName: '',
+      contractEnding: contractEndingDefault,
+      brokerageType: 'percentage',
+      brokerageValue: '',
+      taxAmount: ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => setIsModalOpen(false);
+
+  const onSubmitProject = async (values) => {
+    const projectData = user?.uid ? { ...values, createdBy: user.uid } : { ...values };
+    await dispatch(createProject(projectData)).unwrap();
+    setIsModalOpen(false);
+  };
+
   if (isLoading && !projects?.length) {
     return (
       <PageContainer>
@@ -189,7 +238,7 @@ const ProjectAllocation = () => {
 
   return (
     <PageContainer>
-      <PageHeader title="Project Allocation" />
+      <PageHeader title="Project Allocation" actions={<Button onClick={openAddModal}>Add Project</Button>} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
@@ -217,6 +266,21 @@ const ProjectAllocation = () => {
           borderClassName={remainingAmount >= 0 ? 'border-emerald-500' : 'border-red-500'}
         />
       </div>
+
+      {brokerTotals.length > 0 && (
+        <div className="-mt-2 pt-1 border-t border-slate-200/70">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">By broker</p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
+            {brokerTotals.map(({ broker, amount }) => (
+              <span key={broker} className="inline-flex items-baseline gap-1 tabular-nums">
+                <span className="truncate max-w-[10rem] font-semibold text-primary-700">{broker}</span>
+                <span className="text-slate-300">·</span>
+                <span className="font-semibold text-slate-700">{formatMoney(amount)}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <ErrorAlert message={error} />
 
@@ -266,6 +330,19 @@ const ProjectAllocation = () => {
           ))}
         </DropZone>
       </div>
+
+      <ProjectFormModal
+        key="allocation-new"
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title="Add Project"
+        clientOptions={clientOptions}
+        projectTypeOptions={PROJECT_TYPE_OPTIONS}
+        initialValues={initialValues}
+        onSubmit={onSubmitProject}
+        isSaving={isLoading}
+        projects={projects}
+      />
     </PageContainer>
   );
 };

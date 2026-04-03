@@ -18,7 +18,8 @@ const FormModal = ({
   onSubmit,
   isSaving = false,
   onFieldChange: customFieldChange = null,
-  autoFillLogic = null
+  autoFillLogic = null,
+  columnsPerRow = 2
 }) => {
   const defaultForm = fields.reduce((acc, field) => {
     acc[field.name] = field.defaultValue || '';
@@ -182,6 +183,8 @@ const FormModal = ({
       (field) => typeof field.showWhen !== 'function' || field.showWhen(form)
     );
 
+    const maxPerRow = columnsPerRow;
+
     visibleFields.forEach((field, index) => {
       if (field.type === 'section') {
         if (currentRow.length > 0) {
@@ -209,7 +212,7 @@ const FormModal = ({
       } else {
         currentRow.push(field);
         const isFullWidth = typeof field.fullWidth === 'function' ? field.fullWidth(form) : !!field.fullWidth;
-        if (currentRow.length === 2 || isFullWidth || index === visibleFields.length - 1) {
+        if (currentRow.length === maxPerRow || isFullWidth || index === visibleFields.length - 1) {
           rows.push({ type: 'row', fields: currentRow });
           currentRow = [];
         }
@@ -265,6 +268,7 @@ const FormModal = ({
         onClose();
       }}
       title={title}
+      panelClassName={columnsPerRow >= 3 ? 'max-w-4xl' : 'max-w-2xl'}
     >
       <div className="space-y-6">
         {rows.map((row, rowIndex) => {
@@ -296,19 +300,27 @@ const FormModal = ({
           }
 
           const colSpans = row.fields.map((f) => (typeof f.colSpan === 'function' ? f.colSpan(form) : (f.colSpan ?? 1)));
-          const use8020 = row.fields.length === 2 && colSpans[0] === 4 && colSpans[1] === 1;
-          const gridClass = use8020
-            ? 'grid grid-cols-1 md:grid-cols-[4fr_1fr] gap-6 items-center'
-            : 'grid grid-cols-1 md:grid-cols-2 gap-6 items-center';
+          const use8020 = columnsPerRow === 2 && row.fields.length === 2 && colSpans[0] === 4 && colSpans[1] === 1;
+          const gridClass =
+            columnsPerRow >= 3
+              ? 'grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 items-start'
+              : use8020
+                ? 'grid grid-cols-1 md:grid-cols-[4fr_1fr] gap-6 items-center'
+                : 'grid grid-cols-1 md:grid-cols-2 gap-6 items-center';
           return (
             <div key={`row-${rowIndex}`} className={gridClass}>
               {row.fields.map((field) => {
-                const isFullWidth = field.colSpan === 2 || (typeof field.fullWidth === 'function' ? field.fullWidth(form) : !!field.fullWidth);
+                let spanClass = '';
+                if (columnsPerRow >= 3) {
+                  const fw = typeof field.fullWidth === 'function' ? field.fullWidth(form) : !!field.fullWidth;
+                  if (field.colSpan === 3 || fw) spanClass = 'md:col-span-3';
+                  else if (field.colSpan === 2) spanClass = 'md:col-span-2';
+                } else {
+                  const isFullWidth = field.colSpan === 2 || (typeof field.fullWidth === 'function' ? field.fullWidth(form) : !!field.fullWidth);
+                  spanClass = isFullWidth ? 'md:col-span-2' : '';
+                }
                 return (
-                  <div
-                    key={field.name}
-                    className={isFullWidth ? 'md:col-span-2' : ''}
-                  >
+                  <div key={field.name} className={spanClass}>
                     {renderField(field)}
                   </div>
                 );

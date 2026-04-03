@@ -46,7 +46,8 @@ const Projects = () => {
     recruiterName: '',
     contractEnding: '',
     brokerageType: 'percentage',
-    brokerageValue: ''
+    brokerageValue: '',
+    taxAmount: ''
   });
 
   const filteredProjects = useMemo(() => {
@@ -92,7 +93,8 @@ const Projects = () => {
       recruiterName: '',
       contractEnding: contractEndingDefault,
       brokerageType: 'percentage',
-      brokerageValue: ''
+      brokerageValue: '',
+      taxAmount: ''
     });
     setIsModalOpen(true);
   };
@@ -110,7 +112,8 @@ const Projects = () => {
       recruiterName: project.recruiterName || '',
       contractEnding: project.contractEnding || '',
       brokerageType: project.brokerageType || 'percentage',
-      brokerageValue: project.brokerageValue || ''
+      brokerageValue: project.brokerageValue || '',
+      taxAmount: project.taxAmount ?? ''
     });
     setIsModalOpen(true);
   };
