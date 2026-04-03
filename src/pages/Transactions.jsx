@@ -204,7 +204,7 @@ const Transactions = () => {
             }}
             options={clientOptions}
             placeholder="All Brokers"
-            className="min-w-[160px] sm:min-w-[200px]"
+            layout="md"
           />
           <SearchableDropdown
             label="Project"
@@ -212,7 +212,7 @@ const Transactions = () => {
             onChange={(label) => setSelectedProjectId(projectOptions.find((p) => p.label === label)?.value ?? '')}
             options={projectOptions.map((p) => p.label)}
             placeholder={selectedBroker ? 'All Projects' : 'Select broker first'}
-            className="min-w-[160px] sm:min-w-[220px]"
+            layout="lg"
           />
           <DateFilterControls {...dateFilter} />
         </FilterBar>

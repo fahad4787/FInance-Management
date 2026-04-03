@@ -22,7 +22,8 @@ const DataTable = ({
   additionalFilters = null,
   emptyTitle = 'No Data Yet',
   emptyDescription = 'Get started by adding your first entry',
-  titleActions = null
+  titleActions = null,
+  getRowClassName = null
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValues, setFilterValues] = useState({});
@@ -124,7 +125,7 @@ const DataTable = ({
         )}
 
         {filters.map((filter) => (
-          <div key={filter.key} className="w-full md:w-48">
+          <div key={filter.key} className="w-full md:w-auto shrink-0">
             {filter.type === 'searchable' ? (
               <SearchableDropdown
                 label={filter.label}
@@ -133,6 +134,7 @@ const DataTable = ({
                 options={getFilterOptions(filter).filter(opt => opt !== 'All')}
                 placeholder={filter.placeholder || `All ${filter.label}s`}
                 leftIcon={filter.icon}
+                layout="md"
               />
             ) : (
               <div>
@@ -197,8 +199,12 @@ const DataTable = ({
                     const uniqueId = item.id ?? `row-${localIndex}`;
                     const hasRowAction = onEdit || onDelete || (onApprove && getCanApprove && getCanApprove(item));
                     const isEven = localIndex % 2 === 0;
+                    const rowAccent = getRowClassName?.(item, localIndex);
+                    const trClass = rowAccent
+                      ? `border-b border-slate-100 ${rowAccent} transition-colors`
+                      : `border-b border-slate-100 ${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-primary-50/60 transition-colors`;
                     return (
-                      <tr key={uniqueId} className={`border-b border-slate-100 ${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-primary-50/60 transition-colors`}>
+                      <tr key={uniqueId} className={trClass}>
                         {columns.map((column) => (
                           <td
                             key={column.key}

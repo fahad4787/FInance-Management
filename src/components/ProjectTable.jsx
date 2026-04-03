@@ -1,6 +1,7 @@
 import DataTable from './DataTable';
 import { FiUser } from 'react-icons/fi';
 import { PROJECT_TYPE_COLORS } from '../constants/projectTypes';
+import { isContractEndingWithinMonthsBefore } from '../utils/date';
 
 const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = 'Saved Projects', additionalFilters = null, hideFilters = [] }) => {
   const columns = [
@@ -72,6 +73,11 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
   ];
   const filters = hideFilters.length ? allFilters.filter((f) => !hideFilters.includes(f.key)) : allFilters;
 
+  const getRowClassName = (project) =>
+    isContractEndingWithinMonthsBefore(project.contractEnding, 2)
+      ? 'bg-rose-50/90 hover:bg-rose-100/80 border-l-[3px] border-l-rose-400/90'
+      : '';
+
   return (
     <DataTable
       data={projects}
@@ -83,6 +89,7 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
       searchConfig={searchConfig}
       filters={filters}
       additionalFilters={additionalFilters}
+      getRowClassName={getRowClassName}
     />
   );
 };

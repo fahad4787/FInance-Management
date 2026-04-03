@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FiHome, FiFileText, FiRepeat, FiTrendingDown, FiDollarSign, FiInbox, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiFileText, FiRepeat, FiTrendingDown, FiDollarSign, FiInbox, FiLayout, FiLogOut } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
@@ -22,7 +22,8 @@ const Sidebar = ({ isOpen = true }) => {
     { path: '/transactions', label: 'Transactions', icon: <FiRepeat className="w-5 h-5" /> },
     { path: '/expenses', label: 'Expenses', icon: <FiTrendingDown className="w-5 h-5" /> },
     { path: '/pending', label: 'Pending', icon: <FiInbox className="w-5 h-5" />, badge: pendingCount },
-    { path: '/impact-fund', label: 'Impact Fund', icon: <FiDollarSign className="w-5 h-5" /> }
+    { path: '/impact-fund', label: 'Impact Fund', icon: <FiDollarSign className="w-5 h-5" /> },
+    { path: '/allocation', label: 'Allocation', icon: <FiLayout className="w-5 h-5" /> }
   ];
 
   return (

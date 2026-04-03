@@ -1,3 +1,5 @@
+import { addMonths } from 'date-fns';
+
 /** Normalize date to YYYY-MM-DD (handles Firestore Timestamp, serialized timestamp, Date, string) */
 export const normalizeDateToYYYYMMDD = (value) => {
   if (value == null || value === '') return '';
@@ -98,4 +100,21 @@ export const filterByDateRange = (list, dateFrom, dateTo, getDate) => {
     });
   }
   return result;
+};
+
+/** True when today (local calendar) is within the last `monthsBefore` months before contract end, inclusive through end date. */
+export const isContractEndingWithinMonthsBefore = (endValue, monthsBefore = 2) => {
+  const ymd = normalizeDateToYYYYMMDD(endValue);
+  if (!ymd) return false;
+  const today = normalizeDateToYYYYMMDD(new Date());
+  if (!today || ymd < today) return false;
+  const [y, m, d] = ymd.split('-').map(Number);
+  const endDay = new Date(y, m - 1, d);
+  if (Number.isNaN(endDay.getTime())) return false;
+  const windowStart = addMonths(endDay, -monthsBefore);
+  const wsY = windowStart.getFullYear();
+  const wsM = windowStart.getMonth() + 1;
+  const wsD = windowStart.getDate();
+  const windowStartYmd = `${wsY}-${String(wsM).padStart(2, '0')}-${String(wsD).padStart(2, '0')}`;
+  return today >= windowStartYmd && today <= ymd;
 };

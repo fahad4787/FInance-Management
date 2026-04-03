@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { FiChevronDown } from 'react-icons/fi';
 
+const LAYOUT_WIDTH = {
+  full: 'w-full min-w-0',
+  sm: 'w-[100px] shrink-0 sm:w-[112px]',
+  md: 'w-[112px] shrink-0 sm:w-[128px]',
+  lg: 'w-[112px] shrink-0 sm:w-[168px]'
+};
+
 const SearchableDropdown = ({
   label,
   value,
@@ -8,7 +15,8 @@ const SearchableDropdown = ({
   options = [],
   placeholder = "Type or select...",
   leftIcon = null,
-  className = ""
+  className = '',
+  layout = 'full'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,8 +80,10 @@ const SearchableDropdown = ({
     }, 200);
   };
 
+  const layoutClass = LAYOUT_WIDTH[layout] || LAYOUT_WIDTH.full;
+
   return (
-    <div className={`flex flex-col relative ${className}`} ref={dropdownRef}>
+    <div className={`flex flex-col relative ${layoutClass} ${className}`} ref={dropdownRef}>
       <label className="text-sm font-semibold mb-2.5 text-slate-700 capitalize tracking-wide">
         {label}
       </label>

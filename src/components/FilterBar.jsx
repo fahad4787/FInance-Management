@@ -1,14 +1,26 @@
 import { FiFilter } from 'react-icons/fi';
 
-const FilterBar = ({ children, className = '' }) => (
-  <div className={`rounded-2xl border border-slate-200 bg-white shadow-panel ${className}`}>
-    <div className="flex items-center gap-2 px-5 py-3 bg-slate-50 border-b border-slate-200/80">
-      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-100 text-primary-600">
-        <FiFilter className="w-4 h-4" />
-      </span>
-      <span className="text-sm font-bold text-slate-700 uppercase tracking-wider">Filters</span>
+const FilterBar = ({
+  children,
+  className = '',
+  title = 'Filters',
+  subtitle = 'Refine the list below'
+}) => (
+  <div
+    className={`bg-white rounded-2xl shadow-panel border border-slate-200/80 ring-1 ring-slate-200/50 border-t-4 border-t-primary-500 ${className}`}
+  >
+    <div className="px-6 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary-600">
+          <FiFilter className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h3>
+          <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>
+        </div>
+      </div>
     </div>
-    <div className="flex flex-row flex-wrap gap-4 md:gap-5 items-end justify-end p-4 md:p-5">
+    <div className="p-4 md:p-5 bg-slate-100/60 border-b border-slate-200/80 flex flex-row flex-wrap gap-4 md:gap-5 items-end justify-end">
       {children}
     </div>
   </div>

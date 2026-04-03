@@ -228,7 +228,7 @@ const ImpactFund = () => {
             onChange={setSelectedBroker}
             options={brokerNames}
             placeholder="All Brokers"
-            className="min-w-[160px] sm:min-w-[200px]"
+            layout="md"
           />
           <DateFilterControls {...dateFilter} />
           {selectedBroker && totalFromSelectedBroker !== null && (

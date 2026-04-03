@@ -13,6 +13,7 @@ import Transactions from './pages/Transactions';
 import Expenses from './pages/Expenses';
 import PendingRequests from './pages/PendingRequests';
 import ImpactFund from './pages/ImpactFund';
+import ProjectAllocation from './pages/ProjectAllocation';
 import Signup from './pages/auth/Signup';
 import Login from './pages/auth/Login';
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -76,6 +77,7 @@ function AppRoutes() {
         <Route path="expenses" element={<Expenses />} />
         <Route path="pending" element={<PendingRequests />} />
         <Route path="impact-fund" element={<ImpactFund />} />
+        <Route path="allocation" element={<ProjectAllocation />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

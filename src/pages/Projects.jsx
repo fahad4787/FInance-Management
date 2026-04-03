@@ -17,6 +17,10 @@ import { PROJECT_TYPE_OPTIONS, PROJECT_TYPE_LABELS } from '../constants/projectT
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
 
+const PROJECT_STATUS_FILTER_LABELS = ['All', 'Active', 'Inactive'];
+
+const normalizeProjectStatus = (p) => (p?.projectStatus || 'active').trim();
+
 const Projects = () => {
   const dispatch = useDispatch();
   const { user } = useAuth();
@@ -28,6 +32,7 @@ const Projects = () => {
   const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectType, setSelectedProjectType] = useState('');
+  const [statusFilter, setStatusFilter] = useState('active');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState(null);
   const [initialValues, setInitialValues] = useState({
@@ -48,8 +53,13 @@ const Projects = () => {
     let list = filterByDateRange(projects || [], dateFrom, dateTo, (p) => p.date);
     if (selectedBroker) list = list.filter((p) => (p.client || '').trim() === selectedBroker);
     if (selectedProjectType) list = list.filter((p) => (p.projectType || '').trim() === selectedProjectType);
+    if (statusFilter === 'active') {
+      list = list.filter((p) => normalizeProjectStatus(p) === 'active');
+    } else if (statusFilter === 'inactive') {
+      list = list.filter((p) => normalizeProjectStatus(p) === 'inactive');
+    }
     return list;
-  }, [projects, dateFrom, dateTo, selectedBroker, selectedProjectType]);
+  }, [projects, dateFrom, dateTo, selectedBroker, selectedProjectType, statusFilter]);
 
   const approvedForTable = useMemo(
     () => (filteredProjects || []).filter(isApproved),
@@ -134,7 +144,7 @@ const Projects = () => {
             onChange={setSelectedBroker}
             options={clientOptions}
             placeholder="All Brokers"
-            className="min-w-[160px] sm:min-w-[200px]"
+            layout="md"
           />
           <SearchableDropdown
             label="Project Type"
@@ -142,7 +152,29 @@ const Projects = () => {
             onChange={setSelectedProjectType}
             options={PROJECT_TYPE_LABELS}
             placeholder="All Types"
-            className="min-w-[160px] sm:min-w-[200px]"
+            layout="md"
+          />
+          <SearchableDropdown
+            label="Status"
+            value={
+              statusFilter === 'inactive'
+                ? 'Inactive'
+                : statusFilter === 'all'
+                  ? 'All'
+                  : 'Active'
+            }
+            onChange={(label) => {
+              if (!label) {
+                setStatusFilter('active');
+                return;
+              }
+              if (label === 'Inactive') setStatusFilter('inactive');
+              else if (label === 'All') setStatusFilter('all');
+              else setStatusFilter('active');
+            }}
+            options={PROJECT_STATUS_FILTER_LABELS}
+            placeholder="Status"
+            layout="sm"
           />
           <DateFilterControls {...dateFilter} />
         </FilterBar>

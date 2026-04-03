@@ -121,7 +121,7 @@ const Expenses = () => {
             onChange={setSelectedType}
             options={EXPENSE_TYPE_OPTIONS}
             placeholder="All Types"
-            className="min-w-[160px] sm:min-w-[200px]"
+            layout="md"
           />
           <DateFilterControls {...dateFilter} />
         </FilterBar>

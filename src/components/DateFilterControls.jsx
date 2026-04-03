@@ -57,7 +57,7 @@ const DateFilterControls = ({
       </div>
 
       {/* Content area – fixed min-width so Year vs Range doesn’t cause jump */}
-      <div className="flex items-end gap-3 min-w-[232px] w-[232px] shrink-0">
+      <div className="flex items-end gap-3 min-w-[200px] w-[200px] shrink-0">
         {dateMode === 'yearly' ? (
           <div className="flex flex-col gap-2 w-full min-w-0">
             <label className="text-sm font-bold text-slate-600 uppercase tracking-wider">Year</label>
@@ -85,7 +85,7 @@ const DateFilterControls = ({
               value={dateFrom}
               onChange={setDateFrom}
               placeholder="Start"
-              className="w-[108px] min-w-0 shrink-0"
+              className="w-[96px] min-w-0 shrink-0"
             />
             <span className="pb-2.5 text-slate-400 font-medium shrink-0">–</span>
             <ModernDatePicker
@@ -93,7 +93,7 @@ const DateFilterControls = ({
               value={dateTo}
               onChange={setDateTo}
               placeholder="End"
-              className="w-[108px] min-w-0 shrink-0"
+              className="w-[96px] min-w-0 shrink-0"
             />
           </div>
         )}
