@@ -44,7 +44,7 @@ const Transactions = () => {
   const isLoading = useSelector((state) => state.transactions.isLoading);
   const error = useSelector((state) => state.transactions.error);
 
-  const dateFilter = useDateFilter();
+  const dateFilter = useDateFilter({ defaultToPreviousMonth: true });
   const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
@@ -189,10 +189,7 @@ const Transactions = () => {
 
   return (
     <PageContainer>
-      <PageHeader
-          title="Transactions"
-          actions={<Button onClick={openAddModal}>Add Transaction</Button>}
-        />
+      <PageHeader title="Transactions" actions={<Button onClick={openAddModal}>Add Transaction</Button>} />
 
         <FilterBar>
           <SearchableDropdown

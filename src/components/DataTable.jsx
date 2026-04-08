@@ -23,7 +23,9 @@ const DataTable = ({
   emptyTitle = 'No Data Yet',
   emptyDescription = 'Get started by adding your first entry',
   titleActions = null,
-  getRowClassName = null
+  getRowClassName = null,
+  /** Optional row above column headers: { columnKey, label, aggregate: (rows) => number, format: (n) => string } */
+  headerSummary = null
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValues, setFilterValues] = useState({});
@@ -49,6 +51,19 @@ const DataTable = ({
   });
 
   const currentData = filteredData;
+
+  const headerSummaryColIndex =
+    headerSummary && columns.length > 0
+      ? columns.findIndex((c) => c.key === headerSummary.columnKey)
+      : -1;
+  const headerSummaryNumeric =
+    headerSummary && headerSummaryColIndex >= 0 && typeof headerSummary.aggregate === 'function'
+      ? headerSummary.aggregate(currentData)
+      : null;
+  const headerSummaryDisplay =
+    headerSummaryNumeric != null && Number.isFinite(headerSummaryNumeric)
+      ? (headerSummary.format ? headerSummary.format(headerSummaryNumeric) : String(headerSummaryNumeric))
+      : null;
 
   const getFilterOptions = (filter) => {
     if (filter.options) return filter.options;
@@ -180,6 +195,36 @@ const DataTable = ({
           <div className="overflow-x-auto px-4 py-2">
             <table className="w-full min-w-max">
               <thead>
+                {headerSummaryDisplay != null && headerSummaryColIndex >= 0 ? (
+                  <tr className="bg-primary-50/90 border-b border-primary-200/60">
+                    {headerSummaryColIndex > 0 ? (
+                      <th
+                        colSpan={headerSummaryColIndex}
+                        className="py-2.5 px-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap"
+                      >
+                        {headerSummary.label ?? 'Total'}
+                      </th>
+                    ) : null}
+                    <th
+                      className={`py-2.5 px-4 text-center text-sm font-bold text-primary-800 tabular-nums whitespace-nowrap ${
+                        headerSummaryColIndex > 0 ? 'border-l border-primary-200/50' : ''
+                      }`}
+                      colSpan={1}
+                    >
+                      {headerSummaryDisplay}
+                    </th>
+                    {headerSummaryColIndex < columns.length - 1 ? (
+                      <th
+                        colSpan={columns.length - headerSummaryColIndex - 1}
+                        className="py-2.5 px-4 border-l-0"
+                        aria-hidden
+                      />
+                    ) : null}
+                    {(onEdit || onDelete || onApprove) && (
+                      <th className="py-2.5 px-4 bg-primary-50/90" aria-hidden />
+                    )}
+                  </tr>
+                ) : null}
                 <tr className="bg-slate-100 border-b-2 border-slate-200">
                   {columns.map((column) => (
                     <th

@@ -77,6 +77,12 @@ const TransactionTable = ({ transactions, onDelete, onEdit, isLoading = false, t
       searchConfig={searchConfig}
       filters={filters}
       additionalFilters={additionalFilters}
+      headerSummary={{
+        columnKey: 'totalAmount',
+        label: 'Total (net)',
+        aggregate: (rows) => rows.reduce((s, t) => s + computeNetAfterImpactFund(t), 0),
+        format: formatMoney
+      }}
     />
   );
 };

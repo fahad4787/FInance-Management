@@ -5,14 +5,15 @@ const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 12 }, (_, i) => currentYear - 5 + i);
 
 /**
- * Date filter UI: Yearly (select year) or Date range (start/end), plus Clear (icon + tooltip).
- * Layout is stable to avoid jumping when switching modes or when Clear appears.
+ * Date filter: Month · Yearly · Date range, plus Clear (show all dates).
  */
 const DateFilterControls = ({
   dateMode,
   setDateMode,
   selectedYear,
   setSelectedYear,
+  selectedMonth,
+  setMonth,
   dateFrom,
   setDateFrom,
   dateTo,
@@ -21,44 +22,44 @@ const DateFilterControls = ({
   className = ''
 }) => {
   const hasActiveFilter =
-    dateMode === 'yearly' || (dateMode === 'range' && (dateFrom || dateTo));
+    dateMode === 'yearly' || dateMode === 'month' || (dateMode === 'range' && (dateFrom || dateTo));
+
+  const pill = (isActive) =>
+    `px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shrink-0 ${
+      isActive
+        ? 'bg-white text-primary-700 shadow-card border border-slate-200/60'
+        : 'text-slate-600 hover:text-slate-800'
+    }`;
 
   return (
     <div className={`flex items-end gap-4 flex-nowrap ${className}`}>
-      {/* Date label + mode pills – fixed width so no shift */}
       <div className="flex flex-col gap-2 shrink-0">
-        <label className="text-sm font-bold text-slate-700">
-          Date
-        </label>
-        <div className="inline-flex p-1 rounded-xl bg-slate-100/80 border border-slate-200/80">
-          <button
-            type="button"
-            onClick={() => setDateMode('yearly')}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shrink-0 ${
-              dateMode === 'yearly'
-                ? 'bg-white text-primary-700 shadow-card border border-slate-200/60'
-                : 'text-slate-600 hover:text-slate-800'
-            }`}
-          >
+        <label className="text-sm font-bold text-slate-700">Date</label>
+        <div className="inline-flex p-1 rounded-xl bg-slate-100/80 border border-slate-200/80 flex-wrap sm:flex-nowrap">
+          <button type="button" onClick={() => setDateMode('month')} className={pill(dateMode === 'month')}>
+            Month
+          </button>
+          <button type="button" onClick={() => setDateMode('yearly')} className={pill(dateMode === 'yearly')}>
             Yearly
           </button>
-          <button
-            type="button"
-            onClick={() => setDateMode('range')}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shrink-0 ${
-              dateMode === 'range'
-                ? 'bg-white text-primary-700 shadow-card border border-slate-200/60'
-                : 'text-slate-600 hover:text-slate-800'
-            }`}
-          >
+          <button type="button" onClick={() => setDateMode('range')} className={pill(dateMode === 'range')}>
             Date range
           </button>
         </div>
       </div>
 
-      {/* Content area – fixed min-width so Year vs Range doesn’t cause jump */}
-      <div className="flex items-end gap-3 min-w-[200px] w-[200px] shrink-0">
-        {dateMode === 'yearly' ? (
+      <div className="flex items-end gap-3 min-w-[200px] w-[220px] shrink-0">
+        {dateMode === 'month' && (
+          <ModernDatePicker
+            label="Month"
+            value={selectedMonth}
+            onChange={setMonth}
+            granularity="month"
+            placeholder="YYYY-MM"
+            className="w-full min-w-0"
+          />
+        )}
+        {dateMode === 'yearly' && (
           <div className="flex flex-col gap-2 w-full min-w-0">
             <label className="text-sm font-bold text-slate-600 uppercase tracking-wider">Year</label>
             <div className="relative">
@@ -68,7 +69,9 @@ const DateFilterControls = ({
                 className="w-full pl-3 pr-8 py-2.5 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 bg-white text-slate-800 font-semibold appearance-none cursor-pointer text-sm"
               >
                 {YEAR_OPTIONS.map((y) => (
-                  <option key={y} value={y}>{y}</option>
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
@@ -78,7 +81,8 @@ const DateFilterControls = ({
               </div>
             </div>
           </div>
-        ) : (
+        )}
+        {dateMode === 'range' && (
           <div className="flex items-end gap-2 w-full">
             <ModernDatePicker
               label="Start"
@@ -97,9 +101,11 @@ const DateFilterControls = ({
             />
           </div>
         )}
+        {dateMode === 'all' && (
+          <span className="text-xs text-slate-500 py-2.5 leading-snug">All dates · filters off</span>
+        )}
       </div>
 
-      {/* Clear – always reserve space so layout doesn’t jump */}
       <div className="w-10 h-10 shrink-0 flex items-center justify-center">
         {hasActiveFilter ? (
           <button

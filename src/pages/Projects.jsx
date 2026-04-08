@@ -30,7 +30,7 @@ const Projects = () => {
   const isLoading = useSelector((state) => state.projects.isLoading);
   const error = useSelector((state) => state.projects.error);
 
-  const dateFilter = useDateFilter();
+  const dateFilter = useDateFilter({ defaultMode: 'range' });
   const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectType, setSelectedProjectType] = useState('');

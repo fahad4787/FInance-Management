@@ -39,7 +39,7 @@ const Expenses = () => {
   const isLoading = useSelector((state) => state.expenses.isLoading);
   const error = useSelector((state) => state.expenses.error);
 
-  const dateFilter = useDateFilter();
+  const dateFilter = useDateFilter({ defaultToPreviousMonth: true });
   const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [selectedType, setSelectedType] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);

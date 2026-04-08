@@ -45,7 +45,7 @@ const ImpactFund = () => {
   const [editingWithdrawalId, setEditingWithdrawalId] = useState(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawNote, setWithdrawNote] = useState('');
-  const dateFilter = useDateFilter();
+  const dateFilter = useDateFilter({ defaultToPreviousMonth: true });
   const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [activeTab, setActiveTab] = useState('contrib');
   const [selectedBroker, setSelectedBroker] = useState('');

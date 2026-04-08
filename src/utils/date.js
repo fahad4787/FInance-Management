@@ -34,6 +34,33 @@ export const getThisMonthRange = () => {
   return { from, to };
 };
 
+/** Return { from, to } as YYYY-MM-DD for a calendar month (month is 1–12). */
+export const getCalendarMonthRange = (year, month1To12) => {
+  const y = Number(year);
+  const mo = Number(month1To12);
+  if (!Number.isFinite(y) || !Number.isFinite(mo) || mo < 1 || mo > 12) return { from: '', to: '' };
+  const from = `${y}-${String(mo).padStart(2, '0')}-01`;
+  const lastDay = new Date(y, mo, 0).getDate();
+  const to = `${y}-${String(mo).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  return { from, to };
+};
+
+/** Current month as `YYYY-MM` (for month pickers). */
+export const getCurrentYearMonth = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
+/** Parse `YYYY-MM` → { year, month } with month 1–12, or null. */
+export const parseYearMonth = (ym) => {
+  if (!ym || typeof ym !== 'string') return null;
+  const [ys, ms] = ym.trim().split('-');
+  const y = Number(ys);
+  const m = Number(ms);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return null;
+  return { year: y, month: m };
+};
+
 /** Return { from, to } as YYYY-MM-DD for the given year (Jan 1 - Dec 31) */
 export const getYearRange = (year) => {
   const y = Number(year);
@@ -55,6 +82,12 @@ export const getPreviousMonthRange = () => {
   const lastDay = new Date(prevY, prevM + 1, 0).getDate();
   const to = `${prevY}-${String(prevM + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
   return { from, to };
+};
+
+/** Previous calendar month as `YYYY-MM`. */
+export const getPreviousYearMonth = () => {
+  const { from } = getPreviousMonthRange();
+  return from.slice(0, 7);
 };
 
 export const getMonthRangeFromDate = (dateStr) => {
