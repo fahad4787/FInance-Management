@@ -15,6 +15,7 @@ import { fetchProjects, approveProject, editProject } from '../store/projects/pr
 import { useClientOptions } from '../hooks/useClientOptions';
 import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_COLORS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
 import { PROJECT_TYPE_OPTIONS, PROJECT_TYPE_COLORS } from '../constants/projectTypes';
+import { getTaxFormDefaultsFromProject, prepareProjectForFirestore } from '../utils/project';
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
 import Tabs from '../components/Tabs';
@@ -62,7 +63,8 @@ const defaultProjectForm = {
   contractEnding: '',
   brokerageType: 'percentage',
   brokerageValue: '',
-  taxAmount: ''
+  taxType: 'percentage',
+  taxValue: ''
 };
 
 const PendingRequests = () => {
@@ -218,7 +220,7 @@ const PendingRequests = () => {
       contractEnding: project.contractEnding || '',
       brokerageType: project.brokerageType || 'percentage',
       brokerageValue: project.brokerageValue || '',
-      taxAmount: project.taxAmount ?? ''
+      ...getTaxFormDefaultsFromProject(project)
     });
     setEditingProjectId(project.id);
   };
@@ -241,7 +243,9 @@ const PendingRequests = () => {
 
   const submitEditProject = async (projectData) => {
     if (!editingProjectId) return;
-    await dispatch(editProject({ projectId: editingProjectId, projectData: { ...projectData } })).unwrap();
+    await dispatch(
+      editProject({ projectId: editingProjectId, projectData: prepareProjectForFirestore(projectData) })
+    ).unwrap();
     setEditingProjectId(null);
   };
 
@@ -339,11 +343,17 @@ const PendingRequests = () => {
       }
     },
     {
-      key: 'taxAmount',
+      key: 'taxDisplay',
       label: 'Tax',
-      render: (value) => {
-        const n = Number(value);
-        if (value === '' || value == null || !Number.isFinite(n) || n === 0) return '-';
+      render: (_, project) => {
+        if (project.taxType === 'percentage' && project.taxValue !== '' && project.taxValue != null) {
+          return `${project.taxValue}%`;
+        }
+        if (project.taxType === 'fixed' && project.taxValue !== '' && project.taxValue != null) {
+          return formatMoney(project.taxValue);
+        }
+        const n = Number(project.taxAmount);
+        if (project.taxAmount === '' || project.taxAmount == null || !Number.isFinite(n) || n === 0) return '-';
         return formatMoney(n);
       }
     }

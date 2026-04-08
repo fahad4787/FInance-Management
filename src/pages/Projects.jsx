@@ -16,6 +16,8 @@ import { isApproved } from '../constants/app';
 import { PROJECT_TYPE_OPTIONS, PROJECT_TYPE_LABELS } from '../constants/projectTypes';
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
+import ProjectInsightsSummaryCard from '../components/ProjectInsightsSummaryCard';
+import { getTaxFormDefaultsFromProject, prepareProjectForFirestore } from '../utils/project';
 
 const PROJECT_STATUS_FILTER_LABELS = ['All', 'Active', 'Inactive'];
 
@@ -47,7 +49,8 @@ const Projects = () => {
     contractEnding: '',
     brokerageType: 'percentage',
     brokerageValue: '',
-    taxAmount: ''
+    taxType: 'percentage',
+    taxValue: ''
   });
 
   const filteredProjects = useMemo(() => {
@@ -94,7 +97,8 @@ const Projects = () => {
       contractEnding: contractEndingDefault,
       brokerageType: 'percentage',
       brokerageValue: '',
-      taxAmount: ''
+      taxType: 'percentage',
+      taxValue: ''
     });
     setIsModalOpen(true);
   };
@@ -113,7 +117,7 @@ const Projects = () => {
       contractEnding: project.contractEnding || '',
       brokerageType: project.brokerageType || 'percentage',
       brokerageValue: project.brokerageValue || '',
-      taxAmount: project.taxAmount ?? ''
+      ...getTaxFormDefaultsFromProject(project)
     });
     setIsModalOpen(true);
   };
@@ -121,11 +125,12 @@ const Projects = () => {
   const closeModal = () => setIsModalOpen(false);
 
   const onSubmit = async (values) => {
+    const payload = prepareProjectForFirestore(values);
     if (editingProjectId) {
-      await dispatch(editProject({ projectId: editingProjectId, projectData: { ...values } })).unwrap();
+      await dispatch(editProject({ projectId: editingProjectId, projectData: payload })).unwrap();
       setEditingProjectId(null);
     } else {
-      const projectData = user?.uid ? { ...values, createdBy: user.uid } : { ...values };
+      const projectData = user?.uid ? { ...payload, createdBy: user.uid } : { ...payload };
       await dispatch(createProject(projectData)).unwrap();
     }
 
@@ -140,58 +145,60 @@ const Projects = () => {
     <PageContainer>
       <PageHeader title="Projects" actions={<Button onClick={openAddModal}>Add Project</Button>} />
 
-        <FilterBar>
-          <SearchableDropdown
-            label="Broker"
-            value={selectedBroker}
-            onChange={setSelectedBroker}
-            options={clientOptions}
-            placeholder="All Brokers"
-            layout="md"
-          />
-          <SearchableDropdown
-            label="Project Type"
-            value={selectedProjectType}
-            onChange={setSelectedProjectType}
-            options={PROJECT_TYPE_LABELS}
-            placeholder="All Types"
-            layout="md"
-          />
-          <SearchableDropdown
-            label="Status"
-            value={
-              statusFilter === 'inactive'
-                ? 'Inactive'
-                : statusFilter === 'all'
-                  ? 'All'
-                  : 'Active'
-            }
-            onChange={(label) => {
-              if (!label) {
-                setStatusFilter('active');
-                return;
-              }
-              if (label === 'Inactive') setStatusFilter('inactive');
-              else if (label === 'All') setStatusFilter('all');
-              else setStatusFilter('active');
-            }}
-            options={PROJECT_STATUS_FILTER_LABELS}
-            placeholder="Status"
-            layout="sm"
-          />
-          <DateFilterControls {...dateFilter} />
-        </FilterBar>
+      <ProjectInsightsSummaryCard projects={projects} />
 
-        <ErrorAlert message={error} />
-
-        <ProjectTable
-          projects={approvedForTable}
-          onDelete={onDelete}
-          onEdit={openEditModal}
-          isLoading={isLoading}
-          title="Project Details"
-          hideFilters={['client', 'projectType']}
+      <FilterBar>
+        <SearchableDropdown
+          label="Broker"
+          value={selectedBroker}
+          onChange={setSelectedBroker}
+          options={clientOptions}
+          placeholder="All Brokers"
+          layout="md"
         />
+        <SearchableDropdown
+          label="Project Type"
+          value={selectedProjectType}
+          onChange={setSelectedProjectType}
+          options={PROJECT_TYPE_LABELS}
+          placeholder="All Types"
+          layout="md"
+        />
+        <SearchableDropdown
+          label="Status"
+          value={
+            statusFilter === 'inactive'
+              ? 'Inactive'
+              : statusFilter === 'all'
+                ? 'All'
+                : 'Active'
+          }
+          onChange={(label) => {
+            if (!label) {
+              setStatusFilter('active');
+              return;
+            }
+            if (label === 'Inactive') setStatusFilter('inactive');
+            else if (label === 'All') setStatusFilter('all');
+            else setStatusFilter('active');
+          }}
+          options={PROJECT_STATUS_FILTER_LABELS}
+          placeholder="Status"
+          layout="sm"
+        />
+        <DateFilterControls {...dateFilter} />
+      </FilterBar>
+
+      <ErrorAlert message={error} />
+
+      <ProjectTable
+        projects={approvedForTable}
+        onDelete={onDelete}
+        onEdit={openEditModal}
+        isLoading={isLoading}
+        title="Project Details"
+        hideFilters={['client', 'projectType']}
+      />
 
       <ProjectFormModal
         key={editingProjectId || 'new'}

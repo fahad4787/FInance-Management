@@ -1,7 +1,7 @@
 import DataTable from './DataTable';
 import { FiUser } from 'react-icons/fi';
 import { PROJECT_TYPE_COLORS } from '../constants/projectTypes';
-import { isContractEndingWithinMonthsBefore } from '../utils/date';
+import { isProjectContractEndingAlert } from '../utils/date';
 import { formatMoney } from '../utils/format';
 
 const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = 'Saved Projects', additionalFilters = null, hideFilters = [] }) => {
@@ -51,11 +51,17 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
       }
     },
     {
-      key: 'taxAmount',
+      key: 'taxDisplay',
       label: 'Tax',
-      render: (value) => {
-        const n = Number(value);
-        if (value === '' || value == null || !Number.isFinite(n) || n === 0) return '-';
+      render: (_, project) => {
+        if (project.taxType === 'percentage' && project.taxValue !== '' && project.taxValue != null) {
+          return `${project.taxValue}%`;
+        }
+        if (project.taxType === 'fixed' && project.taxValue !== '' && project.taxValue != null) {
+          return formatMoney(project.taxValue);
+        }
+        const n = Number(project.taxAmount);
+        if (project.taxAmount === '' || project.taxAmount == null || !Number.isFinite(n) || n === 0) return '-';
         return formatMoney(n);
       }
     }
@@ -84,7 +90,7 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
   const filters = hideFilters.length ? allFilters.filter((f) => !hideFilters.includes(f.key)) : allFilters;
 
   const getRowClassName = (project) =>
-    isContractEndingWithinMonthsBefore(project.contractEnding, 2)
+    isProjectContractEndingAlert(project, 2)
       ? 'bg-rose-50/90 hover:bg-rose-100/80 border-l-[3px] border-l-rose-400/90'
       : '';
 

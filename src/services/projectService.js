@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, deleteDoc, doc, updateDoc, deleteField } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ENTRY_STATUS } from '../constants/app';
 
@@ -20,12 +20,16 @@ export const saveProject = async (projectData) => {
   try {
     const createdBy = projectData.createdBy ?? null;
     const status = createdBy ? ENTRY_STATUS.PENDING : ENTRY_STATUS.APPROVED;
+    const nextProjStatus = String(projectData.projectStatus || 'active').trim().toLowerCase();
     const dataWithTimestamp = {
       ...projectData,
       createdBy,
       status,
       createdAt: new Date().toISOString()
     };
+    if (nextProjStatus === 'inactive') {
+      dataWithTimestamp.inactiveAt = new Date().toISOString();
+    }
     const docRef = await addDoc(collection(db, 'projects'), dataWithTimestamp);
     return docRef.id;
   } catch (error) {
@@ -36,10 +40,29 @@ export const saveProject = async (projectData) => {
 
 export const updateProject = async (projectId, projectData) => {
   try {
-    await updateDoc(doc(db, 'projects', projectId), {
-      ...projectData,
+    const ref = doc(db, 'projects', projectId);
+    const snap = await getDoc(ref);
+    const prev = snap.exists() ? snap.data() : {};
+    const prevStatus = String(prev.projectStatus || 'active').trim().toLowerCase();
+    const nextStatus = String(
+      projectData.projectStatus !== undefined && projectData.projectStatus !== null
+        ? projectData.projectStatus
+        : prev.projectStatus || 'active'
+    ).trim().toLowerCase();
+
+    const { inactiveAt: _clientInactiveAt, ...rest } = projectData;
+    const payload = {
+      ...rest,
       updatedAt: new Date().toISOString()
-    });
+    };
+
+    if (nextStatus === 'inactive' && prevStatus !== 'inactive') {
+      payload.inactiveAt = new Date().toISOString();
+    } else if (nextStatus === 'active') {
+      payload.inactiveAt = deleteField();
+    }
+
+    await updateDoc(ref, payload);
   } catch (error) {
     console.error('Error updating project:', error);
     throw error;

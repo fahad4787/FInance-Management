@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { FiDollarSign, FiTrendingUp, FiPieChart, FiMenu, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
 import { fetchProjects, createProject } from '../store/projects/projectsSlice';
 import { formatMoney } from '../utils/format';
-import { getProjectMonthlyAllocationAmount } from '../utils/project';
+import { getProjectMonthlyAllocationAmount, prepareProjectForFirestore } from '../utils/project';
 import { isApproved } from '../constants/app';
 import { PROJECT_TYPE_OPTIONS } from '../constants/projectTypes';
 import { useAuth } from '../contexts/AuthContext';
@@ -91,7 +91,8 @@ const ProjectAllocation = () => {
     contractEnding: '',
     brokerageType: 'percentage',
     brokerageValue: '',
-    taxAmount: ''
+    taxType: 'percentage',
+    taxValue: ''
   });
 
   useEffect(() => {
@@ -212,7 +213,8 @@ const ProjectAllocation = () => {
       contractEnding: contractEndingDefault,
       brokerageType: 'percentage',
       brokerageValue: '',
-      taxAmount: ''
+      taxType: 'percentage',
+      taxValue: ''
     });
     setIsModalOpen(true);
   };
@@ -220,7 +222,8 @@ const ProjectAllocation = () => {
   const closeModal = () => setIsModalOpen(false);
 
   const onSubmitProject = async (values) => {
-    const projectData = user?.uid ? { ...values, createdBy: user.uid } : { ...values };
+    const payload = prepareProjectForFirestore(values);
+    const projectData = user?.uid ? { ...payload, createdBy: user.uid } : { ...payload };
     await dispatch(createProject(projectData)).unwrap();
     setIsModalOpen(false);
   };

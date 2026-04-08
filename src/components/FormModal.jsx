@@ -19,7 +19,8 @@ const FormModal = ({
   isSaving = false,
   onFieldChange: customFieldChange = null,
   autoFillLogic = null,
-  columnsPerRow = 2
+  columnsPerRow = 2,
+  panelClassName: panelClassNameOverride = null
 }) => {
   const defaultForm = fields.reduce((acc, field) => {
     acc[field.name] = field.defaultValue || '';
@@ -185,7 +186,8 @@ const FormModal = ({
 
     const maxPerRow = columnsPerRow;
 
-    visibleFields.forEach((field, index) => {
+    for (let index = 0; index < visibleFields.length; index++) {
+      const field = visibleFields[index];
       if (field.type === 'section') {
         if (currentRow.length > 0) {
           rows.push({ type: 'row', fields: currentRow });
@@ -197,17 +199,23 @@ const FormModal = ({
           rows.push({ type: 'row', fields: currentRow });
           currentRow = [];
         }
-        rows.push({ type: 'radio-group', field });
-        if (field.inlineInput && field.inputField) {
-          const inputField = {
-            type: 'number',
-            name: field.inputField.name,
-            label: field.dynamicLabel ? field.dynamicLabel(form) : field.label,
-            placeholder: field.inputField.placeholder ? field.inputField.placeholder(form) : '',
-            icon: field.inputField.icon ? field.inputField.icon(form) : null,
-            disabled: field.inputField.disabled
-          };
-          currentRow.push(inputField);
+        const next = visibleFields[index + 1];
+        if (field.twinRow && next?.type === 'radio-group') {
+          rows.push({ type: 'radio-group-row', fields: [field, next] });
+          index += 1;
+        } else {
+          rows.push({ type: 'radio-group', field });
+          if (field.inlineInput && field.inputField) {
+            const inputField = {
+              type: 'number',
+              name: field.inputField.name,
+              label: field.dynamicLabel ? field.dynamicLabel(form) : field.label,
+              placeholder: field.inputField.placeholder ? field.inputField.placeholder(form) : '',
+              icon: field.inputField.icon ? field.inputField.icon(form) : null,
+              disabled: field.inputField.disabled
+            };
+            currentRow.push(inputField);
+          }
         }
       } else {
         currentRow.push(field);
@@ -217,46 +225,52 @@ const FormModal = ({
           currentRow = [];
         }
       }
-    });
+    }
+
+    if (currentRow.length > 0) {
+      rows.push({ type: 'row', fields: currentRow });
+    }
 
     return rows;
   };
 
-  const renderRadioGroup = (field) => {
-    return (
-      <div className="space-y-4 pt-4 border-t border-slate-200">
-        <label className="text-sm font-semibold text-slate-700 capitalize tracking-wide block">
-          {field.dynamicLabel ? field.dynamicLabel(form) : field.label}
-        </label>
-        <div className="flex gap-6">
-          {resolveMaybeFn(field.options, form).map((option) => (
-            <label key={option.value} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name={field.name}
-                value={option.value}
-                checked={form[field.name] === option.value}
-                onChange={(e) => onFieldChange(field.name, e.target.value)}
-                className="w-4 h-4 text-primary-600 focus:ring-primary-500 border-slate-300"
-              />
-              <span className="text-sm font-medium text-slate-700">{option.label}</span>
-            </label>
-          ))}
-        </div>
-        {field.inputField && !field.inlineInput && (
-          <InputField
-            label=""
-            type={field.inputField.type || 'number'}
-            value={form[field.inputField.name] || ''}
-            onChange={(e) => onFieldChange(field.inputField.name, e.target.value)}
-            placeholder={field.inputField.placeholder ? field.inputField.placeholder(form) : ''}
-            icon={field.inputField.icon ? field.inputField.icon(form) : null}
-            disabled={field.inputField.disabled}
-          />
-        )}
+  const renderRadioGroupInner = (field) => (
+    <div className="space-y-4 min-w-0">
+      <label className="text-sm font-semibold text-slate-700 capitalize tracking-wide block">
+        {field.dynamicLabel ? field.dynamicLabel(form) : field.label}
+      </label>
+      <div className="flex flex-wrap gap-x-6 gap-y-2">
+        {resolveMaybeFn(field.options, form).map((option) => (
+          <label key={option.value} className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name={field.name}
+              value={option.value}
+              checked={form[field.name] === option.value}
+              onChange={(e) => onFieldChange(field.name, e.target.value)}
+              className="w-4 h-4 text-primary-600 focus:ring-primary-500 border-slate-300"
+            />
+            <span className="text-sm font-medium text-slate-700">{option.label}</span>
+          </label>
+        ))}
       </div>
-    );
-  };
+      {field.inputField && !field.inlineInput && (
+        <InputField
+          label=""
+          type={field.inputField.type || 'number'}
+          value={form[field.inputField.name] || ''}
+          onChange={(e) => onFieldChange(field.inputField.name, e.target.value)}
+          placeholder={field.inputField.placeholder ? field.inputField.placeholder(form) : ''}
+          icon={field.inputField.icon ? field.inputField.icon(form) : null}
+          disabled={field.inputField.disabled}
+        />
+      )}
+    </div>
+  );
+
+  const renderRadioGroup = (field) => (
+    <div className="pt-4 border-t border-slate-200">{renderRadioGroupInner(field)}</div>
+  );
 
   const rows = groupFieldsIntoRows();
 
@@ -268,7 +282,9 @@ const FormModal = ({
         onClose();
       }}
       title={title}
-      panelClassName={columnsPerRow >= 3 ? 'max-w-4xl' : 'max-w-2xl'}
+      panelClassName={
+        panelClassNameOverride || (columnsPerRow >= 3 ? 'max-w-4xl' : 'max-w-2xl')
+      }
     >
       <div className="space-y-6">
         {rows.map((row, rowIndex) => {
@@ -291,6 +307,23 @@ const FormModal = ({
                     )}
                   </div>
                 ))}
+              </div>
+            );
+          }
+
+          if (row.type === 'radio-group-row') {
+            return (
+              <div key={`radio-row-${rowIndex}`} className="pt-4 border-t border-slate-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
+                  {row.fields.map((f, i) => (
+                    <div
+                      key={f.name}
+                      className={`min-w-0 ${i > 0 ? 'md:border-l md:border-slate-200 md:pl-6' : ''}`}
+                    >
+                      {renderRadioGroupInner(f)}
+                    </div>
+                  ))}
+                </div>
               </div>
             );
           }

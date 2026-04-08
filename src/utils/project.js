@@ -3,12 +3,48 @@ const toNumber = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
+/** Tax in dollars for allocation (same basis as gross: hours × rate). */
+export const computeProjectTaxDollars = (p) => {
+  const hours = toNumber(p.totalMonthlyHours);
+  const rate = toNumber(p.hourlyRate);
+  const gross = hours * rate;
+  if (p.taxType === 'percentage') {
+    return gross * (toNumber(p.taxValue) / 100);
+  }
+  if (p.taxType === 'fixed') {
+    return toNumber(p.taxValue);
+  }
+  return toNumber(p.taxAmount);
+};
+
+/** Form defaults when editing or copying from an existing project. */
+export const getTaxFormDefaultsFromProject = (project) => {
+  if (!project) return { taxType: 'percentage', taxValue: '' };
+  if (project.taxType === 'percentage' || project.taxType === 'fixed') {
+    return {
+      taxType: project.taxType,
+      taxValue: project.taxValue ?? ''
+    };
+  }
+  const legacy = project.taxAmount;
+  if (legacy !== '' && legacy != null && Number(legacy) !== 0) {
+    return { taxType: 'fixed', taxValue: String(legacy) };
+  }
+  return { taxType: 'percentage', taxValue: '' };
+};
+
+/** Persist computed taxAmount ($) for reporting; keep taxType + taxValue for the form. */
+export const prepareProjectForFirestore = (values) => {
+  const taxAmount = Number(computeProjectTaxDollars(values).toFixed(2));
+  return { ...values, taxAmount };
+};
+
 export const getProjectMonthlyAllocationAmount = (p) => {
   const hours = toNumber(p.totalMonthlyHours);
   const rate = toNumber(p.hourlyRate);
   const gross = hours * rate;
   const isPercentage = (p.brokerageType || 'percentage') === 'percentage';
   const brokerage = isPercentage ? gross * (toNumber(p.brokerageValue) / 100) : toNumber(p.brokerageValue);
-  const tax = toNumber(p.taxAmount);
+  const tax = computeProjectTaxDollars(p);
   return Math.max(0, gross - brokerage - tax);
 };
