@@ -197,7 +197,7 @@ ts-date-picker input {
   border: 2px solid var(--border-color);
   border-radius: 0.5rem;
   padding-inline: 1rem;
-  padding-block: 0.5rem 0.625rem;
+  padding-block: 0.625rem;
   padding-right: 2.75rem;
   line-height: 1.5;
   outline: none;
@@ -206,11 +206,12 @@ ts-date-picker input {
   font-family: inherit;
   width: 100%;
   color: var(--text-color);
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 ts-date-picker input:focus {
   border-color: var(--selected-color);
+  box-shadow: 0 0 0 2px rgb(14 165 233 / 0.2);
 }
 
 ts-date-picker dialog {

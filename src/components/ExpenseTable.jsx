@@ -3,6 +3,12 @@ import DataTable from './DataTable';
 import { formatMoney } from '../utils/format';
 import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_COLORS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
 
+const sumExpenseAmounts = (rows) =>
+  rows.reduce((s, e) => {
+    const n = Number(e.amount);
+    return s + (Number.isFinite(n) ? n : 0);
+  }, 0);
+
 const ExpenseTable = ({ expenses, onDelete, onEdit, isLoading = false, title = 'Expense Details', additionalFilters = null, hideFilters = [] }) => {
   const columns = [
     { key: 'expenseName', label: 'Expense Name' },
@@ -58,6 +64,12 @@ const ExpenseTable = ({ expenses, onDelete, onEdit, isLoading = false, title = '
       searchConfig={searchConfig}
       filters={filters}
       additionalFilters={additionalFilters}
+      headerSummary={{
+        columnKey: 'amount',
+        label: 'Total',
+        aggregate: sumExpenseAmounts,
+        format: formatMoney
+      }}
     />
   );
 };

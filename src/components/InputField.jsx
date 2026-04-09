@@ -41,9 +41,11 @@ const InputField = ({
 
   return (
     <div className={`flex flex-col ${className}`}>
-      <label className="text-sm font-semibold mb-2.5 text-gray-700 capitalize tracking-wide">
-        {label}
-      </label>
+      {label ? (
+        <label className="text-sm font-semibold mb-2.5 text-gray-700 capitalize tracking-wide">
+          {label}
+        </label>
+      ) : null}
       <div className="relative">
         {hasLeftContent && (
           <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">

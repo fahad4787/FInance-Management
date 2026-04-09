@@ -13,7 +13,9 @@ const MainLayout = () => {
   return (
     <div className="flex h-screen bg-slate-100/90">
       <Sidebar isOpen={isSidebarOpen} />
-      <div className={`flex-1 transition-all duration-300 w-full ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div
+        className={`flex-1 min-w-0 transition-all duration-300 w-full ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}
+      >
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/80 shadow-card">
           <div className="w-full max-w-[1800px] mx-auto px-6 py-4 flex items-center">
             <button
@@ -29,8 +31,8 @@ const MainLayout = () => {
             </button>
           </div>
         </header>
-        <main className="overflow-auto h-[calc(100vh-73px)] w-full">
-          <div className="w-full max-w-[1800px] mx-auto relative">
+        <main className="overflow-auto h-[calc(100vh-73px)] w-full min-h-0 min-w-0">
+          <div className="w-full min-w-0 max-w-[1800px] mx-auto relative">
             <Outlet />
           </div>
         </main>

@@ -10,6 +10,7 @@ import BarChart from '../components/BarChart';
 import LineChartChartJS from '../components/LineChartChartJS';
 import TransactionTable from '../components/TransactionTable';
 import TransactionFormModal from '../components/TransactionFormModal';
+import MissingTransactionsFloating from '../components/MissingTransactionsFloating';
 import { fetchProjects } from '../store/projects/projectsSlice';
 import {
   createTransaction,
@@ -23,6 +24,7 @@ import { useDateFilter } from '../hooks/useDateFilter';
 import { useClientOptions } from '../hooks/useClientOptions';
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
+import { PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
 
 const defaultForm = {
   client: '',
@@ -51,6 +53,7 @@ const Transactions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransactionId, setEditingTransactionId] = useState(null);
   const [initialValues, setInitialValues] = useState(defaultForm);
+  const [isMissingOpen, setIsMissingOpen] = useState(false);
 
   const filteredTransactions = useMemo(() => {
     let list = filterByDateRange(transactions || [], dateFrom, dateTo, (t) => t.date);
@@ -70,6 +73,116 @@ const Transactions = () => {
     () => (filteredTransactions || []).filter(isApproved),
     [filteredTransactions]
   );
+
+  const selectedProject = useMemo(() => {
+    if (!selectedProjectId) return null;
+    const [client, project] = selectedProjectId.split('|');
+    const matches = (projects || []).filter(
+      (p) => (p.client || '').trim() === client && (p.project || '').trim() === project
+    );
+    if (matches.length === 0) return null;
+    return matches.sort((a, b) => (b.createdAt || b.date || '').localeCompare(a.createdAt || a.date || ''))[0];
+  }, [projects, selectedProjectId]);
+
+  const monthBuckets = useMemo(() => {
+    if (!dateFrom || !dateTo) return [];
+    const start = new Date(dateFrom);
+    const end = new Date(dateTo);
+    if (!(start <= end)) return [];
+    const months = [];
+    const d = new Date(start.getFullYear(), start.getMonth(), 1);
+    const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+    while (d <= endMonth) {
+      months.push({ year: d.getFullYear(), month: d.getMonth() });
+      d.setMonth(d.getMonth() + 1);
+    }
+    return months;
+  }, [dateFrom, dateTo]);
+
+  const missingTransactionsList = useMemo(() => {
+    if (!dateFrom || !dateTo || monthBuckets.length === 0) return [];
+
+    const approvedProjects = (projects || []).filter(isApproved);
+    const latestByKey = new Map();
+    approvedProjects.forEach((p) => {
+      const client = (p.client || '').trim();
+      const project = (p.project || '').trim();
+      if (!client || !project) return;
+      const key = `${client}|${project}`;
+      const prev = latestByKey.get(key);
+      if (!prev) {
+        latestByKey.set(key, p);
+        return;
+      }
+      const prevDate = prev.createdAt || prev.date || '';
+      const nextDate = p.createdAt || p.date || '';
+      if (String(nextDate).localeCompare(String(prevDate)) > 0) latestByKey.set(key, p);
+    });
+
+    const approvedTx = (transactions || []).filter(isApproved);
+    const actualCountByKey = new Map();
+    approvedTx.forEach((t) => {
+      const client = (t.client || '').trim();
+      const project = (t.project || '').trim();
+      if (!client || !project) return;
+      const ymd = normalizeDateToYYYYMMDD(t.date);
+      if (!ymd) return;
+      const td = new Date(ymd);
+      const inRangeMonth = monthBuckets.some((m) => m.year === td.getFullYear() && m.month === td.getMonth());
+      if (!inRangeMonth) return;
+      const key = `${client}|${project}`;
+      actualCountByKey.set(key, (actualCountByKey.get(key) || 0) + 1);
+    });
+
+    const results = [];
+    latestByKey.forEach((p, key) => {
+      const payoutOccurrence = String(p.payoutOccurrence || 'biweekly').trim().toLowerCase();
+      const perMonth = payoutOccurrence === 'weekly' ? 4 : payoutOccurrence === 'biweekly' ? 2 : 1;
+      const expected = monthBuckets.length * perMonth;
+      const actual = actualCountByKey.get(key) || 0;
+      const missing = Math.max(0, expected - actual);
+      if (missing <= 0) return;
+      const cadenceLabel = PAYOUT_OCCURRENCE_LABEL_BY_VALUE[payoutOccurrence] || 'Monthly';
+      const [client, project] = key.split('|');
+      results.push({
+        key,
+        client,
+        project,
+        missing,
+        cadenceLabel
+      });
+    });
+
+    results.sort((a, b) => b.missing - a.missing || a.client.localeCompare(b.client) || a.project.localeCompare(b.project));
+    return results;
+  }, [projects, transactions, dateFrom, dateTo, monthBuckets]);
+
+  const missingTransactionsMessage = useMemo(() => {
+    if (!dateFrom || !dateTo) return '';
+    if (selectedProjectId) {
+      const project = selectedProject;
+      if (!project || monthBuckets.length === 0) return '';
+      const payoutOccurrence = String(project.payoutOccurrence || 'biweekly').trim().toLowerCase();
+      const perMonth = payoutOccurrence === 'weekly' ? 4 : payoutOccurrence === 'biweekly' ? 2 : 1;
+      const expected = monthBuckets.length * perMonth;
+      const [client, projectName] = selectedProjectId.split('|');
+      const actual = (transactions || [])
+        .filter(isApproved)
+        .filter((t) => (t.client || '').trim() === client && (t.project || '').trim() === projectName)
+        .filter((t) => {
+          const ymd = normalizeDateToYYYYMMDD(t.date);
+          if (!ymd) return false;
+          const td = new Date(ymd);
+          return monthBuckets.some((m) => m.year === td.getFullYear() && m.month === td.getMonth());
+        }).length;
+      const missing = Math.max(0, expected - actual);
+      if (missing <= 0) return '';
+      const cadenceLabel = PAYOUT_OCCURRENCE_LABEL_BY_VALUE[payoutOccurrence] || 'Monthly';
+      return `Missing ${missing} transaction${missing === 1 ? '' : 's'} (${cadenceLabel})`;
+    }
+    if (missingTransactionsList.length === 0) return '';
+    return `Missing transactions in this range (${missingTransactionsList.length} project${missingTransactionsList.length === 1 ? '' : 's'})`;
+  }, [dateFrom, dateTo, selectedProjectId, selectedProject, transactions, monthBuckets, missingTransactionsList]);
 
   const monthlyTrendData = useMemo(() => {
     const list = approvedForCharts;
@@ -191,7 +304,9 @@ const Transactions = () => {
     <PageContainer>
       <PageHeader title="Transactions" actions={<Button onClick={openAddModal}>Add Transaction</Button>} />
 
-        <FilterBar>
+        <FilterBar
+          stats={null}
+        >
           <SearchableDropdown
             label="Broker"
             value={selectedBroker}
@@ -206,7 +321,14 @@ const Transactions = () => {
           <SearchableDropdown
             label="Project"
             value={projectOptions.find((p) => p.value === selectedProjectId)?.label ?? ''}
-            onChange={(label) => setSelectedProjectId(projectOptions.find((p) => p.label === label)?.value ?? '')}
+            onChange={(label) => {
+              if (!label) {
+                setSelectedProjectId('');
+                return;
+              }
+              const match = projectOptions.find((p) => p.label === label);
+              if (match) setSelectedProjectId(match.value);
+            }}
             options={projectOptions.map((p) => p.label)}
             placeholder={selectedBroker ? 'All Projects' : 'Select broker first'}
             layout="lg"
@@ -254,6 +376,18 @@ const Transactions = () => {
         isSaving={isLoading}
         projects={projects}
         clientOptions={clientOptions}
+        transactions={transactions}
+        editingTransactionId={editingTransactionId}
+      />
+
+      <MissingTransactionsFloating
+        isOpen={isMissingOpen}
+        onOpen={() => setIsMissingOpen(true)}
+        onClose={() => setIsMissingOpen(false)}
+        title="Missing transactions"
+        summary={missingTransactionsMessage}
+        items={selectedProjectId ? [] : missingTransactionsList}
+        emptyText={dateFrom && dateTo ? 'No missing transactions in this range.' : 'Select a date range to check missing transactions.'}
       />
     </PageContainer>
   );

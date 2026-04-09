@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import FormModal from './FormModal';
 import { FiUser } from 'react-icons/fi';
-import { FaPercent } from 'react-icons/fa6';
-import { HiOutlineCurrencyDollar } from 'react-icons/hi2';
+import { HiOutlineCurrencyDollar, HiOutlinePercentBadge } from 'react-icons/hi2';
 import { getTaxFormDefaultsFromProject } from '../utils/project';
+import { PAYOUT_OCCURRENCE_OPTIONS, PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
 
 const getDateSixMonthsFromNow = () => {
   const d = new Date();
@@ -17,6 +17,7 @@ const defaultForm = {
   project: '',
   projectType: 'Full time',
   projectStatus: 'active',
+  payoutOccurrence: 'biweekly',
   totalMonthlyHours: '',
   hourlyRate: '',
   recruiterName: '',
@@ -51,6 +52,10 @@ const ProjectFormModal = ({
         : 'Full time',
     projectStatus: initialValues && initialValues.projectStatus ? initialValues.projectStatus : 'active',
     contractEnding: initialValues && initialValues.contractEnding ? initialValues.contractEnding : contractEndingDefault,
+    payoutOccurrence:
+      initialValues && initialValues.payoutOccurrence
+        ? (PAYOUT_OCCURRENCE_LABEL_BY_VALUE[initialValues.payoutOccurrence] ? initialValues.payoutOccurrence : 'biweekly')
+        : 'biweekly',
     taxType: taxFromInitial.taxType,
     taxValue: taxFromInitial.taxValue
   };
@@ -122,6 +127,13 @@ const ProjectFormModal = ({
         hidePlaceholder: true
       },
       {
+        type: 'dropdown',
+        name: 'payoutOccurrence',
+        label: 'Payout Occurrence',
+        options: PAYOUT_OCCURRENCE_OPTIONS,
+        hidePlaceholder: true
+      },
+      {
         type: 'date',
         name: 'contractEnding',
         label: 'End Date',
@@ -159,7 +171,7 @@ const ProjectFormModal = ({
             form.brokerageType === 'percentage' ? 'Enter percentage...' : 'Enter amount...',
           icon: (form) =>
             form.brokerageType === 'percentage' ? (
-              <FaPercent className="w-5 h-5 text-gray-400" />
+              <HiOutlinePercentBadge className="w-5 h-5 text-gray-400" />
             ) : (
               <HiOutlineCurrencyDollar className="w-5 h-5 text-gray-400" />
             )
@@ -183,7 +195,7 @@ const ProjectFormModal = ({
           placeholder: (form) => (form.taxType === 'percentage' ? 'Enter percentage...' : 'Enter amount...'),
           icon: (form) =>
             form.taxType === 'percentage' ? (
-              <FaPercent className="w-5 h-5 text-gray-400" />
+              <HiOutlinePercentBadge className="w-5 h-5 text-gray-400" />
             ) : (
               <HiOutlineCurrencyDollar className="w-5 h-5 text-gray-400" />
             )

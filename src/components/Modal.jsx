@@ -5,7 +5,7 @@ const Modal = ({ isOpen, onClose, title, children, panelClassName = 'max-w-2xl' 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 !m-0"
       style={{ backgroundColor: 'rgba(15, 23, 42, 0.75)' }}
       onClick={onClose}
     >

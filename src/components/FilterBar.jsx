@@ -8,7 +8,7 @@ const FilterBar = ({
   stats = null
 }) => (
   <div
-    className={`bg-white rounded-2xl shadow-panel border border-slate-200/80 ring-1 ring-slate-200/50 border-t-4 border-t-primary-500 ${className}`}
+    className={`bg-white rounded-2xl shadow-panel border border-slate-200/80 ring-1 ring-slate-200/50 border-t-4 border-t-primary-500 min-w-0 w-full ${className}`}
   >
     <div className="px-6 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80 rounded-t-2xl">
       <div className="flex items-center gap-3">

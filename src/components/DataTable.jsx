@@ -34,6 +34,11 @@ const DataTable = ({
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const getMenuHeightEstimate = ({ canApprove }) => {
+    const itemsCount = (onEdit ? 1 : 0) + (canApprove ? 1 : 0) + (onDelete ? 1 : 0);
+    return Math.max(44, itemsCount * 40 + 12);
+  };
+
   const filteredData = data.filter((item) => {
     if (searchConfig.enabled && searchTerm) {
       const matchesSearch = searchConfig.searchFields.some(field => {
@@ -83,7 +88,8 @@ const DataTable = ({
     </div>
   );
 
-  const tableCardClass = 'bg-white rounded-2xl shadow-panel overflow-hidden border border-slate-200/80 ring-1 ring-slate-200/50 border-t-4 border-t-primary-500';
+  const tableCardClass =
+    'bg-white rounded-2xl shadow-panel overflow-hidden border border-slate-200/80 ring-1 ring-slate-200/50 border-t-4 border-t-primary-500 min-w-0 w-full';
 
   if (isLoading) {
     return (
@@ -192,7 +198,10 @@ const DataTable = ({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto px-4 py-2">
+          <div
+            className="min-w-0 overflow-auto overscroll-x-contain px-4 py-2 [@media(max-height:760px)]:max-h-[calc(100dvh-12rem)]"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             <table className="w-full min-w-max">
               <thead>
                 {headerSummaryDisplay != null && headerSummaryColIndex >= 0 ? (
@@ -265,8 +274,17 @@ const DataTable = ({
                               <button
                                 onClick={(e) => {
                                   const rect = e.currentTarget.getBoundingClientRect();
+                                  const canApprove = !!(onApprove && getCanApprove && getCanApprove(item));
+                                  const menuHeight = getMenuHeightEstimate({ canApprove });
+                                  const preferredTop = rect.bottom + 4;
+                                  const maxTop = window.innerHeight - menuHeight - 8;
+                                  const flippedTop = rect.top - menuHeight - 4;
+                                  const top =
+                                    preferredTop > maxTop && flippedTop >= 8
+                                      ? flippedTop
+                                      : Math.min(preferredTop, Math.max(8, maxTop));
                                   setDropdownPosition({
-                                    top: rect.bottom + 4,
+                                    top,
                                     right: window.innerWidth - rect.right
                                   });
                                   setOpenDropdownIndex(openDropdownIndex === uniqueId ? null : uniqueId);

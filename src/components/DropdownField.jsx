@@ -8,7 +8,8 @@ const DropdownField = ({
   placeholder = "Select...",
   className = "",
   hideLabel = false,
-  hidePlaceholder = false
+  hidePlaceholder = false,
+  disabled = false
 }) => {
   return (
     <div className={`flex flex-col ${className}`}>
@@ -21,7 +22,10 @@ const DropdownField = ({
         <select
           value={value}
           onChange={onChange}
-          className="w-full h-11 px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary-500 appearance-none bg-white pr-10 cursor-pointer text-gray-700 text-sm"
+          disabled={disabled}
+          className={`w-full px-4 py-2.5 border-2 rounded-lg focus:outline-none appearance-none bg-white pr-10 cursor-pointer text-slate-700 ${
+            disabled ? "bg-gray-50 cursor-not-allowed opacity-60" : ""
+          } border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20`}
         >
           {!hidePlaceholder && <option value="" className="text-gray-400">{placeholder}</option>}
           {options.map((option) => (

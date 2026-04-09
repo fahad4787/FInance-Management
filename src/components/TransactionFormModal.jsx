@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import FormModal from './FormModal';
 import { FiUser, FiFileText, FiDollarSign } from 'react-icons/fi';
 import { formatMoney } from '../utils/format';
-import { FaPercent } from 'react-icons/fa6';
-import { HiOutlineCurrencyDollar } from 'react-icons/hi2';
+import { HiOutlineCurrencyDollar, HiOutlinePercentBadge } from 'react-icons/hi2';
+import { normalizeDateToYYYYMMDD } from '../utils/date';
+import { isApproved } from '../constants/app';
+import { PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
 
 const defaultForm = {
   client: '',
@@ -47,9 +49,12 @@ const TransactionFormModal = ({
   onSubmit,
   isSaving = false,
   projects = [],
-  clientOptions = []
+  clientOptions = [],
+  transactions = [],
+  editingTransactionId = null
 }) => {
   const today = new Date().toISOString().slice(0, 10);
+  const [submitError, setSubmitError] = useState('');
   const normalizedInitialValues = {
     ...defaultForm,
     ...(initialValues || {}),
@@ -93,6 +98,7 @@ const TransactionFormModal = ({
   };
 
   const handleFieldChange = (form, fieldName, value) => {
+    if (submitError) setSubmitError('');
     if (fieldName === 'client') {
       form.project = '';
     }
@@ -119,6 +125,16 @@ const TransactionFormModal = ({
   };
 
   const fields = useMemo(() => [
+    ...(submitError ? [{
+      type: 'summary',
+      name: 'cadenceError',
+      fullWidth: true,
+      render: () => (
+        <div className="rounded-xl border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-sm text-amber-900 shadow-card">
+          <p className="font-semibold">{submitError}</p>
+        </div>
+      )
+    }] : []),
     {
       type: 'searchable-dropdown',
       name: 'client',
@@ -162,7 +178,7 @@ const TransactionFormModal = ({
         type: 'number',
         placeholder: (form) => form.brokerageType === 'percentage' ? 'Enter percentage...' : 'Enter amount...',
         icon: (form) => form.brokerageType === 'percentage'
-          ? <FaPercent className="w-5 h-5 text-gray-400" />
+          ? <HiOutlinePercentBadge className="w-5 h-5 text-gray-400" />
           : <HiOutlineCurrencyDollar className="w-5 h-5 text-gray-400" />
       },
       inlineInput: true
@@ -217,9 +233,40 @@ const TransactionFormModal = ({
         );
       }
     }
-  ], [activeClientOptions, activeProjects, today]);
+  ], [activeClientOptions, activeProjects, today, submitError]);
+
+  useEffect(() => {
+    if (!isOpen) setSubmitError('');
+  }, [isOpen]);
 
   const handleSubmit = async (values) => {
+    const latestProject = values.client && values.project
+      ? findLatestProjectByBrokerAndProject(values.client, values.project)
+      : null;
+    const payoutOccurrence = String(latestProject?.payoutOccurrence || 'biweekly').trim().toLowerCase();
+    const perMonth =
+      payoutOccurrence === 'weekly' ? 4 : payoutOccurrence === 'biweekly' ? 2 : 1;
+
+    const txDate = normalizeDateToYYYYMMDD(values.date);
+    if (txDate && latestProject) {
+      const monthKey = txDate.slice(0, 7);
+      const existingCount = (transactions || [])
+        .filter(isApproved)
+        .filter((t) => {
+          if (editingTransactionId && t?.id === editingTransactionId) return false;
+          if ((t.client || '').trim() !== (values.client || '').trim()) return false;
+          if ((t.project || '').trim() !== (values.project || '').trim()) return false;
+          const d = normalizeDateToYYYYMMDD(t.date);
+          return d && d.slice(0, 7) === monthKey;
+        }).length;
+
+      if (existingCount >= perMonth) {
+        const cadenceLabel = PAYOUT_OCCURRENCE_LABEL_BY_VALUE[payoutOccurrence] || 'Monthly';
+        setSubmitError(`This project is ${cadenceLabel}. You already have ${existingCount} transaction${existingCount === 1 ? '' : 's'} in ${monthKey}.`);
+        return;
+      }
+    }
+
     const brokerageAmount = computeBrokerageAmount(values);
     const totalAmount = computeTotalAmount({ ...values, brokerageAmount });
     const transactionData = {

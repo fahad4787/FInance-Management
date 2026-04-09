@@ -3,6 +3,7 @@ import { FiUser } from 'react-icons/fi';
 import { PROJECT_TYPE_COLORS } from '../constants/projectTypes';
 import { isProjectContractEndingAlert } from '../utils/date';
 import { formatMoney } from '../utils/format';
+import { PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
 
 const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = 'Saved Projects', additionalFilters = null, hideFilters = [] }) => {
   const columns = [
@@ -18,6 +19,25 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
         return (
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorClass}`}>
             {value}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'payoutOccurrence',
+      label: 'Payout',
+      render: (value) => {
+        const key = String(value || 'biweekly').trim().toLowerCase();
+        const label = PAYOUT_OCCURRENCE_LABEL_BY_VALUE[key] || 'Biweekly';
+        const colorClass =
+          key === 'weekly'
+            ? 'bg-indigo-100 text-indigo-800'
+            : key === 'biweekly'
+              ? 'bg-emerald-100 text-emerald-800'
+              : 'bg-slate-200 text-slate-700';
+        return (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorClass}`}>
+            {label}
           </span>
         );
       }
@@ -70,7 +90,7 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
   const searchConfig = {
     enabled: true,
     placeholder: 'Search by broker, date, project name, type, or recruiter...',
-    searchFields: ['client', 'project', 'projectType', 'recruiterName', 'date', 'contractEnding']
+    searchFields: ['client', 'project', 'projectType', 'recruiterName', 'date', 'contractEnding', 'payoutOccurrence']
   };
 
   const allFilters = [
