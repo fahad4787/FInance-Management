@@ -25,6 +25,8 @@ import { useClientOptions } from '../hooks/useClientOptions';
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
 import { PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
+import { isProjectEligibleForTransactions } from '../utils/transactionsEligibility';
+import { countExpectedPayoutsInRange, countExpectedWithCarryover, getPayoutOccurrenceLabel } from '../utils/payoutSchedule';
 
 const defaultForm = {
   client: '',
@@ -120,6 +122,7 @@ const Transactions = () => {
     });
 
     const approvedTx = (transactions || []).filter(isApproved);
+    const txByKey = new Map();
     const actualCountByKey = new Map();
     approvedTx.forEach((t) => {
       const client = (t.client || '').trim();
@@ -132,17 +135,20 @@ const Transactions = () => {
       if (!inRangeMonth) return;
       const key = `${client}|${project}`;
       actualCountByKey.set(key, (actualCountByKey.get(key) || 0) + 1);
+      const arr = txByKey.get(key) || [];
+      arr.push(t);
+      txByKey.set(key, arr);
     });
 
     const results = [];
     latestByKey.forEach((p, key) => {
-      const payoutOccurrence = String(p.payoutOccurrence || 'biweekly').trim().toLowerCase();
-      const perMonth = payoutOccurrence === 'weekly' ? 4 : payoutOccurrence === 'biweekly' ? 2 : 1;
-      const expected = monthBuckets.length * perMonth;
-      const actual = actualCountByKey.get(key) || 0;
-      const missing = Math.max(0, expected - actual);
+      const txForProject = txByKey.get(key) || [];
+      const expectedInRange = countExpectedPayoutsInRange(p, dateFrom, dateTo);
+      const actualInRange = actualCountByKey.get(key) || 0;
+      const carryMeta = countExpectedWithCarryover(p, txForProject, dateFrom, dateTo);
+      const missing = Math.max(0, (expectedInRange + carryMeta.carryIn) - actualInRange);
       if (missing <= 0) return;
-      const cadenceLabel = PAYOUT_OCCURRENCE_LABEL_BY_VALUE[payoutOccurrence] || 'Monthly';
+      const cadenceLabel = getPayoutOccurrenceLabel(p, PAYOUT_OCCURRENCE_LABEL_BY_VALUE);
       const [client, project] = key.split('|');
       results.push({
         key,
@@ -162,27 +168,33 @@ const Transactions = () => {
     if (selectedProjectId) {
       const project = selectedProject;
       if (!project || monthBuckets.length === 0) return '';
-      const payoutOccurrence = String(project.payoutOccurrence || 'biweekly').trim().toLowerCase();
-      const perMonth = payoutOccurrence === 'weekly' ? 4 : payoutOccurrence === 'biweekly' ? 2 : 1;
-      const expected = monthBuckets.length * perMonth;
       const [client, projectName] = selectedProjectId.split('|');
-      const actual = (transactions || [])
+      const txForProject = (transactions || [])
         .filter(isApproved)
         .filter((t) => (t.client || '').trim() === client && (t.project || '').trim() === projectName)
+      const expectedInRange = countExpectedPayoutsInRange(project, dateFrom, dateTo);
+      const actualInRange = txForProject
         .filter((t) => {
           const ymd = normalizeDateToYYYYMMDD(t.date);
           if (!ymd) return false;
           const td = new Date(ymd);
           return monthBuckets.some((m) => m.year === td.getFullYear() && m.month === td.getMonth());
         }).length;
-      const missing = Math.max(0, expected - actual);
+      const carryMeta = countExpectedWithCarryover(project, txForProject, dateFrom, dateTo);
+      const missing = Math.max(0, (expectedInRange + carryMeta.carryIn) - actualInRange);
       if (missing <= 0) return '';
-      const cadenceLabel = PAYOUT_OCCURRENCE_LABEL_BY_VALUE[payoutOccurrence] || 'Monthly';
+      const cadenceLabel = getPayoutOccurrenceLabel(project, PAYOUT_OCCURRENCE_LABEL_BY_VALUE);
       return `Missing ${missing} transaction${missing === 1 ? '' : 's'} (${cadenceLabel})`;
     }
     if (missingTransactionsList.length === 0) return '';
     return `Missing transactions in this range (${missingTransactionsList.length} project${missingTransactionsList.length === 1 ? '' : 's'})`;
   }, [dateFrom, dateTo, selectedProjectId, selectedProject, transactions, monthBuckets, missingTransactionsList]);
+
+  const missingRangeLabel = useMemo(() => {
+    if (!dateFrom || !dateTo) return '';
+    const sameMonth = String(dateFrom).slice(0, 7) === String(dateTo).slice(0, 7);
+    return sameMonth ? `Month: ${String(dateFrom).slice(0, 7)}` : `Range: ${dateFrom} → ${dateTo}`;
+  }, [dateFrom, dateTo]);
 
   const monthlyTrendData = useMemo(() => {
     const list = approvedForCharts;
@@ -247,16 +259,21 @@ const Transactions = () => {
     dispatch(fetchTransactions());
   }, [dispatch]);
 
-  const clientOptions = useClientOptions(projects);
+  const eligibleProjectsForTx = useMemo(
+    () => (projects || []).filter((p) => isProjectEligibleForTransactions(p, 2)),
+    [projects]
+  );
+
+  const clientOptions = useClientOptions(eligibleProjectsForTx);
 
   const projectOptions = useMemo(() => {
-    const list = projects || [];
+    const list = eligibleProjectsForTx;
     const filtered = selectedBroker ? list.filter((p) => (p.client || '').trim() === selectedBroker) : list;
     return filtered.map((p) => ({
       value: `${(p.client || '').trim()}|${(p.project || '').trim()}`,
       label: [p.client, p.project].filter(Boolean).join(' – ') || 'Unnamed'
     }));
-  }, [projects, selectedBroker]);
+  }, [eligibleProjectsForTx, selectedBroker]);
 
   const openAddModal = () => {
     setEditingTransactionId(null);
@@ -386,6 +403,7 @@ const Transactions = () => {
         onClose={() => setIsMissingOpen(false)}
         title="Missing transactions"
         summary={missingTransactionsMessage}
+        rangeLabel={missingRangeLabel}
         items={selectedProjectId ? [] : missingTransactionsList}
         emptyText={dateFrom && dateTo ? 'No missing transactions in this range.' : 'Select a date range to check missing transactions.'}
       />

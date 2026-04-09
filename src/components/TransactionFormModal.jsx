@@ -6,6 +6,8 @@ import { HiOutlineCurrencyDollar, HiOutlinePercentBadge } from 'react-icons/hi2'
 import { normalizeDateToYYYYMMDD } from '../utils/date';
 import { isApproved } from '../constants/app';
 import { PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
+import { isProjectEligibleForTransactions } from '../utils/transactionsEligibility';
+import { countExpectedPayoutsInRange, countExpectedWithCarryover, getPayoutOccurrenceLabel } from '../utils/payoutSchedule';
 
 const defaultForm = {
   client: '',
@@ -39,8 +41,6 @@ const computeTotalAmount = ({ amount, brokerageAmount, additionalCharges, broker
   return a - bAmt - charges;
 };
 
-const isActiveProject = (p) => (p.projectStatus || 'active') === 'active';
-
 const TransactionFormModal = ({
   isOpen,
   onClose,
@@ -61,14 +61,14 @@ const TransactionFormModal = ({
     date: (initialValues && initialValues.date) ? initialValues.date : today
   };
 
-  const activeProjects = useMemo(
-    () => (projects || []).filter(isActiveProject),
+  const eligibleProjects = useMemo(
+    () => (projects || []).filter((p) => isProjectEligibleForTransactions(p, 2)),
     [projects]
   );
 
   const activeClientOptions = useMemo(
-    () => [...new Set(activeProjects.map((p) => p.client).filter(Boolean).map((c) => String(c).trim()))].sort(),
-    [activeProjects]
+    () => [...new Set(eligibleProjects.map((p) => p.client).filter(Boolean).map((c) => String(c).trim()))].sort(),
+    [eligibleProjects]
   );
 
   const uniqueProjectsForBroker = (broker, currentProjects) => {
@@ -83,8 +83,8 @@ const TransactionFormModal = ({
   };
 
   const findLatestProjectByBrokerAndProject = (broker, projectName) => {
-    if (!broker || !projectName || !activeProjects?.length) return null;
-    const matches = activeProjects
+    if (!broker || !projectName || !eligibleProjects?.length) return null;
+    const matches = eligibleProjects
       .filter((p) =>
         (p.client || '').trim().toLowerCase() === broker.trim().toLowerCase() &&
         (p.project || '').trim().toLowerCase() === projectName.trim().toLowerCase()
@@ -147,7 +147,7 @@ const TransactionFormModal = ({
       type: 'searchable-dropdown',
       name: 'project',
       label: 'Project Name',
-      options: (form) => uniqueProjectsForBroker(form.client, activeProjects),
+      options: (form) => uniqueProjectsForBroker(form.client, eligibleProjects),
       placeholder: (form) => form.client ? 'Type or select project...' : 'Select broker first...',
       icon: <FiFileText className="w-5 h-5 text-gray-400" />
     },
@@ -233,7 +233,7 @@ const TransactionFormModal = ({
         );
       }
     }
-  ], [activeClientOptions, activeProjects, today, submitError]);
+  ], [activeClientOptions, eligibleProjects, today, submitError]);
 
   useEffect(() => {
     if (!isOpen) setSubmitError('');
@@ -243,13 +243,23 @@ const TransactionFormModal = ({
     const latestProject = values.client && values.project
       ? findLatestProjectByBrokerAndProject(values.client, values.project)
       : null;
-    const payoutOccurrence = String(latestProject?.payoutOccurrence || 'biweekly').trim().toLowerCase();
-    const perMonth =
-      payoutOccurrence === 'weekly' ? 4 : payoutOccurrence === 'biweekly' ? 2 : 1;
 
     const txDate = normalizeDateToYYYYMMDD(values.date);
     if (txDate && latestProject) {
       const monthKey = txDate.slice(0, 7);
+      const monthStart = `${monthKey}-01`;
+      const [yy, mm] = monthKey.split('-').map(Number);
+      const lastDay = Number.isFinite(yy) && Number.isFinite(mm) ? new Date(yy, mm, 0).getDate() : 31;
+      const monthEnd = `${monthKey}-${String(lastDay).padStart(2, '0')}`;
+      const ownTx = (transactions || [])
+        .filter(isApproved)
+        .filter((t) =>
+          (t.client || '').trim() === (values.client || '').trim() &&
+          (t.project || '').trim() === (values.project || '').trim()
+        );
+      const carryMeta = countExpectedWithCarryover(latestProject, ownTx, monthStart, monthEnd);
+      const allowedThisMonth = countExpectedPayoutsInRange(latestProject, monthStart, monthEnd) + (carryMeta.carryIn || 0);
+
       const existingCount = (transactions || [])
         .filter(isApproved)
         .filter((t) => {
@@ -260,9 +270,9 @@ const TransactionFormModal = ({
           return d && d.slice(0, 7) === monthKey;
         }).length;
 
-      if (existingCount >= perMonth) {
-        const cadenceLabel = PAYOUT_OCCURRENCE_LABEL_BY_VALUE[payoutOccurrence] || 'Monthly';
-        setSubmitError(`This project is ${cadenceLabel}. You already have ${existingCount} transaction${existingCount === 1 ? '' : 's'} in ${monthKey}.`);
+      if (allowedThisMonth > 0 && existingCount >= allowedThisMonth) {
+        const payoutLabel = getPayoutOccurrenceLabel(latestProject, PAYOUT_OCCURRENCE_LABEL_BY_VALUE);
+        setSubmitError(`This project is ${payoutLabel}. You already have ${existingCount} transaction${existingCount === 1 ? '' : 's'} in ${monthKey}.`);
         return;
       }
     }

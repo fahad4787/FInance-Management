@@ -8,6 +8,7 @@ const MissingTransactionsFloating = ({
   onClose,
   title = 'Missing transactions',
   summary = '',
+  rangeLabel = '',
   items = [],
   emptyText = 'No missing transactions in this range.'
 }) => {
@@ -84,6 +85,9 @@ const MissingTransactionsFloating = ({
         <div className="space-y-4">
           <div className="rounded-xl border border-rose-200/80 bg-rose-50/80 px-4 py-3 text-sm text-rose-900 shadow-card">
             <p className="font-semibold">{headerText}</p>
+            {rangeLabel ? (
+              <p className="text-xs text-rose-900/70 mt-1">{rangeLabel}</p>
+            ) : null}
           </div>
 
           {items.length > 0 ? (
