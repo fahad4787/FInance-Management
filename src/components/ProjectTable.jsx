@@ -58,6 +58,11 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
     },
     { key: 'totalMonthlyHours', label: 'Monthly Hours' },
     { key: 'hourlyRate', label: 'Hourly Rate' },
+    {
+      key: 'projectCost',
+      label: 'Project Cost',
+      render: (v) => formatMoney(v)
+    },
     { key: 'recruiterName', label: 'Recruiter Name' },
     { key: 'contractEnding', label: 'End Date' },
     {
@@ -90,7 +95,16 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
   const searchConfig = {
     enabled: true,
     placeholder: 'Search by broker, date, project name, type, or recruiter...',
-    searchFields: ['client', 'project', 'projectType', 'recruiterName', 'date', 'contractEnding', 'payoutOccurrence']
+    searchFields: [
+      'client',
+      'project',
+      'projectType',
+      'recruiterName',
+      'date',
+      'contractEnding',
+      'payoutOccurrence',
+      'projectCost'
+    ]
   };
 
   const allFilters = [

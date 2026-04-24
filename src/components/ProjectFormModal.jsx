@@ -20,6 +20,7 @@ const defaultForm = {
   payoutOccurrence: 'biweekly',
   totalMonthlyHours: '',
   hourlyRate: '',
+  projectCost: '',
   recruiterName: '',
   contractEnding: '',
   brokerageType: 'percentage',
@@ -80,6 +81,10 @@ const ProjectFormModal = ({
       if (latestProject) {
         form.brokerageValue = latestProject.brokerageValue || '';
         form.brokerageType = latestProject.brokerageType || 'percentage';
+        form.projectCost =
+          latestProject.projectCost != null && latestProject.projectCost !== ''
+            ? String(latestProject.projectCost)
+            : '';
         const taxDefaults = getTaxFormDefaultsFromProject(latestProject);
         form.taxType = taxDefaults.taxType;
         form.taxValue = taxDefaults.taxValue;
@@ -131,7 +136,8 @@ const ProjectFormModal = ({
         name: 'payoutOccurrence',
         label: 'Payout Occurrence',
         options: PAYOUT_OCCURRENCE_OPTIONS,
-        hidePlaceholder: true
+        hidePlaceholder: true,
+        showWhen: (form) => String(form?.projectType || '').trim() !== 'Freelance'
       },
       {
         type: 'date',
@@ -147,7 +153,14 @@ const ProjectFormModal = ({
       {
         type: 'number',
         name: 'hourlyRate',
-        label: 'Hourly Rates'
+        label: 'Hourly Rate',
+        icon: <HiOutlineCurrencyDollar className="w-5 h-5 text-gray-400" />
+      },
+      {
+        type: 'number',
+        name: 'projectCost',
+        label: 'Project Cost',
+        icon: <HiOutlineCurrencyDollar className="w-5 h-5 text-gray-400" />
       },
       {
         type: 'text',

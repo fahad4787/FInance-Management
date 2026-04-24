@@ -3,6 +3,8 @@ import { normalizeDateToYYYYMMDD } from './date';
 
 export const isProjectEligibleForTransactions = (project, monthsAfterInactive = 2) => {
   if (!project) return false;
+  const type = String(project.projectType || '').trim();
+  if (type === 'Freelance') return false;
   const status = String(project.projectStatus || 'active').trim().toLowerCase();
   if (status === 'active') return true;
   if (status !== 'inactive') return true;

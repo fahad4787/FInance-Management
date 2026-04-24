@@ -59,6 +59,7 @@ const defaultProjectForm = {
   projectStatus: 'active',
   totalMonthlyHours: '',
   hourlyRate: '',
+  projectCost: '',
   recruiterName: '',
   contractEnding: '',
   brokerageType: 'percentage',
@@ -216,6 +217,8 @@ const PendingRequests = () => {
       projectStatus: project.projectStatus || 'active',
       totalMonthlyHours: project.totalMonthlyHours || '',
       hourlyRate: project.hourlyRate || '',
+      projectCost:
+        project.projectCost != null && project.projectCost !== '' ? String(project.projectCost) : '',
       recruiterName: project.recruiterName || '',
       contractEnding: project.contractEnding || '',
       brokerageType: project.brokerageType || 'percentage',
@@ -330,6 +333,7 @@ const PendingRequests = () => {
     },
     { key: 'totalMonthlyHours', label: 'Monthly Hours' },
     { key: 'hourlyRate', label: 'Hourly Rate' },
+    { key: 'projectCost', label: 'Project Cost', render: (v) => formatMoney(v) },
     { key: 'recruiterName', label: 'Recruiter Name' },
     { key: 'contractEnding', label: 'End Date' },
     {

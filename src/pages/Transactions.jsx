@@ -104,7 +104,7 @@ const Transactions = () => {
   const missingTransactionsList = useMemo(() => {
     if (!dateFrom || !dateTo || monthBuckets.length === 0) return [];
 
-    const approvedProjects = (projects || []).filter(isApproved);
+    const approvedProjects = (projects || []).filter(isApproved).filter((p) => isProjectEligibleForTransactions(p, 2));
     const latestByKey = new Map();
     approvedProjects.forEach((p) => {
       const client = (p.client || '').trim();
@@ -168,6 +168,7 @@ const Transactions = () => {
     if (selectedProjectId) {
       const project = selectedProject;
       if (!project || monthBuckets.length === 0) return '';
+      if (!isProjectEligibleForTransactions(project, 2)) return '';
       const [client, projectName] = selectedProjectId.split('|');
       const txForProject = (transactions || [])
         .filter(isApproved)

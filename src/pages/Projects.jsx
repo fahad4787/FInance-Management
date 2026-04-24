@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
 import { createProject, editProject, fetchProjects, removeProject } from '../store/projects/projectsSlice';
+import { fetchTransactions } from '../store/transactions/transactionsSlice';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
 import DateFilterControls from '../components/DateFilterControls';
@@ -27,6 +28,7 @@ const Projects = () => {
   const dispatch = useDispatch();
   const { user } = useAuth();
   const projects = useSelector((state) => state.projects.items);
+  const transactions = useSelector((state) => state.transactions.items);
   const isLoading = useSelector((state) => state.projects.isLoading);
   const error = useSelector((state) => state.projects.error);
 
@@ -46,6 +48,7 @@ const Projects = () => {
     payoutOccurrence: 'biweekly',
     totalMonthlyHours: '',
     hourlyRate: '',
+    projectCost: '',
     recruiterName: '',
     contractEnding: '',
     brokerageType: 'percentage',
@@ -77,6 +80,7 @@ const Projects = () => {
 
   useEffect(() => {
     dispatch(fetchProjects());
+    dispatch(fetchTransactions());
   }, [dispatch]);
 
   const clientOptions = useClientOptions(projects);
@@ -95,6 +99,7 @@ const Projects = () => {
       payoutOccurrence: 'biweekly',
       totalMonthlyHours: '',
       hourlyRate: '',
+      projectCost: '',
       recruiterName: '',
       contractEnding: contractEndingDefault,
       brokerageType: 'percentage',
@@ -116,6 +121,8 @@ const Projects = () => {
       payoutOccurrence: project.payoutOccurrence || 'biweekly',
       totalMonthlyHours: project.totalMonthlyHours || '',
       hourlyRate: project.hourlyRate || '',
+      projectCost:
+        project.projectCost != null && project.projectCost !== '' ? String(project.projectCost) : '',
       recruiterName: project.recruiterName || '',
       contractEnding: project.contractEnding || '',
       brokerageType: project.brokerageType || 'percentage',
@@ -148,7 +155,7 @@ const Projects = () => {
     <PageContainer>
       <PageHeader title="Projects" actions={<Button onClick={openAddModal}>Add Project</Button>} />
 
-      <ProjectInsightsSummaryCard projects={projects} />
+      <ProjectInsightsSummaryCard projects={projects} transactions={transactions} />
 
       <FilterBar>
         <SearchableDropdown
