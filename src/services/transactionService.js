@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ENTRY_STATUS } from '../constants/app';
 
@@ -34,6 +34,34 @@ export const saveTransaction = async (transactionData) => {
   }
 };
 
+export const saveTransactionsBulk = async (transactions = []) => {
+  try {
+    if (!Array.isArray(transactions) || transactions.length === 0) return [];
+    const batch = writeBatch(db);
+    const ids = [];
+    const nowIso = new Date().toISOString();
+
+    transactions.forEach((t) => {
+      const createdBy = t?.createdBy ?? null;
+      const status = createdBy ? ENTRY_STATUS.PENDING : ENTRY_STATUS.APPROVED;
+      const ref = doc(collection(db, 'transactions'));
+      ids.push(ref.id);
+      batch.set(ref, {
+        ...(t || {}),
+        createdBy,
+        status,
+        createdAt: nowIso
+      });
+    });
+
+    await batch.commit();
+    return ids;
+  } catch (error) {
+    console.error('Error saving transactions bulk:', error);
+    throw error;
+  }
+};
+
 export const updateTransaction = async (transactionId, transactionData) => {
   try {
     const payload = { ...transactionData, updatedAt: new Date().toISOString() };
@@ -63,6 +91,23 @@ export const deleteTransaction = async (transactionId) => {
     await deleteDoc(doc(db, 'transactions', transactionId));
   } catch (error) {
     console.error('Error deleting transaction:', error);
+    throw error;
+  }
+};
+
+export const deleteTransactionsBulk = async (transactionIds = []) => {
+  try {
+    const ids = (transactionIds || []).filter(Boolean);
+    if (ids.length === 0) return;
+    const chunkSize = 400;
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const batch = writeBatch(db);
+      chunk.forEach((id) => batch.delete(doc(db, 'transactions', id)));
+      await batch.commit();
+    }
+  } catch (error) {
+    console.error('Error deleting transactions bulk:', error);
     throw error;
   }
 };

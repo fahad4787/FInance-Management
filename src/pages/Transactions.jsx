@@ -10,7 +10,7 @@ import BarChart from '../components/BarChart';
 import LineChartChartJS from '../components/LineChartChartJS';
 import TransactionTable from '../components/TransactionTable';
 import TransactionFormModal from '../components/TransactionFormModal';
-import MissingTransactionsFloating from '../components/MissingTransactionsFloating';
+import Modal from '../components/Modal';
 import { fetchProjects } from '../store/projects/projectsSlice';
 import {
   createTransaction,
@@ -26,7 +26,9 @@ import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
 import { PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
 import { isProjectEligibleForTransactions } from '../utils/transactionsEligibility';
-import { countExpectedPayoutsInRange, countExpectedWithCarryover, getPayoutOccurrenceLabel } from '../utils/payoutSchedule';
+import { buildExpectedTransactionDatesForMonth, countExpectedPayoutsInRange, getPayoutOccurrenceLabel } from '../utils/payoutSchedule';
+import { computeProjectTaxDollars } from '../utils/project';
+import { createTransactionsBulk } from '../store/transactions/transactionsSlice';
 
 const defaultForm = {
   client: '',
@@ -48,14 +50,17 @@ const Transactions = () => {
   const isLoading = useSelector((state) => state.transactions.isLoading);
   const error = useSelector((state) => state.transactions.error);
 
-  const dateFilter = useDateFilter({ defaultToPreviousMonth: true });
+  const dateFilter = useDateFilter({ defaultToPreviousMonth: false });
   const { effectiveDateFrom: dateFrom, effectiveDateTo: dateTo } = dateFilter;
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransactionId, setEditingTransactionId] = useState(null);
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [initialValues, setInitialValues] = useState(defaultForm);
-  const [isMissingOpen, setIsMissingOpen] = useState(false);
+  const [isGenerateOpen, setIsGenerateOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState('');
 
   const filteredTransactions = useMemo(() => {
     let list = filterByDateRange(transactions || [], dateFrom, dateTo, (t) => t.date);
@@ -76,16 +81,6 @@ const Transactions = () => {
     [filteredTransactions]
   );
 
-  const selectedProject = useMemo(() => {
-    if (!selectedProjectId) return null;
-    const [client, project] = selectedProjectId.split('|');
-    const matches = (projects || []).filter(
-      (p) => (p.client || '').trim() === client && (p.project || '').trim() === project
-    );
-    if (matches.length === 0) return null;
-    return matches.sort((a, b) => (b.createdAt || b.date || '').localeCompare(a.createdAt || a.date || ''))[0];
-  }, [projects, selectedProjectId]);
-
   const monthBuckets = useMemo(() => {
     if (!dateFrom || !dateTo) return [];
     const start = new Date(dateFrom);
@@ -101,16 +96,18 @@ const Transactions = () => {
     return months;
   }, [dateFrom, dateTo]);
 
-  const missingTransactionsList = useMemo(() => {
-    if (!dateFrom || !dateTo || monthBuckets.length === 0) return [];
+  const generationPlan = useMemo(() => {
+    if (!dateFrom || !dateTo || monthBuckets.length === 0) {
+      return { items: [], totalToCreate: 0 };
+    }
 
     const approvedProjects = (projects || []).filter(isApproved).filter((p) => isProjectEligibleForTransactions(p, 2));
     const latestByKey = new Map();
     approvedProjects.forEach((p) => {
       const client = (p.client || '').trim();
-      const project = (p.project || '').trim();
-      if (!client || !project) return;
-      const key = `${client}|${project}`;
+      const projectName = (p.project || '').trim();
+      if (!client || !projectName) return;
+      const key = `${client}|${projectName}`;
       const prev = latestByKey.get(key);
       if (!prev) {
         latestByKey.set(key, p);
@@ -121,77 +118,50 @@ const Transactions = () => {
       if (String(nextDate).localeCompare(String(prevDate)) > 0) latestByKey.set(key, p);
     });
 
-    const approvedTx = (transactions || []).filter(isApproved);
-    const txByKey = new Map();
-    const actualCountByKey = new Map();
-    approvedTx.forEach((t) => {
+    const allTx = transactions || [];
+    const txByKeyMonth = new Map();
+    allTx.forEach((t) => {
       const client = (t.client || '').trim();
-      const project = (t.project || '').trim();
-      if (!client || !project) return;
+      const projectName = (t.project || '').trim();
+      if (!client || !projectName) return;
       const ymd = normalizeDateToYYYYMMDD(t.date);
       if (!ymd) return;
-      const td = new Date(ymd);
-      const inRangeMonth = monthBuckets.some((m) => m.year === td.getFullYear() && m.month === td.getMonth());
-      if (!inRangeMonth) return;
-      const key = `${client}|${project}`;
-      actualCountByKey.set(key, (actualCountByKey.get(key) || 0) + 1);
-      const arr = txByKey.get(key) || [];
+      const monthKey = ymd.slice(0, 7);
+      const key = `${client}|${projectName}|${monthKey}`;
+      const arr = txByKeyMonth.get(key) || [];
       arr.push(t);
-      txByKey.set(key, arr);
+      txByKeyMonth.set(key, arr);
     });
 
-    const results = [];
+    const items = [];
+    let totalToCreate = 0;
+
     latestByKey.forEach((p, key) => {
-      const txForProject = txByKey.get(key) || [];
-      const expectedInRange = countExpectedPayoutsInRange(p, dateFrom, dateTo);
-      const actualInRange = actualCountByKey.get(key) || 0;
-      const carryMeta = countExpectedWithCarryover(p, txForProject, dateFrom, dateTo);
-      const missing = Math.max(0, (expectedInRange + carryMeta.carryIn) - actualInRange);
-      if (missing <= 0) return;
-      const cadenceLabel = getPayoutOccurrenceLabel(p, PAYOUT_OCCURRENCE_LABEL_BY_VALUE);
-      const [client, project] = key.split('|');
-      results.push({
-        key,
-        client,
-        project,
-        missing,
-        cadenceLabel
+      const [client, projectName] = key.split('|');
+      monthBuckets.forEach((m) => {
+        const monthKey = `${m.year}-${String(m.month + 1).padStart(2, '0')}`;
+        const monthStart = `${monthKey}-01`;
+        const lastDay = new Date(m.year, m.month + 1, 0).getDate();
+        const monthEnd = `${monthKey}-${String(lastDay).padStart(2, '0')}`;
+
+        const expected = countExpectedPayoutsInRange(p, monthStart, monthEnd);
+        if (expected <= 0) return;
+
+        const existing = txByKeyMonth.get(`${client}|${projectName}|${monthKey}`) || [];
+        const missing = Math.max(0, expected - existing.length);
+        if (missing <= 0) return;
+
+        const cadenceLabel = getPayoutOccurrenceLabel(p, PAYOUT_OCCURRENCE_LABEL_BY_VALUE);
+        items.push({ key: `${key}|${monthKey}`, client, project: projectName, monthKey, missing, cadenceLabel, projectRow: p, existing });
+        totalToCreate += missing;
       });
     });
 
-    results.sort((a, b) => b.missing - a.missing || a.client.localeCompare(b.client) || a.project.localeCompare(b.project));
-    return results;
+    items.sort((a, b) => b.missing - a.missing || a.client.localeCompare(b.client) || a.project.localeCompare(b.project));
+    return { items, totalToCreate };
   }, [projects, transactions, dateFrom, dateTo, monthBuckets]);
 
-  const missingTransactionsMessage = useMemo(() => {
-    if (!dateFrom || !dateTo) return '';
-    if (selectedProjectId) {
-      const project = selectedProject;
-      if (!project || monthBuckets.length === 0) return '';
-      if (!isProjectEligibleForTransactions(project, 2)) return '';
-      const [client, projectName] = selectedProjectId.split('|');
-      const txForProject = (transactions || [])
-        .filter(isApproved)
-        .filter((t) => (t.client || '').trim() === client && (t.project || '').trim() === projectName)
-      const expectedInRange = countExpectedPayoutsInRange(project, dateFrom, dateTo);
-      const actualInRange = txForProject
-        .filter((t) => {
-          const ymd = normalizeDateToYYYYMMDD(t.date);
-          if (!ymd) return false;
-          const td = new Date(ymd);
-          return monthBuckets.some((m) => m.year === td.getFullYear() && m.month === td.getMonth());
-        }).length;
-      const carryMeta = countExpectedWithCarryover(project, txForProject, dateFrom, dateTo);
-      const missing = Math.max(0, (expectedInRange + carryMeta.carryIn) - actualInRange);
-      if (missing <= 0) return '';
-      const cadenceLabel = getPayoutOccurrenceLabel(project, PAYOUT_OCCURRENCE_LABEL_BY_VALUE);
-      return `Missing ${missing} transaction${missing === 1 ? '' : 's'} (${cadenceLabel})`;
-    }
-    if (missingTransactionsList.length === 0) return '';
-    return `Missing transactions in this range (${missingTransactionsList.length} project${missingTransactionsList.length === 1 ? '' : 's'})`;
-  }, [dateFrom, dateTo, selectedProjectId, selectedProject, transactions, monthBuckets, missingTransactionsList]);
-
-  const missingRangeLabel = useMemo(() => {
+  const generationRangeLabel = useMemo(() => {
     if (!dateFrom || !dateTo) return '';
     const sameMonth = String(dateFrom).slice(0, 7) === String(dateTo).slice(0, 7);
     return sameMonth ? `Month: ${String(dateFrom).slice(0, 7)}` : `Range: ${dateFrom} → ${dateTo}`;
@@ -278,12 +248,21 @@ const Transactions = () => {
 
   const openAddModal = () => {
     setEditingTransactionId(null);
+    setEditingTransaction(null);
     setInitialValues(defaultForm);
     setIsModalOpen(true);
   };
 
+  const openGenerateModal = () => {
+    setGenerateError('');
+    setIsGenerateOpen(true);
+  };
+
+  const closeGenerateModal = () => setIsGenerateOpen(false);
+
   const openEditModal = (transaction, transactionId) => {
     setEditingTransactionId(transactionId);
+    setEditingTransaction(transaction || null);
     setInitialValues({
       ...defaultForm,
       client: transaction.client || '',
@@ -298,7 +277,10 @@ const Transactions = () => {
     setIsModalOpen(true);
   };
 
-  const closeModal = () => setIsModalOpen(false);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingTransaction(null);
+  };
 
   const onSubmit = async (transactionData) => {
     if (editingTransactionId) {
@@ -312,15 +294,172 @@ const Transactions = () => {
     }
 
     setIsModalOpen(false);
+    setEditingTransaction(null);
   };
 
   const onDelete = async (transactionId) => {
     await dispatch(removeTransaction(transactionId)).unwrap();
   };
 
+  const toNumber = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const computeBrokerageAmountFromProject = (project, grossAmount) => {
+    const type = String(project?.brokerageType || 'percentage').trim().toLowerCase();
+    const val = toNumber(project?.brokerageValue);
+    if (type === 'percentage') return grossAmount * (val / 100);
+    return val;
+  };
+
+  const payoutShareCount = (project) => {
+    const key = String(project?.payoutOccurrence || 'biweekly').trim().toLowerCase();
+    if (key === 'weekly') return 4;
+    if (key === 'monthly') return 1;
+    return 2;
+  };
+
+  const splitCurrency = (total, parts) => {
+    const n = Math.max(1, Math.floor(parts));
+    const cents = Math.round(total * 100);
+    const base = Math.floor(cents / n);
+    let rem = cents - base * n;
+    const out = [];
+    for (let i = 0; i < n; i += 1) {
+      const c = base + (rem > 0 ? 1 : 0);
+      if (rem > 0) rem -= 1;
+      out.push(c / 100);
+    }
+    return out;
+  };
+
+  const buildAutoTransactionsPayload = () => {
+    const items = generationPlan.items;
+    if (!items.length) return [];
+    const out = [];
+    items.forEach((it) => {
+      const p = it.projectRow;
+      const gross = toNumber(p?.totalMonthlyHours) * toNumber(p?.hourlyRate);
+      const brokerageAmount = computeBrokerageAmountFromProject(p, gross);
+      const tax = computeProjectTaxDollars(p);
+      const projectCost = toNumber(p?.projectCost);
+      const additionalCharges = Number((tax + projectCost).toFixed(2));
+      const totalAmount = Number((gross - brokerageAmount - additionalCharges).toFixed(2));
+      const shareCount = payoutShareCount(p);
+
+      const existingRows = it.existing || [];
+      const sumExisting = (pick) =>
+        existingRows.reduce((s, t) => s + toNumber(pick(t)), 0);
+      const existingGrossSum = sumExisting((t) => t.amount);
+      const existingBrokerageSum = sumExisting((t) => t.brokerageAmount);
+      const existingAdditionalSum = sumExisting((t) => t.additionalCharges);
+      const existingTotalSum = sumExisting((t) => t.totalAmount);
+
+      const targetGrossRem = Math.max(0, Number(gross.toFixed(2)) - existingGrossSum);
+      const targetBrokerageRem = Math.max(0, Number(brokerageAmount.toFixed(2)) - existingBrokerageSum);
+      const targetAdditionalRem = Math.max(0, additionalCharges - existingAdditionalSum);
+      const targetTotalRem = Math.max(0, totalAmount - existingTotalSum);
+
+      const grossParts = splitCurrency(targetGrossRem, it.missing);
+      const brokerageParts = splitCurrency(targetBrokerageRem, it.missing);
+      const additionalParts = splitCurrency(targetAdditionalRem, it.missing);
+
+      const existingDates = new Set((it.existing || []).map((t) => normalizeDateToYYYYMMDD(t?.date)).filter(Boolean));
+      const slots = buildExpectedTransactionDatesForMonth(p, it.monthKey).filter((d) => !existingDates.has(d));
+      const startYmd = normalizeDateToYYYYMMDD(p?.date);
+      const monthStartYmd = `${it.monthKey}-01`;
+      const defaultBase = startYmd && startYmd.slice(0, 7) === it.monthKey ? startYmd : monthStartYmd;
+
+      let need = it.missing;
+      let idx = 0;
+      let newTotalRunning = 0;
+      while (need > 0) {
+        const base = slots[idx] || defaultBase;
+        let date = base;
+        let bump = 0;
+        while ((existingDates.has(date) || (startYmd && date < startYmd)) && bump < 31) {
+          bump += 1;
+          const dd = Math.min(new Date(Number(it.monthKey.slice(0, 4)), Number(it.monthKey.slice(5, 7)), 0).getDate(), Number(defaultBase.slice(8, 10)) + bump);
+          date = `${it.monthKey}-${String(dd).padStart(2, '0')}`;
+        }
+        existingDates.add(date);
+
+        const i = it.missing - need;
+        const rowGross = grossParts[i] ?? 0;
+        const rowBrokerage = brokerageParts[i] ?? 0;
+        const rowAdditional = additionalParts[i] ?? 0;
+        let rowTotal = Number((rowGross - rowBrokerage - rowAdditional).toFixed(2));
+        if (i === it.missing - 1) {
+          rowTotal = Number((targetTotalRem - newTotalRunning).toFixed(2));
+        } else {
+          newTotalRunning += rowTotal;
+        }
+
+        out.push({
+          client: it.client,
+          project: it.project,
+          date,
+          amount: Number(rowGross.toFixed(2)),
+          brokerageType: p?.brokerageType || 'percentage',
+          brokerageValue: toNumber(p?.brokerageValue),
+          brokerageAmount: Number(rowBrokerage.toFixed(2)),
+          additionalCharges: Number(rowAdditional.toFixed(2)),
+          totalAmount: rowTotal,
+          autoGenerated: true,
+          payoutShareCount: shareCount
+        });
+        need -= 1;
+        idx += 1;
+      }
+    });
+    return out;
+  };
+
+  const onGenerateTransactions = async () => {
+    if (!user?.uid) {
+      setGenerateError('You must be logged in to generate transactions.');
+      return;
+    }
+    if (!dateFrom || !dateTo) {
+      setGenerateError('Select a date range/month first.');
+      return;
+    }
+    if (generationPlan.totalToCreate <= 0) {
+      setGenerateError('No transactions to generate for this period.');
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenerateError('');
+    try {
+      const payload = buildAutoTransactionsPayload().map((t) => ({ ...t, createdBy: user.uid }));
+      await dispatch(createTransactionsBulk(payload)).unwrap();
+      setIsGenerateOpen(false);
+    } catch (e) {
+      setGenerateError(e?.message || 'Failed to generate transactions.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <PageContainer>
-      <PageHeader title="Transactions" actions={<Button onClick={openAddModal}>Add Transaction</Button>} />
+      <PageHeader
+        title="Transactions"
+        actions={
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              onClick={openGenerateModal}
+              disabled={!dateFrom || !dateTo || generationPlan.totalToCreate <= 0}
+            >
+              Generate
+            </Button>
+            <Button onClick={openAddModal}>Add Transaction</Button>
+          </div>
+        }
+      />
 
         <FilterBar
           stats={null}
@@ -396,18 +535,73 @@ const Transactions = () => {
         clientOptions={clientOptions}
         transactions={transactions}
         editingTransactionId={editingTransactionId}
+        editingTransaction={editingTransaction}
       />
 
-      <MissingTransactionsFloating
-        isOpen={isMissingOpen}
-        onOpen={() => setIsMissingOpen(true)}
-        onClose={() => setIsMissingOpen(false)}
-        title="Missing transactions"
-        summary={missingTransactionsMessage}
-        rangeLabel={missingRangeLabel}
-        items={selectedProjectId ? [] : missingTransactionsList}
-        emptyText={dateFrom && dateTo ? 'No missing transactions in this range.' : 'Select a date range to check missing transactions.'}
-      />
+      <Modal isOpen={isGenerateOpen} onClose={closeGenerateModal} title="Generate transactions" panelClassName="max-w-3xl">
+        <div className="space-y-4">
+          <div className="rounded-xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-800 shadow-card">
+            <p className="font-semibold">Period</p>
+            <p className="text-slate-600 text-xs mt-1">{generationRangeLabel || '—'}</p>
+          </div>
+
+          {generateError ? (
+            <div className="rounded-xl border border-rose-200/80 bg-rose-50/80 px-4 py-3 text-sm text-rose-900 shadow-card">
+              <p className="font-semibold">{generateError}</p>
+            </div>
+          ) : null}
+
+          {generationPlan.items.length > 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-panel overflow-hidden">
+              <div className="max-h-[55vh] overflow-auto">
+                <table className="w-full min-w-max">
+                  <thead className="bg-slate-100 border-b border-slate-200">
+                    <tr>
+                      <th className="py-3 px-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Broker</th>
+                      <th className="py-3 px-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Project</th>
+                      <th className="py-3 px-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Month</th>
+                      <th className="py-3 px-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Payout</th>
+                      <th className="py-3 px-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">To create</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {generationPlan.items.map((m, idx) => (
+                      <tr key={m.key} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                        <td className="py-3 px-4 text-slate-800 font-semibold whitespace-nowrap">{m.client}</td>
+                        <td className="py-3 px-4 text-slate-700 whitespace-nowrap">{m.project}</td>
+                        <td className="py-3 px-4 text-slate-700 text-center whitespace-nowrap">{m.monthKey}</td>
+                        <td className="py-3 px-4 text-slate-700 text-center whitespace-nowrap">{m.cadenceLabel}</td>
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
+                          <span className="inline-flex items-center justify-center min-w-8 px-2 py-1 rounded-full bg-primary-50 text-primary-800 border border-primary-200/70 text-xs font-extrabold tabular-nums">
+                            {m.missing}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-slate-600 py-10">
+              {dateFrom && dateTo ? 'Nothing to generate for this period.' : 'Select a date range/month first.'}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <Button variant="secondary" onClick={closeGenerateModal} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              onClick={onGenerateTransactions}
+              className="flex-1"
+              disabled={isGenerating || generationPlan.totalToCreate <= 0}
+            >
+              {isGenerating ? 'Generating…' : `Generate (${generationPlan.totalToCreate})`}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </PageContainer>
   );
 };

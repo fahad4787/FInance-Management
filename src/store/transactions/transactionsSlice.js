@@ -2,8 +2,10 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import {
   getAllTransactions as getAllTransactionsService,
   saveTransaction as saveTransactionService,
+  saveTransactionsBulk as saveTransactionsBulkService,
   updateTransaction as updateTransactionService,
   deleteTransaction as deleteTransactionService,
+  deleteTransactionsBulk as deleteTransactionsBulkService,
   approveTransaction as approveTransactionService
 } from '../../services/transactionService';
 
@@ -15,6 +17,14 @@ export const createTransaction = createAsyncThunk(
   'transactions/create',
   async (transactionData, { dispatch }) => {
     await saveTransactionService(transactionData);
+    await dispatch(fetchTransactions());
+  }
+);
+
+export const createTransactionsBulk = createAsyncThunk(
+  'transactions/createBulk',
+  async (transactions, { dispatch }) => {
+    await saveTransactionsBulkService(transactions);
     await dispatch(fetchTransactions());
   }
 );
@@ -31,6 +41,14 @@ export const removeTransaction = createAsyncThunk(
   'transactions/delete',
   async (transactionId, { dispatch }) => {
     await deleteTransactionService(transactionId);
+    await dispatch(fetchTransactions());
+  }
+);
+
+export const removeTransactionsBulk = createAsyncThunk(
+  'transactions/deleteBulk',
+  async (transactionIds, { dispatch }) => {
+    await deleteTransactionsBulkService(transactionIds);
     await dispatch(fetchTransactions());
   }
 );
@@ -68,8 +86,10 @@ const transactionsSlice = createSlice({
       .addMatcher(
         (action) =>
           action.type.startsWith('transactions/create/') ||
+          action.type.startsWith('transactions/createBulk/') ||
           action.type.startsWith('transactions/edit/') ||
           action.type.startsWith('transactions/delete/') ||
+          action.type.startsWith('transactions/deleteBulk/') ||
           action.type.startsWith('transactions/approve/'),
         (state, action) => {
           if (action.type.endsWith('/pending')) {

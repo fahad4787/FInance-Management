@@ -56,6 +56,7 @@ const Dashboard = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransactionId, setEditingTransactionId] = useState(null);
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [initialValues, setInitialValues] = useState(defaultForm);
   const [selectedBroker, setSelectedBroker] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
@@ -143,12 +144,14 @@ const Dashboard = () => {
 
   const openAddModal = () => {
     setEditingTransactionId(null);
+    setEditingTransaction(null);
     setInitialValues(defaultForm);
     setIsModalOpen(true);
   };
 
   const openEditModal = (transaction, transactionId) => {
     setEditingTransactionId(transactionId);
+    setEditingTransaction(transaction || null);
     setInitialValues({
       ...defaultForm,
       client: transaction.client || '',
@@ -163,7 +166,10 @@ const Dashboard = () => {
     setIsModalOpen(true);
   };
 
-  const closeModal = () => setIsModalOpen(false);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingTransaction(null);
+  };
 
   const onSubmit = async (transactionData) => {
     if (editingTransactionId) {
@@ -177,6 +183,7 @@ const Dashboard = () => {
     }
 
     setIsModalOpen(false);
+    setEditingTransaction(null);
   };
 
   const onDelete = async (transactionId) => {
@@ -467,6 +474,9 @@ const Dashboard = () => {
         isSaving={isLoading}
         projects={projects}
         clientOptions={clientOptions}
+        transactions={transactions}
+        editingTransactionId={editingTransactionId}
+        editingTransaction={editingTransaction}
       />
 
       <Modal isOpen={isTargetModalOpen} onClose={closeTargetModal} title="Set Target Amount">

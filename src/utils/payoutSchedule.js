@@ -11,6 +11,67 @@ const toDateFromYmd = (ymd) => {
 
 const daysInMonth = (year, monthIndex0) => new Date(year, monthIndex0 + 1, 0).getDate();
 
+export const buildExpectedTransactionDatesForMonth = (project, monthKey) => {
+  const mk = String(monthKey || '').slice(0, 7);
+  if (!/^\d{4}-\d{2}$/.test(mk)) return [];
+  const [yy, mm] = mk.split('-').map(Number);
+  if (!Number.isFinite(yy) || !Number.isFinite(mm)) return [];
+
+  const lastDay = new Date(yy, mm, 0).getDate();
+  const payoutOccurrence = String(project?.payoutOccurrence || 'biweekly').trim().toLowerCase();
+  const startYmd = normalizeDateToYYYYMMDD(project?.date);
+  const startDay = (() => {
+    if (!startYmd) return 1;
+    if (startYmd.slice(0, 7) !== mk) return 1;
+    const d = Number(startYmd.slice(8, 10));
+    return Number.isFinite(d) ? d : 1;
+  })();
+
+  const clampDay = (d) => Math.max(1, Math.min(lastDay, d));
+  const ymd = (day) => `${mk}-${String(clampDay(day)).padStart(2, '0')}`;
+
+  const buildSegmentSlots = (segStartDay, segEndDay, count) => {
+    const start = Math.max(segStartDay, startDay);
+    const end = segEndDay;
+    if (start > end) return [];
+    if (count <= 1) return [ymd(end)];
+    if (count === 2) {
+      const a = ymd(start);
+      const b = ymd(end);
+      return [a, b];
+    }
+    const slots = [];
+    const span = Math.max(1, end - start);
+    for (let i = 0; i < count; i += 1) {
+      const day = Math.round(start + (span * i) / Math.max(1, count - 1));
+      slots.push(ymd(day));
+    }
+    return slots;
+  };
+
+  let dates = [];
+  if (payoutOccurrence === 'weekly') {
+    dates = [
+      ...buildSegmentSlots(1, 15, 2),
+      ...buildSegmentSlots(16, lastDay, 2)
+    ];
+  } else if (payoutOccurrence === 'monthly') {
+    const ps = toDateFromYmd(startYmd);
+    const targetDay = ps ? ps.getDate() : 1;
+    const d = clampDay(targetDay);
+    const picked = d < startDay ? startDay : d;
+    dates = [ymd(picked)];
+  } else {
+    dates = [
+      ...buildSegmentSlots(1, 15, 1),
+      ...buildSegmentSlots(16, lastDay, 1)
+    ];
+  }
+
+  if (!startYmd) return dates;
+  return dates.filter((d) => d >= startYmd);
+};
+
 const firstOccurrenceMonthly = (startDate, rangeStart) => {
   const targetDay = startDate.getDate();
   const y = rangeStart.getFullYear();
