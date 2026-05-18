@@ -266,7 +266,7 @@ const ProjectAllocation = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         <StatCard
           label="Total Monthly Amount"
           value={formatMoney(totalAmount)}
@@ -295,7 +295,7 @@ const ProjectAllocation = () => {
 
       <ErrorAlert message={error} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 min-w-0">
         <DropZone
           label={`Active projects (${leftItems.length}) — drag right to see expense if inactive`}
           onDragOver={(e) => handleDragOver(e, 'left')}

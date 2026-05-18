@@ -23,10 +23,9 @@ import PageContainer from '../components/PageContainer';
 import Button from '../components/Button';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
-import DateFilterControls from '../components/DateFilterControls';
 import StatCard from '../components/StatCard';
 import ErrorAlert from '../components/ErrorAlert';
-import Modal from '../components/Modal';
+import Modal, { modalActionsClass } from '../components/Modal';
 import InputField from '../components/InputField';
 import TransactionTable from '../components/TransactionTable';
 import TransactionFormModal from '../components/TransactionFormModal';
@@ -359,7 +358,7 @@ const Dashboard = () => {
     <PageContainer>
       <PageHeader title="Overview" actions={<Button onClick={openAddModal}>Add Transaction</Button>} />
 
-        <FilterBar>
+        <FilterBar dateFilter={dateFilter}>
           <SearchableDropdown
             label="Broker"
             value={selectedBroker}
@@ -369,7 +368,7 @@ const Dashboard = () => {
             }}
             options={clientOptions}
             placeholder="All Brokers"
-            layout="md"
+            layout="filter"
           />
           <SearchableDropdown
             label="Project"
@@ -377,12 +376,11 @@ const Dashboard = () => {
             onChange={(label) => setSelectedProjectId(projectOptions.find((p) => p.label === label)?.value ?? '')}
             options={projectOptions.map((p) => p.label)}
             placeholder={selectedBroker ? 'All Projects' : 'Select broker first'}
-            layout="lg"
+            layout="filter"
           />
-          <DateFilterControls {...dateFilter} />
         </FilterBar>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <StatCard
             label="Available Amount"
             value={formatMoney(availableAmount)}
@@ -400,11 +398,11 @@ const Dashboard = () => {
             borderClassName="border-primary-500"
             chips={activeProjectCountByType}
           />
-          <div className="bg-white rounded-2xl shadow-panel overflow-hidden border-t-4 border-primary-500 p-6">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-panel overflow-hidden border-t-4 border-primary-500 p-4 sm:p-5 md:p-6 min-w-0">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-3">
-                <span className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary-100 text-primary-600"><FiTarget className="w-5 h-5" /></span>
-                <p className="text-sm font-bold text-slate-600 uppercase tracking-wider">Total Inward / Target</p>
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <span className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-primary-100 text-primary-600 shrink-0"><FiTarget className="w-4 h-4 sm:w-5 sm:h-5" /></span>
+                <p className="text-xs sm:text-sm font-bold text-slate-600 uppercase tracking-wider leading-snug">Total Inward / Target</p>
               </div>
               <button
                 type="button"
@@ -415,7 +413,7 @@ const Dashboard = () => {
                 <FiEdit2 className="w-5 h-5" />
               </button>
             </div>
-            <p className="mt-2 text-2xl font-bold">
+            <p className="mt-2 sm:mt-3 text-xl sm:text-2xl font-bold tabular-nums">
               {targetAmount != null && targetAmount > 0 ? (
                 <>
                   <span className={totalInward >= targetAmount ? 'text-emerald-600' : 'text-red-600'}>
@@ -436,7 +434,7 @@ const Dashboard = () => {
 
         <ErrorAlert messages={[projectsError, transactionsError, expensesError].filter(Boolean)} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 min-w-0">
           <LineChartChartJS
             data={chartSeries}
             labels={chartData.labels}
@@ -480,7 +478,7 @@ const Dashboard = () => {
       />
 
       <Modal isOpen={isTargetModalOpen} onClose={closeTargetModal} title="Set Target Amount">
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <InputField
             label="Target Amount"
             type="number"
@@ -490,11 +488,11 @@ const Dashboard = () => {
             onChange={(e) => setTargetInputValue(e.target.value)}
             placeholder="Enter target amount"
           />
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="secondary" onClick={closeTargetModal}>
+          <div className={modalActionsClass}>
+            <Button variant="secondary" onClick={closeTargetModal} className="w-full sm:flex-1">
               Cancel
             </Button>
-            <Button onClick={onSaveTarget} disabled={isSavingTarget}>
+            <Button onClick={onSaveTarget} disabled={isSavingTarget} className="w-full sm:flex-1">
               {isSavingTarget ? 'Saving...' : 'Save'}
             </Button>
           </div>

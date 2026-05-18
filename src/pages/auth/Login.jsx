@@ -45,8 +45,8 @@ const Login = ({ showSignupLink = false }) => {
   };
 
   return (
-    <AuthCard title="Sign in">
-      <form onSubmit={handleSubmit} className="space-y-5">
+    <AuthCard title="Sign in" subtitle="Access your dashboard, projects, and financial records.">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         <ErrorAlert message={error} />
         <InputField
           label="Email"

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { FiAlertTriangle } from 'react-icons/fi';
-import Modal from './Modal';
+import Modal, { modalScrollTableWrapClass, modalScrollTableInnerClass } from './Modal';
+import { tableElementClass, tableHeadCellClass, tableBodyCellClass } from '../constants/tableStyles';
 
 const MissingTransactionsFloating = ({
   isOpen,
@@ -44,7 +45,7 @@ const MissingTransactionsFloating = ({
       <button
         type="button"
         onClick={onOpen}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-3 rounded-2xl border border-rose-200/80 bg-white/95 backdrop-blur px-4 py-3 hover:bg-white transition-colors group"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-3 rounded-2xl border border-rose-200/80 bg-white px-4 py-3 shadow-card hover:bg-slate-50 transition-colors group"
         aria-label="Show missing transactions"
         title="Show missing transactions"
         style={{
@@ -82,7 +83,7 @@ const MissingTransactionsFloating = ({
       </button>
 
       <Modal isOpen={isOpen} onClose={onClose} title={title} panelClassName="max-w-3xl">
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <div className="rounded-xl border border-rose-200/80 bg-rose-50/80 px-4 py-3 text-sm text-rose-900 shadow-card">
             <p className="font-semibold">{headerText}</p>
             {rangeLabel ? (
@@ -91,23 +92,15 @@ const MissingTransactionsFloating = ({
           </div>
 
           {items.length > 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-panel overflow-hidden">
-              <div className="max-h-[55vh] overflow-auto">
-                <table className="w-full min-w-max">
+            <div className={modalScrollTableWrapClass}>
+              <div className={`${modalScrollTableInnerClass} overflow-x-auto`}>
+                <table className={`${tableElementClass} min-w-[22rem]`}>
                   <thead className="bg-slate-100 border-b border-slate-200">
                     <tr>
-                      <th className="py-3 px-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                        Broker
-                      </th>
-                      <th className="py-3 px-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                        Project
-                      </th>
-                      <th className="py-3 px-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                        Payout
-                      </th>
-                      <th className="py-3 px-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                        Missing
-                      </th>
+                      <th className={tableHeadCellClass('text-left')}>Broker</th>
+                      <th className={tableHeadCellClass('text-left')}>Project</th>
+                      <th className={tableHeadCellClass('text-center')}>Payout</th>
+                      <th className={tableHeadCellClass('text-center')}>Missing</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -116,11 +109,11 @@ const MissingTransactionsFloating = ({
                         key={m.key || `${m.client}-${m.project}-${idx}`}
                         className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}
                       >
-                        <td className="py-3 px-4 text-slate-800 font-semibold whitespace-nowrap">{m.client}</td>
-                        <td className="py-3 px-4 text-slate-700 whitespace-nowrap">{m.project}</td>
-                        <td className="py-3 px-4 text-slate-700 text-center whitespace-nowrap">{m.cadenceLabel}</td>
-                        <td className="py-3 px-4 text-center whitespace-nowrap">
-                          <span className="inline-flex items-center justify-center min-w-8 px-2 py-1 rounded-full bg-rose-100 text-rose-900 text-xs font-extrabold tabular-nums">
+                        <td className={`${tableBodyCellClass('text-left')} font-semibold text-slate-800`}>{m.client}</td>
+                        <td className={tableBodyCellClass('text-left')}>{m.project}</td>
+                        <td className={tableBodyCellClass('text-center')}>{m.cadenceLabel}</td>
+                        <td className={tableBodyCellClass('text-center')}>
+                          <span className="inline-flex items-center justify-center min-w-7 sm:min-w-8 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-rose-100 text-rose-900 text-[10px] sm:text-xs font-extrabold tabular-nums">
                             {m.missing}
                           </span>
                         </td>

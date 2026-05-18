@@ -295,3 +295,19 @@ ts-date-picker [cal] :is(button:not([selected])):hover {
 ts-date-picker dialog::backdrop {
   background-color: transparent;
 }
+
+.filter-date-field ts-date-picker input {
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  padding-right: 2.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border-radius: 0.75rem;
+  border-width: 2px;
+  border-color: #cbd5e1;
+}
+
+.filter-date-field ts-date-picker input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgb(16 185 129 / 0.2);
+}

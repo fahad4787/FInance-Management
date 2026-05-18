@@ -5,7 +5,6 @@ import { createProject, editProject, fetchProjects, removeProject } from '../sto
 import { fetchTransactions } from '../store/transactions/transactionsSlice';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
-import DateFilterControls from '../components/DateFilterControls';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import ProjectTable from '../components/ProjectTable';
@@ -157,14 +156,14 @@ const Projects = () => {
 
       <ProjectInsightsSummaryCard projects={projects} transactions={transactions} />
 
-      <FilterBar>
+      <FilterBar dateFilter={dateFilter}>
         <SearchableDropdown
           label="Broker"
           value={selectedBroker}
           onChange={setSelectedBroker}
           options={clientOptions}
           placeholder="All Brokers"
-          layout="md"
+          layout="filter"
         />
         <SearchableDropdown
           label="Project Type"
@@ -172,7 +171,7 @@ const Projects = () => {
           onChange={setSelectedProjectType}
           options={PROJECT_TYPE_LABELS}
           placeholder="All Types"
-          layout="md"
+          layout="filter"
         />
         <SearchableDropdown
           label="Status"
@@ -194,9 +193,8 @@ const Projects = () => {
           }}
           options={PROJECT_STATUS_FILTER_LABELS}
           placeholder="Status"
-          layout="sm"
+          layout="filter"
         />
-        <DateFilterControls {...dateFilter} />
       </FilterBar>
 
       <ErrorAlert message={error} />

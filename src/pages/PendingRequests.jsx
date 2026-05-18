@@ -417,7 +417,7 @@ const PendingRequests = () => {
   ];
 
   const pendingTabs = [
-    { id: 'transactions', label: 'Transactions', badge: pendingTransactions.length },
+    { id: 'transactions', label: 'Transactions', shortLabel: 'Trans.', badge: pendingTransactions.length },
     { id: 'expenses', label: 'Expenses', badge: pendingExpenses.length },
     { id: 'projects', label: 'Projects', badge: pendingProjects.length }
   ];
@@ -444,7 +444,7 @@ const PendingRequests = () => {
               emptyTitle="No pending transactions"
               emptyDescription="Transactions added by the other user will appear here for approval"
               titleActions={
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                   {resettablePendingTransactionIds.length > 0 ? (
                     <Button
                       variant="danger"

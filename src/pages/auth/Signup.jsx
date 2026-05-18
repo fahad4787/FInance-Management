@@ -71,8 +71,8 @@ const Signup = () => {
   };
 
   return (
-    <AuthCard title="Create account">
-      <form onSubmit={handleSubmit} className="space-y-5">
+    <AuthCard title="Create account" subtitle="Set up FinHub for your finance team — up to two partner accounts.">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         <ErrorAlert message={error} />
         <InputField
           label="Email"

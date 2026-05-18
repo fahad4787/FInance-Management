@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
-import DateFilterControls from '../components/DateFilterControls';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import ExpenseTable from '../components/ExpenseTable';
@@ -114,16 +113,15 @@ const Expenses = () => {
     <PageContainer>
       <PageHeader title="Expenses" actions={<Button onClick={openAddModal}>Add Expense</Button>} />
 
-        <FilterBar>
+        <FilterBar dateFilter={dateFilter}>
           <SearchableDropdown
             label="Type"
             value={selectedType}
             onChange={setSelectedType}
             options={EXPENSE_TYPE_OPTIONS}
             placeholder="All Types"
-            layout="md"
+            layout="filter"
           />
-          <DateFilterControls {...dateFilter} />
         </FilterBar>
 
         <ErrorAlert message={error} />

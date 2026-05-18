@@ -3,14 +3,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/Button';
-import DateFilterControls from '../components/DateFilterControls';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import BarChart from '../components/BarChart';
 import LineChartChartJS from '../components/LineChartChartJS';
 import TransactionTable from '../components/TransactionTable';
 import TransactionFormModal from '../components/TransactionFormModal';
-import Modal from '../components/Modal';
+import Modal, { modalActionsClass, modalScrollTableWrapClass, modalScrollTableInnerClass } from '../components/Modal';
+import { tableElementClass, tableHeadCellClass, tableBodyCellClass } from '../constants/tableStyles';
 import { fetchProjects } from '../store/projects/projectsSlice';
 import {
   createTransaction,
@@ -448,7 +448,7 @@ const Transactions = () => {
       <PageHeader
         title="Transactions"
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full">
             <Button
               variant="secondary"
               onClick={openGenerateModal}
@@ -461,9 +461,7 @@ const Transactions = () => {
         }
       />
 
-        <FilterBar
-          stats={null}
-        >
+        <FilterBar dateFilter={dateFilter}>
           <SearchableDropdown
             label="Broker"
             value={selectedBroker}
@@ -473,7 +471,7 @@ const Transactions = () => {
             }}
             options={clientOptions}
             placeholder="All Brokers"
-            layout="md"
+            layout="filter"
           />
           <SearchableDropdown
             label="Project"
@@ -488,15 +486,14 @@ const Transactions = () => {
             }}
             options={projectOptions.map((p) => p.label)}
             placeholder={selectedBroker ? 'All Projects' : 'Select broker first'}
-            layout="lg"
+            layout="filter"
           />
-          <DateFilterControls {...dateFilter} />
         </FilterBar>
 
         <ErrorAlert message={error} />
 
         {(monthlyTrendData.labels.length > 0 && monthlyTrendData.values.some((v) => v > 0)) || projectChartData.labels.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 min-w-0">
             {monthlyTrendData.labels.length > 0 && monthlyTrendData.values.some((v) => v > 0) && (
               <LineChartChartJS
                 data={[{ label: 'Transactions (Net)', values: monthlyTrendData.values, color: '#10b981' }]}
@@ -539,8 +536,8 @@ const Transactions = () => {
       />
 
       <Modal isOpen={isGenerateOpen} onClose={closeGenerateModal} title="Generate transactions" panelClassName="max-w-3xl">
-        <div className="space-y-4">
-          <div className="rounded-xl border border-slate-200/80 bg-white px-4 py-3 text-sm text-slate-800 shadow-card">
+        <div className="space-y-4 min-w-0">
+          <div className="rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-slate-800 shadow-card">
             <p className="font-semibold">Period</p>
             <p className="text-slate-600 text-xs mt-1">{generationRangeLabel || '—'}</p>
           </div>
@@ -552,27 +549,27 @@ const Transactions = () => {
           ) : null}
 
           {generationPlan.items.length > 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-panel overflow-hidden">
-              <div className="max-h-[55vh] overflow-auto">
-                <table className="w-full min-w-max">
+            <div className={modalScrollTableWrapClass}>
+              <div className={`${modalScrollTableInnerClass} overflow-x-auto`}>
+                <table className={`${tableElementClass} min-w-[28rem]`}>
                   <thead className="bg-slate-100 border-b border-slate-200">
                     <tr>
-                      <th className="py-3 px-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Broker</th>
-                      <th className="py-3 px-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Project</th>
-                      <th className="py-3 px-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Month</th>
-                      <th className="py-3 px-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Payout</th>
-                      <th className="py-3 px-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">To create</th>
+                      <th className={tableHeadCellClass('text-left')}>Broker</th>
+                      <th className={tableHeadCellClass('text-left')}>Project</th>
+                      <th className={tableHeadCellClass('text-center')}>Month</th>
+                      <th className={tableHeadCellClass('text-center')}>Payout</th>
+                      <th className={tableHeadCellClass('text-center')}>To create</th>
                     </tr>
                   </thead>
                   <tbody>
                     {generationPlan.items.map((m, idx) => (
                       <tr key={m.key} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-                        <td className="py-3 px-4 text-slate-800 font-semibold whitespace-nowrap">{m.client}</td>
-                        <td className="py-3 px-4 text-slate-700 whitespace-nowrap">{m.project}</td>
-                        <td className="py-3 px-4 text-slate-700 text-center whitespace-nowrap">{m.monthKey}</td>
-                        <td className="py-3 px-4 text-slate-700 text-center whitespace-nowrap">{m.cadenceLabel}</td>
-                        <td className="py-3 px-4 text-center whitespace-nowrap">
-                          <span className="inline-flex items-center justify-center min-w-8 px-2 py-1 rounded-full bg-primary-50 text-primary-800 border border-primary-200/70 text-xs font-extrabold tabular-nums">
+                        <td className={`${tableBodyCellClass('text-left')} font-semibold text-slate-800`}>{m.client}</td>
+                        <td className={tableBodyCellClass('text-left')}>{m.project}</td>
+                        <td className={tableBodyCellClass('text-center')}>{m.monthKey}</td>
+                        <td className={tableBodyCellClass('text-center')}>{m.cadenceLabel}</td>
+                        <td className={tableBodyCellClass('text-center')}>
+                          <span className="inline-flex items-center justify-center min-w-7 sm:min-w-8 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-primary-50 text-primary-800 border border-primary-200/70 text-[10px] sm:text-xs font-extrabold tabular-nums">
                             {m.missing}
                           </span>
                         </td>
@@ -588,13 +585,13 @@ const Transactions = () => {
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
-            <Button variant="secondary" onClick={closeGenerateModal} className="flex-1">
+          <div className={modalActionsClass}>
+            <Button variant="secondary" onClick={closeGenerateModal} className="w-full sm:flex-1">
               Cancel
             </Button>
             <Button
               onClick={onGenerateTransactions}
-              className="flex-1"
+              className="w-full sm:flex-1"
               disabled={isGenerating || generationPlan.totalToCreate <= 0}
             >
               {isGenerating ? 'Generating…' : `Generate (${generationPlan.totalToCreate})`}

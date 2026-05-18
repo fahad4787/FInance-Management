@@ -40,8 +40,8 @@ const ForgotPassword = () => {
   };
 
   return (
-    <AuthCard title="Reset password">
-      <form onSubmit={handleSubmit} className="space-y-5">
+    <AuthCard title="Reset password" subtitle="We'll email you a link to choose a new password.">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         <ErrorAlert message={error} />
         {success && (
           <div className="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800" role="status">

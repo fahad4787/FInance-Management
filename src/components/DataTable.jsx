@@ -3,6 +3,12 @@ import { FiSearch, FiChevronDown, FiFileText, FiMoreVertical } from 'react-icons
 import SearchableDropdown from './SearchableDropdown';
 import Loader from './Loader';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import {
+  tableElementClass,
+  tableHeadCellClass,
+  tableBodyCellClass,
+  tableScrollWrapClass
+} from '../constants/tableStyles';
 
 const DataTable = ({
   data = [],
@@ -77,13 +83,13 @@ const DataTable = ({
   };
 
   const tableHeader = (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-100 text-primary-600">
-        <FiFileText className="w-5 h-5" />
+    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+      <div className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary-100 text-primary-600 shrink-0">
+        <FiFileText className="w-4 h-4 sm:w-5 sm:h-5" />
       </div>
-      <div>
-        <h3 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h3>
-        <p className="text-sm text-slate-500 mt-0.5">Search and filter below</p>
+      <div className="min-w-0">
+        <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-800 tracking-tight truncate">{title}</h3>
+        <p className="text-[11px] sm:text-xs md:text-sm text-slate-500 mt-0.5">Search and filter below</p>
       </div>
     </div>
   );
@@ -91,11 +97,28 @@ const DataTable = ({
   const tableCardClass =
     'bg-white rounded-2xl shadow-panel overflow-hidden border border-slate-200/80 ring-1 ring-slate-200/50 border-t-4 border-t-primary-500 min-w-0 w-full';
 
+  const tableHeaderBarClass =
+    'px-4 py-3.5 sm:px-6 sm:py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80';
+
+  const renderEmptyState = (Icon, iconBgClass, iconClass, heading, description) => (
+    <div className="text-center py-8 sm:py-10 px-4 sm:px-6">
+      <div
+        className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-xl sm:rounded-2xl flex items-center justify-center ${iconBgClass}`}
+      >
+        <Icon className={iconClass} />
+      </div>
+      <h4 className="text-base sm:text-lg font-bold text-slate-800 mb-1 sm:mb-1.5 px-2">{heading}</h4>
+      <p className="text-slate-500 text-xs sm:text-sm max-w-[16rem] sm:max-w-sm mx-auto leading-relaxed px-2">
+        {description}
+      </p>
+    </div>
+  );
+
   if (isLoading) {
     return (
-      <div className={`${tableCardClass} p-8 md:p-12`}>
-        <div className="px-6 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80">{tableHeader}</div>
-        <div className="p-8">
+      <div className={tableCardClass}>
+        <div className={tableHeaderBarClass}>{tableHeader}</div>
+        <div className="flex justify-center py-8 sm:py-10 px-4">
           <Loader />
         </div>
       </div>
@@ -104,30 +127,30 @@ const DataTable = ({
 
   if (data.length === 0) {
     return (
-      <div className={`${tableCardClass} p-8 md:p-12`}>
-        <div className="px-6 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80">{tableHeader}</div>
-        <div className="text-center py-16 px-6">
-          <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-primary-100 flex items-center justify-center">
-            <FiFileText className="w-10 h-10 text-primary-500" />
-          </div>
-          <h4 className="text-lg font-bold text-slate-800 mb-2">{emptyTitle}</h4>
-          <p className="text-slate-500 text-sm max-w-sm mx-auto">{emptyDescription}</p>
-        </div>
+      <div className={tableCardClass}>
+        <div className={tableHeaderBarClass}>{tableHeader}</div>
+        {renderEmptyState(
+          FiFileText,
+          'bg-primary-100',
+          'w-7 h-7 sm:w-8 sm:h-8 text-primary-500',
+          emptyTitle,
+          emptyDescription
+        )}
       </div>
     );
   }
 
   return (
     <div className={tableCardClass}>
-      <div className="px-6 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80 flex flex-row flex-wrap justify-between items-center gap-4">
+      <div className={`${tableHeaderBarClass} flex flex-row flex-wrap justify-between items-center gap-3 sm:gap-4`}>
         {tableHeader}
         {titleActions && <div className="flex-shrink-0">{titleActions}</div>}
       </div>
 
-      <div className="p-4 md:p-5 bg-slate-100/60 border-b border-slate-200/80 flex flex-col md:flex-row gap-4">
+      <div className="p-3 sm:p-4 md:p-5 bg-slate-100/60 border-b border-slate-200/80 flex flex-col md:flex-row gap-3 sm:gap-4">
         {searchConfig.enabled && (
-          <div className="flex-1">
-            <label className="text-sm font-semibold mb-2.5 text-slate-700 capitalize tracking-wide block">
+          <div className="flex-1 min-w-0">
+            <label className="text-xs sm:text-sm font-semibold mb-2 sm:mb-2.5 text-slate-700 capitalize tracking-wide block">
               Search
             </label>
             <div className="relative">
@@ -136,7 +159,7 @@ const DataTable = ({
                 placeholder={searchConfig.placeholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2.5 pl-10 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                className="w-full px-3 py-2 sm:px-4 sm:py-2.5 pl-9 sm:pl-10 text-sm border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
               />
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <FiSearch className="w-5 h-5 text-slate-400" />
@@ -159,7 +182,7 @@ const DataTable = ({
               />
             ) : (
               <div>
-                <label className="text-sm font-semibold mb-2.5 text-slate-700 capitalize tracking-wide block">
+                <label className="text-xs sm:text-sm font-semibold mb-2 sm:mb-2.5 text-slate-700 capitalize tracking-wide block">
                   {filter.label}
                 </label>
                 <div className="relative">
@@ -189,33 +212,33 @@ const DataTable = ({
       </div>
 
       {currentData.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center">
+        <div className="text-center py-8 sm:py-10 px-4 sm:px-6">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-xl sm:rounded-2xl bg-slate-100 flex items-center justify-center">
             <FiSearch className="w-8 h-8 text-slate-400" />
           </div>
-          <p className="text-slate-600 font-semibold">No results found</p>
+          <p className="text-slate-600 font-semibold text-sm sm:text-base">No results found</p>
           <p className="text-slate-500 text-sm mt-1">Try adjusting your search or filter</p>
         </div>
       ) : (
         <>
           <div
-            className="min-w-0 overflow-auto overscroll-x-contain px-4 py-2 [@media(max-height:760px)]:max-h-[calc(100dvh-12rem)]"
+            className={tableScrollWrapClass}
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
-            <table className="w-full min-w-max">
+            <table className={tableElementClass}>
               <thead>
                 {headerSummaryDisplay != null && headerSummaryColIndex >= 0 ? (
                   <tr className="bg-primary-50/90 border-b border-primary-200/60">
                     {headerSummaryColIndex > 0 ? (
                       <th
                         colSpan={headerSummaryColIndex}
-                        className="py-2.5 px-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap"
+                        className={tableHeadCellClass('text-right')}
                       >
                         {headerSummary.label ?? 'Total'}
                       </th>
                     ) : null}
                     <th
-                      className={`py-2.5 px-4 text-center text-sm font-bold text-primary-800 tabular-nums whitespace-nowrap ${
+                      className={`${tableBodyCellClass('text-center', 'font-bold text-primary-800 tabular-nums')} ${
                         headerSummaryColIndex > 0 ? 'border-l border-primary-200/50' : ''
                       }`}
                       colSpan={1}
@@ -225,12 +248,12 @@ const DataTable = ({
                     {headerSummaryColIndex < columns.length - 1 ? (
                       <th
                         colSpan={columns.length - headerSummaryColIndex - 1}
-                        className="py-2.5 px-4 border-l-0"
+                        className="py-2 px-2 sm:py-2.5 sm:px-4 border-l-0"
                         aria-hidden
                       />
                     ) : null}
                     {(onEdit || onDelete || onApprove) && (
-                      <th className="py-2.5 px-4 bg-primary-50/90" aria-hidden />
+                      <th className="py-2 px-2 sm:py-2.5 sm:px-4 bg-primary-50/90" aria-hidden />
                     )}
                   </tr>
                 ) : null}
@@ -238,13 +261,13 @@ const DataTable = ({
                   {columns.map((column) => (
                     <th
                       key={column.key}
-                      className={`py-3.5 px-4 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap ${column.align || 'text-center'} ${column.className || ''}`}
+                      className={`${tableHeadCellClass(column.align || 'text-center')} ${column.className || ''}`}
                     >
                       {column.label}
                     </th>
                   ))}
                   {(onEdit || onDelete || onApprove) && (
-                    <th className="text-center py-3.5 px-4 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                    <th className={tableHeadCellClass('text-center')}>Actions</th>
                   )}
                 </tr>
               </thead>
@@ -262,13 +285,13 @@ const DataTable = ({
                         {columns.map((column) => (
                           <td
                             key={column.key}
-                            className={`py-3 px-4 text-slate-700 whitespace-nowrap ${column.align || 'text-center'} ${column.className || ''}`}
+                            className={`${tableBodyCellClass(column.align || 'text-center')} ${column.className || ''}`}
                           >
                             {column.render ? column.render(item[column.key], item) : (item[column.key] || '-')}
                           </td>
                         ))}
                         {(onEdit || onDelete || onApprove) && (
-                          <td className="text-center py-3 px-4">
+                          <td className={tableBodyCellClass('text-center')}>
                             {hasRowAction ? (
                             <div className="relative inline-block">
                               <button
@@ -289,9 +312,9 @@ const DataTable = ({
                                   });
                                   setOpenDropdownIndex(openDropdownIndex === uniqueId ? null : uniqueId);
                                 }}
-                                className="p-2 rounded-xl hover:bg-primary-100 text-slate-600 hover:text-primary-700 transition-colors"
+                                className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-primary-100 text-slate-600 hover:text-primary-700 transition-colors"
                               >
-                                <FiMoreVertical className="w-5 h-5 text-slate-600" />
+                                <FiMoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" />
                               </button>
                             </div>
                             ) : null}

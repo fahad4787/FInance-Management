@@ -14,16 +14,30 @@ import { formatMoney } from '../utils/format';
 import { buildProjectInwardCostChartRows } from '../utils/projectInwardCostChart';
 import { useDateFilter } from '../hooks/useDateFilter';
 import DateFilterControls from './DateFilterControls';
+import {
+  chartCardClass,
+  chartCardHeaderClass,
+  chartCardTitleClass,
+  chartCardSubtitleClass,
+  chartCardIconWrapClass,
+  chartPlotHeightClass
+} from '../constants/chartCardStyles';
+import { useCompactChart } from '../hooks/useCompactChart';
+import {
+  themeText,
+  themeMuted,
+  themeGrid,
+  buildAxisTickFont,
+  buildLegendFont,
+  buildLegendPadding
+} from '../utils/chartTheme';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const MAX_BARS = 14;
 
-const themeText = '#1e293b';
-const themeMuted = '#64748b';
-const themeGrid = 'rgba(15, 23, 42, 0.06)';
-
 const ProjectInwardCostBar = ({ projects = [], transactions = [] }) => {
+  const compact = useCompactChart();
   const chartDateFilter = useDateFilter({ defaultMode: 'month' });
   const { effectiveDateFrom, effectiveDateTo, dateMode } = chartDateFilter;
 
@@ -81,27 +95,28 @@ const ProjectInwardCostBar = ({ projects = [], transactions = [] }) => {
         intersect: false
       },
       layout: {
-        padding: { top: 8, right: 8, bottom: 4, left: 4 }
+        padding: { top: compact ? 4 : 8, right: compact ? 4 : 8, bottom: 2, left: 2 }
       },
       plugins: {
         legend: {
           position: 'top',
-          align: 'end',
+          align: compact ? 'center' : 'end',
           labels: {
             usePointStyle: true,
             pointStyle: 'circle',
-            padding: 16,
+            padding: buildLegendPadding(compact),
             color: themeText,
-            font: { family: 'inherit', size: 12, weight: '600' }
+            font: buildLegendFont(compact),
+            boxWidth: compact ? 8 : 12
           }
         },
         tooltip: {
           backgroundColor: 'rgba(15, 23, 42, 0.92)',
           titleColor: '#f8fafc',
           bodyColor: '#e2e8f0',
-          padding: 14,
-          titleFont: { size: 13, weight: 'bold' },
-          bodyFont: { size: 13 },
+          padding: compact ? 10 : 14,
+          titleFont: { size: compact ? 11 : 13, weight: 'bold' },
+          bodyFont: { size: compact ? 11 : 13 },
           borderColor: 'rgba(248, 250, 252, 0.12)',
           borderWidth: 1,
           cornerRadius: 12,
@@ -133,10 +148,12 @@ const ProjectInwardCostBar = ({ projects = [], transactions = [] }) => {
           grid: { display: false },
           ticks: {
             color: themeMuted,
-            font: { size: 10 },
-            padding: 8,
-            maxRotation: 55,
-            minRotation: 0
+            font: buildAxisTickFont(compact),
+            padding: compact ? 4 : 8,
+            maxRotation: compact ? 65 : 55,
+            minRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: compact ? 5 : undefined
           }
         },
         y: {
@@ -149,15 +166,15 @@ const ProjectInwardCostBar = ({ projects = [], transactions = [] }) => {
           },
           ticks: {
             color: themeMuted,
-            font: { size: 11 },
-            padding: 10,
-            maxTicksLimit: 7,
+            font: buildAxisTickFont(compact),
+            padding: compact ? 6 : 10,
+            maxTicksLimit: compact ? 5 : 7,
             callback: (value) => (Number.isFinite(value) ? `$${value}` : value)
           }
         }
       }
     }),
-    [tooltipRowDetails]
+    [tooltipRowDetails, compact]
   );
 
   const hasData =
@@ -165,37 +182,37 @@ const ProjectInwardCostBar = ({ projects = [], transactions = [] }) => {
     chartData.datasets.some((d) => d.data.some((n) => n > 0));
 
   return (
-    <div className="bg-white rounded-2xl shadow-panel border border-slate-200/80 ring-1 ring-slate-200/50 border-t-4 border-t-emerald-600 overflow-hidden">
-      <div className="px-4 md:px-6 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
-          <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 shrink-0">
-              <FiLayers className="w-5 h-5" aria-hidden />
+    <div className={`${chartCardClass} border-t-4 border-t-emerald-600 overflow-hidden`}>
+      <div className={chartCardHeaderClass}>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+          <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
+            <div className={`${chartCardIconWrapClass} bg-emerald-100 text-emerald-700`}>
+              <FiLayers className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden />
             </div>
             <div className="min-w-0">
-              <h3 className="text-xl font-bold text-slate-800 tracking-tight">Inward vs total cost</h3>
-              <p className="text-sm text-slate-500 mt-0.5 leading-snug">
+              <h3 className={chartCardTitleClass}>Inward vs total cost</h3>
+              <p className={chartCardSubtitleClass}>
                 Total cost: brokerage, tax, project cost. Net inward: filtered by date (after 2% withholding).
               </p>
             </div>
           </div>
-          <div className="shrink-0 w-full lg:w-auto lg:max-w-[min(100%,42rem)] lg:ml-auto">
-            <DateFilterControls {...chartDateFilter} className="justify-end" />
+          <div className="shrink-0 w-full min-w-0 lg:w-auto lg:max-w-[min(100%,42rem)] lg:ml-auto">
+            <DateFilterControls {...chartDateFilter} className="xl:items-end" />
           </div>
         </div>
       </div>
-      <div className="px-4 md:px-6 py-4 md:py-5 bg-slate-100/60">
+      <div className="px-3 py-3 sm:px-4 md:px-6 sm:py-4 md:py-5 bg-slate-100/60 min-w-0">
         {truncated ? (
-          <p className="text-[11px] text-slate-500 mb-2">
+          <p className="text-[10px] sm:text-[11px] text-slate-500 mb-2">
             Showing the {MAX_BARS} largest projects by combined total.
           </p>
         ) : null}
         {hasData ? (
-          <div className="h-[min(420px,55vh)] min-h-[260px] w-full">
+          <div className={chartPlotHeightClass}>
             <Bar data={chartData} options={options} />
           </div>
         ) : (
-          <p className="text-sm text-slate-500 py-10 text-center">
+          <p className="text-xs sm:text-sm text-slate-500 py-8 sm:py-10 text-center px-2">
             {dateMode !== 'all' && (effectiveDateFrom || effectiveDateTo)
               ? 'No data for this period. Try another range or clear the date filter.'
               : 'No approved transactions or cost data yet.'}

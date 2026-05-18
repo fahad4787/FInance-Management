@@ -42,7 +42,7 @@ const MainLayout = () => {
       {!isDesktop && isSidebarOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-[2px] lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden"
           aria-label="Close menu"
           onClick={closeSidebar}
         />
@@ -51,7 +51,7 @@ const MainLayout = () => {
       <div
         className={`flex-1 min-w-0 transition-all duration-300 w-full ${isSidebarOpen ? 'lg:ml-64' : ''}`}
       >
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/80 shadow-card">
+        <header className="sticky top-0 z-30 bg-white border-b border-slate-200/80 shadow-card">
           <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center">
             <button
               type="button"

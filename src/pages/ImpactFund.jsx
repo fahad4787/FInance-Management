@@ -9,10 +9,9 @@ import Button from '../components/Button';
 import StatCard from '../components/StatCard';
 import Tabs from '../components/Tabs';
 import DataTable from '../components/DataTable';
-import Modal from '../components/Modal';
+import Modal, { modalActionsClass } from '../components/Modal';
 import InputField from '../components/InputField';
 import TextareaField from '../components/TextareaField';
-import DateFilterControls from '../components/DateFilterControls';
 import FilterBar from '../components/FilterBar';
 import SearchableDropdown from '../components/SearchableDropdown';
 import { filterByDateRange } from '../utils/date';
@@ -221,29 +220,32 @@ const ImpactFund = () => {
     <PageContainer>
       <PageHeader title="Impact Fund" actions={<Button variant="danger" onClick={openWithdrawModal} disabled={remaining <= 0}><FiTrendingDown className="w-4 h-4" /> Withdraw</Button>} />
 
-        <FilterBar>
+        <FilterBar
+          dateFilter={dateFilter}
+          stats={
+            selectedBroker && totalFromSelectedBroker !== null ? (
+              <div className="inline-flex flex-wrap items-center gap-2 rounded-xl bg-primary-50 border border-primary-200/80 px-4 py-3">
+                <span className="text-sm text-slate-600">Total from</span>
+                <span className="text-sm font-semibold text-primary-700">{selectedBroker}</span>
+                <span className="text-primary-500">·</span>
+                <span className="text-base font-bold text-primary-600">{formatMoney(totalFromSelectedBroker)}</span>
+              </div>
+            ) : null
+          }
+        >
           <SearchableDropdown
             label="Broker"
             value={selectedBroker}
             onChange={setSelectedBroker}
             options={brokerNames}
             placeholder="All Brokers"
-            layout="md"
+            layout="filter"
           />
-          <DateFilterControls {...dateFilter} />
-          {selectedBroker && totalFromSelectedBroker !== null && (
-            <div className="inline-flex items-center gap-2 rounded-xl bg-primary-50 border border-primary-200/80 px-4 py-2.5">
-              <span className="text-sm text-slate-600">Total from</span>
-              <span className="text-sm font-semibold text-primary-700">{selectedBroker}</span>
-              <span className="text-primary-500">·</span>
-              <span className="text-base font-bold text-primary-600">{formatMoney(totalFromSelectedBroker)}</span>
-            </div>
-          )}
         </FilterBar>
 
         <ErrorAlert message={error} />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           {statCards.map((card) => (
             <StatCard
               key={card.label}
@@ -259,8 +261,8 @@ const ImpactFund = () => {
 
         <Tabs
           tabs={[
-            { id: 'contrib', label: 'Contribution history' },
-            { id: 'withdraw', label: 'Withdrawal history' }
+            { id: 'contrib', label: 'Contribution history', shortLabel: 'Contributions' },
+            { id: 'withdraw', label: 'Withdrawal history', shortLabel: 'Withdrawals' }
           ]}
           activeId={activeTab}
           onChange={setActiveTab}
@@ -306,7 +308,7 @@ const ImpactFund = () => {
         onClose={() => { setIsWithdrawModalOpen(false); setEditingWithdrawalId(null); setWithdrawError(''); }}
         title={editingWithdrawalId ? 'Edit Withdrawal' : 'Withdraw from Impact Fund'}
       >
-        <form onSubmit={handleWithdrawSubmit} className="space-y-4">
+        <form onSubmit={handleWithdrawSubmit} className="space-y-4 min-w-0">
           <div>
             <InputField
               label="Amount"
@@ -337,16 +339,17 @@ const ImpactFund = () => {
             placeholder="Optional note for this withdrawal..."
             rows={4}
           />
-          <div className="flex gap-3 pt-4">
+          <div className={modalActionsClass}>
             <button
               type="button"
               onClick={() => { setIsWithdrawModalOpen(false); setEditingWithdrawalId(null); setWithdrawError(''); }}
-              className="flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-300 text-slate-700 font-semibold hover:bg-slate-50"
+              className="w-full sm:flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-300 text-slate-700 font-semibold hover:bg-slate-50"
             >
               Cancel
             </button>
             <Button
               type="submit"
+              className="w-full sm:flex-1"
               disabled={isLoading || toNumber(withdrawAmount) <= 0 || toNumber(withdrawAmount) > maxWithdrawable}
             >
               {isLoading ? 'Saving...' : editingWithdrawalId ? 'Update' : 'Withdraw'}

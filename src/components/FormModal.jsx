@@ -286,7 +286,7 @@ const FormModal = ({
         panelClassNameOverride || (columnsPerRow >= 3 ? 'max-w-4xl' : 'max-w-2xl')
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 min-w-0">
         {rows.map((row, rowIndex) => {
           if (row.type === 'section') {
             return (
@@ -362,18 +362,18 @@ const FormModal = ({
           );
         })}
 
-        <div className="flex gap-4 pt-4 border-t border-slate-200">
+        <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-slate-200">
           <Button
             variant="secondary"
             onClick={() => {
               setForm(normalizedInitialValues);
               onClose();
             }}
-            className="flex-1"
+            className="w-full sm:flex-1"
           >
             Cancel
           </Button>
-          <Button onClick={handleSave} className="flex-1" disabled={isSaving}>
+          <Button onClick={handleSave} className="w-full sm:flex-1" disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save'}
           </Button>
         </div>

@@ -1,12 +1,16 @@
-import { FiX } from 'react-icons/fi';
+import { FiChevronDown } from 'react-icons/fi';
 import ModernDatePicker from './ModernDatePicker';
 
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 12 }, (_, i) => currentYear - 5 + i);
 
-/**
- * Date filter: Month · Yearly · Date range, plus Clear (show all dates).
- */
+const filterLabelClass = 'text-sm font-semibold mb-2 text-slate-700 capitalize tracking-wide block';
+
+const filterSelectClass =
+  'w-full min-w-0 flex-1 px-3 py-2 pr-10 text-sm text-slate-800 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 bg-white appearance-none cursor-pointer';
+
+const datePickerClass = 'filter-date-field w-full min-w-0 md:flex-1';
+
 const DateFilterControls = ({
   dateMode,
   setDateMode,
@@ -18,27 +22,21 @@ const DateFilterControls = ({
   setDateFrom,
   dateTo,
   setDateTo,
-  clearAll,
   className = ''
 }) => {
-  const hasActiveFilter =
-    dateMode === 'yearly' ||
-    dateMode === 'month' ||
-    (dateMode === 'range' && (dateFrom || dateTo));
-  const showInputs = dateMode !== 'all';
-
   const pill = (isActive) =>
-    `px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shrink-0 ${
+    `w-full px-3 py-2 rounded-md text-sm font-semibold transition-all duration-200 md:w-auto md:whitespace-nowrap ${
       isActive
-        ? 'bg-white text-primary-700 shadow-card border border-slate-200/60'
+        ? 'bg-white text-primary-700 shadow-sm border border-slate-200/70'
         : 'text-slate-600 hover:text-slate-800'
     }`;
 
   return (
-    <div className={`flex items-end gap-4 flex-wrap ${className}`}>
-      <div className="flex flex-col gap-2 shrink-0">
-        <label className="text-sm font-bold text-slate-700">Date</label>
-        <div className="inline-flex p-1 rounded-xl bg-slate-100/80 border border-slate-200/80 flex-wrap sm:flex-nowrap">
+    <div className={`flex flex-col min-w-0 w-full ${className}`}>
+      <label className={filterLabelClass}>Date</label>
+
+      <div className="flex flex-col gap-2 w-full min-w-0 md:flex-row md:flex-wrap md:items-end md:gap-2">
+        <div className="grid grid-cols-3 gap-0.5 p-0.5 w-full rounded-xl bg-slate-100/90 border border-slate-200/80 md:w-auto md:inline-flex md:shrink-0">
           <button type="button" onClick={() => setDateMode('month')} className={pill(dateMode === 'month')}>
             Month
           </button>
@@ -46,79 +44,59 @@ const DateFilterControls = ({
             Yearly
           </button>
           <button type="button" onClick={() => setDateMode('range')} className={pill(dateMode === 'range')}>
-            Date range
+            Range
           </button>
         </div>
-      </div>
 
-      {showInputs ? (
-        <div className="flex items-end gap-3 min-w-[12rem] shrink-0">
-          {dateMode === 'month' && (
+        {dateMode === 'month' && (
+          <ModernDatePicker
+            label=""
+            value={selectedMonth}
+            onChange={setMonth}
+            granularity="month"
+            placeholder="YYYY-MM"
+            className={datePickerClass}
+          />
+        )}
+        {dateMode === 'yearly' && (
+          <div className="relative w-full min-w-0 md:flex-1 md:min-w-[6.5rem]">
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className={filterSelectClass}
+              aria-label="Year"
+            >
+              {YEAR_OPTIONS.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <FiChevronDown className="w-5 h-5 text-slate-400" />
+            </div>
+          </div>
+        )}
+        {dateMode === 'range' && (
+          <div className="flex flex-col gap-2 w-full min-w-0 md:flex-row md:flex-1 md:items-end md:gap-2">
             <ModernDatePicker
-              label="Month"
-              value={selectedMonth}
-              onChange={setMonth}
-              granularity="month"
-              placeholder="YYYY-MM"
-              className="w-full min-w-0"
+              label=""
+              value={dateFrom}
+              onChange={setDateFrom}
+              placeholder="Start"
+              className={datePickerClass}
             />
-          )}
-          {dateMode === 'yearly' && (
-            <div className="flex flex-col gap-2 w-full min-w-0">
-              <label className="text-sm font-bold text-slate-600 uppercase tracking-wider">Year</label>
-              <div className="relative">
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="w-full pl-3 pr-8 py-2.5 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 bg-white text-slate-800 font-semibold appearance-none cursor-pointer text-sm"
-                >
-                  {YEAR_OPTIONS.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          )}
-          {dateMode === 'range' && (
-            <div className="flex items-end gap-2 w-full">
-              <ModernDatePicker
-                label="Start"
-                value={dateFrom}
-                onChange={setDateFrom}
-                placeholder="Start"
-                className="w-[96px] min-w-0 shrink-0"
-              />
-              <span className="pb-2.5 text-slate-400 font-medium shrink-0">–</span>
-              <ModernDatePicker
-                label="End"
-                value={dateTo}
-                onChange={setDateTo}
-                placeholder="End"
-                className="w-[96px] min-w-0 shrink-0"
-              />
-            </div>
-          )}
-        </div>
-      ) : null}
-
-      {hasActiveFilter ? (
-        <button
-          type="button"
-          onClick={clearAll}
-          className="flex items-center justify-center w-10 h-10 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors shrink-0"
-          title="Clear date filter"
-          aria-label="Clear date filter"
-        >
-          <FiX className="w-5 h-5" />
-        </button>
-      ) : null}
+            <span className="hidden md:inline pb-2 text-slate-400 text-sm font-medium shrink-0">–</span>
+            <ModernDatePicker
+              label=""
+              value={dateTo}
+              onChange={setDateTo}
+              placeholder="End"
+              className={datePickerClass}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -3,9 +3,10 @@ import { FiChevronDown } from 'react-icons/fi';
 
 const LAYOUT_WIDTH = {
   full: 'w-full min-w-0',
-  sm: 'w-[100px] shrink-0 sm:w-[112px]',
-  md: 'w-[112px] shrink-0 sm:w-[128px]',
-  lg: 'w-[112px] shrink-0 sm:w-[168px]'
+  filter: 'w-full min-w-0',
+  sm: 'w-full min-w-0 xl:w-[7.5rem] xl:shrink-0',
+  md: 'w-full min-w-0 xl:w-32 xl:shrink-0',
+  lg: 'w-full min-w-0 xl:w-40 xl:shrink-0'
 };
 
 const SearchableDropdown = ({
@@ -81,10 +82,17 @@ const SearchableDropdown = ({
   };
 
   const layoutClass = LAYOUT_WIDTH[layout] || LAYOUT_WIDTH.full;
+  const isFilter = layout === 'filter';
 
   return (
     <div className={`flex flex-col relative ${layoutClass} ${className}`} ref={dropdownRef}>
-      <label className="text-sm font-semibold mb-2.5 text-slate-700 capitalize tracking-wide">
+      <label
+        className={
+          isFilter
+            ? 'text-sm font-semibold mb-2 text-slate-700 capitalize tracking-wide'
+            : 'text-sm font-semibold mb-2.5 text-slate-700 capitalize tracking-wide'
+        }
+      >
         {label}
       </label>
       <div className="relative">
@@ -101,7 +109,9 @@ const SearchableDropdown = ({
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           placeholder={placeholder}
-          className={`w-full px-4 py-2.5 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 bg-white pr-10 ${leftIcon ? 'pl-10' : ''}`}
+          className={`w-full border-2 border-slate-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 bg-white pr-10 ${
+            isFilter ? 'px-3 py-2 text-sm' : 'px-4 py-2.5'
+          } ${leftIcon ? 'pl-10' : ''}`}
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
           <FiChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />

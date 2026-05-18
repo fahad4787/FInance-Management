@@ -50,7 +50,7 @@ function AppRoutes() {
   if (!user) {
     if (authConfig.loading) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="min-h-screen flex items-center justify-center auth-shell">
           <Loader />
         </div>
       );
