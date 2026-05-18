@@ -106,17 +106,31 @@ const ImpactFund = () => {
     [withdrawalRows, dateFrom, dateTo]
   );
 
-  const totalContributions = contributionHistory.reduce((sum, c) => sum + c.amount, 0);
-  const totalWithdrawn = (withdrawals || []).reduce((sum, w) => sum + toNumber(w.amount), 0);
+  const totalContributions = useMemo(
+    () => filteredContributionHistory.reduce((sum, c) => sum + c.amount, 0),
+    [filteredContributionHistory]
+  );
+
+  const totalWithdrawn = useMemo(
+    () => filteredWithdrawalRows.reduce((sum, w) => sum + toNumber(w.amount), 0),
+    [filteredWithdrawalRows]
+  );
+
   const remaining = totalContributions - totalWithdrawn;
+
+  const allTimeRemaining = useMemo(() => {
+    const contrib = contributionHistory.reduce((sum, c) => sum + c.amount, 0);
+    const withdrawn = (withdrawals || []).reduce((sum, w) => sum + toNumber(w.amount), 0);
+    return contrib - withdrawn;
+  }, [contributionHistory, withdrawals]);
 
   const maxWithdrawable = useMemo(() => {
     if (editingWithdrawalId) {
       const current = withdrawals?.find((w) => w.id === editingWithdrawalId);
-      return remaining + (current ? toNumber(current.amount) : 0);
+      return allTimeRemaining + (current ? toNumber(current.amount) : 0);
     }
-    return remaining;
-  }, [remaining, editingWithdrawalId, withdrawals]);
+    return allTimeRemaining;
+  }, [allTimeRemaining, editingWithdrawalId, withdrawals]);
 
   const statCards = [
     {
@@ -218,7 +232,7 @@ const ImpactFund = () => {
 
   return (
     <PageContainer>
-      <PageHeader title="Impact Fund" actions={<Button variant="danger" onClick={openWithdrawModal} disabled={remaining <= 0}><FiTrendingDown className="w-4 h-4" /> Withdraw</Button>} />
+      <PageHeader title="Impact Fund" actions={<Button variant="danger" onClick={openWithdrawModal} disabled={allTimeRemaining <= 0}><FiTrendingDown className="w-4 h-4" /> Withdraw</Button>} />
 
         <FilterBar
           dateFilter={dateFilter}
