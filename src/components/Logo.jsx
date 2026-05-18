@@ -1,16 +1,22 @@
-const Logo = ({ className = '', variant = 'default' }) => {
+const Logo = ({ className = '', variant = 'default', compact = false }) => {
   const isLight = variant === 'light';
   const textClass = isLight ? 'text-slate-100' : 'text-slate-800';
-  const subClass = isLight ? 'text-primary-400' : 'text-primary-600';
+  const subClass = isLight ? 'text-emerald-300' : 'text-primary-600';
+  const iconBoxClass = compact ? 'w-9 h-9 rounded-lg' : 'w-12 h-12 rounded-xl';
+  const titleClass = compact ? 'text-base' : 'text-xl';
+  const subTitleClass = compact ? 'text-[10px]' : 'text-xs';
+  const chartIcon = compact ? 20 : 24;
+  const badgeSize = compact ? 'w-4 h-4' : 'w-5 h-5';
+  const badgeIcon = compact ? 8 : 10;
 
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`flex items-center gap-2.5 sm:gap-3 ${className}`}>
       <div
-        className="relative w-12 h-12 rounded-xl flex items-center justify-center shadow-lg border-2 border-primary-400/40 bg-gradient-to-br from-primary-500 to-primary-700"
+        className={`relative ${iconBoxClass} flex items-center justify-center shadow-lg border-2 border-primary-400/40 bg-gradient-to-br from-primary-500 to-primary-700`}
       >
         <svg
-          width="24"
-          height="24"
+          width={chartIcon}
+          height={chartIcon}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -31,10 +37,12 @@ const Logo = ({ className = '', variant = 'default' }) => {
             strokeLinejoin="round"
           />
         </svg>
-        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-md bg-primary-700">
+        <div
+          className={`absolute -bottom-1 -right-1 ${badgeSize} rounded-full flex items-center justify-center border-2 border-white shadow-md bg-primary-700`}
+        >
           <svg
-            width="10"
-            height="10"
+            width={badgeIcon}
+            height={badgeIcon}
             viewBox="0 0 10 10"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -48,9 +56,9 @@ const Logo = ({ className = '', variant = 'default' }) => {
           </svg>
         </div>
       </div>
-      <div className="flex flex-col">
-        <span className={`text-xl font-bold leading-tight tracking-tight ${textClass}`}>FinHub</span>
-        <span className={`text-xs font-semibold leading-tight uppercase tracking-wider ${subClass}`}>
+      <div className="flex flex-col min-w-0">
+        <span className={`${titleClass} font-bold leading-tight tracking-tight ${textClass}`}>FinHub</span>
+        <span className={`${subTitleClass} font-semibold leading-tight uppercase tracking-wider ${subClass}`}>
           Finance Hub
         </span>
       </div>

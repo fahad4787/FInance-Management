@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { FiX, FiMenu } from 'react-icons/fi';
 import Sidebar from '../components/Sidebar';
+import Logo from '../components/Logo';
 
 const DESKTOP_MEDIA = '(min-width: 1024px)';
 
@@ -42,7 +43,7 @@ const MainLayout = () => {
       {!isDesktop && isSidebarOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-emerald-950/60 lg:hidden"
           aria-label="Close menu"
           onClick={closeSidebar}
         />
@@ -52,15 +53,23 @@ const MainLayout = () => {
         className={`flex-1 min-w-0 transition-all duration-300 w-full ${isSidebarOpen ? 'lg:ml-64' : ''}`}
       >
         <header className="sticky top-0 z-30 bg-white border-b border-slate-200/80 shadow-card">
-          <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center">
+          <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
+            <Link
+              to="/"
+              className="lg:hidden min-w-0 shrink"
+              onClick={() => !isDesktop && isSidebarOpen && closeSidebar()}
+            >
+              <Logo compact />
+            </Link>
+
             <button
               type="button"
               onClick={toggleSidebar}
-              className="p-2.5 rounded-xl hover:bg-slate-100 transition-colors text-slate-600 hover:text-primary-600"
+              className="p-2.5 rounded-xl hover:bg-slate-100 transition-colors text-slate-600 hover:text-primary-600 shrink-0 ml-auto lg:ml-0"
               aria-label={isSidebarOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={isSidebarOpen}
             >
-              {isSidebarOpen ? (
+              {isSidebarOpen && !isDesktop ? (
                 <FiX className="w-5 h-5" />
               ) : (
                 <FiMenu className="w-5 h-5" />

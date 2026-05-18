@@ -45,7 +45,7 @@ const Login = ({ showSignupLink = false }) => {
   };
 
   return (
-    <AuthCard title="Sign in" subtitle="Access your dashboard, projects, and financial records.">
+    <AuthCard title="Sign in" subtitle="Sign in to your private FinHub workspace.">
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         <ErrorAlert message={error} />
         <InputField
@@ -76,7 +76,7 @@ const Login = ({ showSignupLink = false }) => {
         </Button>
         {showSignupLink && (
           <p className="mt-4 text-center text-sm text-gray-600">
-            Need a second account?{' '}
+            Need an account?{' '}
             <Link to="/signup" className="font-semibold text-primary-600 hover:text-primary-700">
               Create account
             </Link>

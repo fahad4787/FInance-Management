@@ -5,6 +5,15 @@ import { useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
 import { isApproved } from '../constants/app';
+import {
+  sidebarShellClass,
+  sidebarSectionBorderClass,
+  sidebarNavLinkBase,
+  sidebarNavLinkActive,
+  sidebarNavLinkInactive,
+  sidebarBadgeClass,
+  sidebarLogoutClass
+} from '../constants/sidebarTheme';
 
 const Sidebar = ({ isOpen = true, isDesktop = true, onClose }) => {
   const location = useLocation();
@@ -22,13 +31,13 @@ const Sidebar = ({ isOpen = true, isDesktop = true, onClose }) => {
   }, [location.pathname, isDesktop, onClose]);
 
   const menuItems = [
-    { path: '/', label: 'Dashboard', icon: <FiHome className="w-5 h-5" /> },
-    { path: '/projects', label: 'Projects', icon: <FiFileText className="w-5 h-5" /> },
-    { path: '/transactions', label: 'Transactions', icon: <FiRepeat className="w-5 h-5" /> },
-    { path: '/expenses', label: 'Expenses', icon: <FiTrendingDown className="w-5 h-5" /> },
-    { path: '/pending', label: 'Pending', icon: <FiInbox className="w-5 h-5" />, badge: pendingCount },
-    { path: '/impact-fund', label: 'Impact Fund', icon: <FiDollarSign className="w-5 h-5" /> },
-    { path: '/allocation', label: 'Allocation', icon: <FiLayout className="w-5 h-5" /> }
+    { path: '/', label: 'Dashboard', icon: <FiHome className="w-5 h-5 shrink-0" /> },
+    { path: '/projects', label: 'Projects', icon: <FiFileText className="w-5 h-5 shrink-0" /> },
+    { path: '/transactions', label: 'Transactions', icon: <FiRepeat className="w-5 h-5 shrink-0" /> },
+    { path: '/expenses', label: 'Expenses', icon: <FiTrendingDown className="w-5 h-5 shrink-0" /> },
+    { path: '/pending', label: 'Pending', icon: <FiInbox className="w-5 h-5 shrink-0" />, badge: pendingCount },
+    { path: '/impact-fund', label: 'Impact Fund', icon: <FiDollarSign className="w-5 h-5 shrink-0" /> },
+    { path: '/allocation', label: 'Allocation', icon: <FiLayout className="w-5 h-5 shrink-0" /> }
   ];
 
   const showLabels = isOpen;
@@ -40,15 +49,17 @@ const Sidebar = ({ isOpen = true, isDesktop = true, onClose }) => {
 
   return (
     <aside className={asideClass} aria-hidden={!isOpen}>
-      <div className="h-full flex flex-col bg-slate-800 shadow-xl border-r border-slate-700/50 overscroll-contain">
-        <div className={`p-6 border-b border-slate-700/50 shrink-0 ${showLabels ? '' : 'opacity-0'} transition-opacity duration-300`}>
+      <div className={sidebarShellClass}>
+        <div
+          className={`p-5 sm:p-6 border-b ${sidebarSectionBorderClass} shrink-0 ${showLabels ? '' : 'opacity-0'} transition-opacity duration-300`}
+        >
           <Link to="/" className="flex items-center" onClick={() => !isDesktop && onClose?.()}>
             <Logo variant="light" />
           </Link>
         </div>
 
         <nav
-          className={`flex-1 p-4 space-y-1 overflow-y-auto ${showLabels ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+          className={`flex-1 p-3 sm:p-4 space-y-1 overflow-y-auto ${showLabels ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
         >
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -58,21 +69,13 @@ const Sidebar = ({ isOpen = true, isDesktop = true, onClose }) => {
                 key={item.path}
                 to={item.path}
                 onClick={() => !isDesktop && onClose?.()}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                  isActive
-                    ? 'bg-primary-500/20 text-primary-400 border-l-4 border-primary-500'
-                    : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'
-                }`}
+                className={`${sidebarNavLinkBase} ${isActive ? sidebarNavLinkActive : sidebarNavLinkInactive}`}
               >
                 {item.icon}
                 {showLabels && (
                   <>
-                    <span className="flex-1">{item.label}</span>
-                    {count > 0 && (
-                      <span className="min-w-[1.25rem] px-1.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                        {count}
-                      </span>
-                    )}
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {count > 0 && <span className={sidebarBadgeClass}>{count}</span>}
                   </>
                 )}
               </Link>
@@ -80,14 +83,11 @@ const Sidebar = ({ isOpen = true, isDesktop = true, onClose }) => {
           })}
         </nav>
 
-        <div className={`p-4 border-t border-slate-700/50 shrink-0 ${showLabels ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
-          <button
-            type="button"
-            onClick={logout}
-            aria-label="Sign out"
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors"
-          >
-            <FiLogOut className="w-5 h-5" />
+        <div
+          className={`p-3 sm:p-4 border-t ${sidebarSectionBorderClass} shrink-0 ${showLabels ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+        >
+          <button type="button" onClick={logout} aria-label="Sign out" className={sidebarLogoutClass}>
+            <FiLogOut className="w-5 h-5 shrink-0" />
             {showLabels && <span>Sign out</span>}
           </button>
         </div>

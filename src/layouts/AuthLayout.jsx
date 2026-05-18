@@ -8,21 +8,24 @@ const AuthLayout = () => (
   <div className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row w-full bg-slate-100 isolate">
     <AuthFeaturePanel />
 
-    <div className="flex-1 flex flex-col min-w-0 bg-slate-100 lg:bg-white">
-      <div className="flex-1 flex flex-col justify-center px-4 py-6 sm:px-8 sm:py-10 w-full max-w-md mx-auto lg:max-w-lg">
-        <div className="lg:hidden flex justify-center mb-5 auth-enter">
+    <div className="flex-1 flex flex-col min-w-0 min-h-[100dvh] lg:min-h-0 bg-white lg:justify-center">
+      {/* Mobile: form first */}
+      <div
+        className="flex-1 flex flex-col justify-center min-h-0 px-4 py-5 sm:px-8 sm:py-8 w-full max-w-md mx-auto lg:max-w-lg lg:py-10 min-w-0 auth-enter"
+        style={{ animationDelay: '0.05s' }}
+      >
+        <div className="lg:hidden flex justify-center mb-5">
           <Logo />
         </div>
+        <Outlet />
+      </div>
 
-        <AuthMobileFeatures />
-
-        <div className="auth-enter w-full min-w-0" style={{ animationDelay: '0.05s' }}>
-          <Outlet />
-        </div>
-
-        <p className="mt-5 text-center text-[11px] sm:text-xs text-slate-500">
-          Secure sign-in · Projects · Transactions · Impact Fund
+      {/* Mobile: features below form */}
+      <div className="lg:hidden mt-auto bg-emerald-900 border-t border-emerald-950 px-4 py-5 sm:px-6 sm:py-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] auth-enter shrink-0 w-full">
+        <p className="text-center text-emerald-100/90 text-sm leading-relaxed max-w-sm mx-auto mb-4">
+          Your finance operations hub
         </p>
+        <AuthMobileFeatures />
       </div>
     </div>
   </div>
