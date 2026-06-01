@@ -1,6 +1,9 @@
 import { addMonths } from 'date-fns';
 import { normalizeDateToYYYYMMDD } from './date';
 
+export const isActiveProject = (project) =>
+  String(project?.projectStatus || 'active').trim().toLowerCase() === 'active';
+
 export const isProjectEligibleForTransactions = (project, monthsAfterInactive = 2) => {
   if (!project) return false;
   const type = String(project.projectType || '').trim();

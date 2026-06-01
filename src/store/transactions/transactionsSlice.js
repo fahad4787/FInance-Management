@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { ENTRY_STATUS } from '../../constants/app';
 import {
   getAllTransactions as getAllTransactionsService,
   saveTransaction as saveTransactionService,
@@ -39,27 +40,50 @@ export const editTransaction = createAsyncThunk(
 
 export const removeTransaction = createAsyncThunk(
   'transactions/delete',
-  async (transactionId, { dispatch }) => {
-    await deleteTransactionService(transactionId);
-    await dispatch(fetchTransactions());
+  async (transactionId, { dispatch, rejectWithValue }) => {
+    try {
+      await deleteTransactionService(transactionId);
+      return transactionId;
+    } catch (error) {
+      await dispatch(fetchTransactions());
+      return rejectWithValue(error?.message || 'Failed to delete transaction');
+    }
   }
 );
 
 export const removeTransactionsBulk = createAsyncThunk(
   'transactions/deleteBulk',
-  async (transactionIds, { dispatch }) => {
-    await deleteTransactionsBulkService(transactionIds);
-    await dispatch(fetchTransactions());
+  async (transactionIds, { dispatch, rejectWithValue }) => {
+    try {
+      await deleteTransactionsBulkService(transactionIds);
+      return transactionIds;
+    } catch (error) {
+      await dispatch(fetchTransactions());
+      return rejectWithValue(error?.message || 'Failed to delete transactions');
+    }
   }
 );
 
 export const approveTransaction = createAsyncThunk(
   'transactions/approve',
-  async ({ transactionId, approvedBy }, { dispatch }) => {
-    await approveTransactionService(transactionId, approvedBy);
-    await dispatch(fetchTransactions());
+  async ({ transactionId, approvedBy }, { dispatch, rejectWithValue }) => {
+    try {
+      await approveTransactionService(transactionId, approvedBy);
+      return { transactionId, approvedBy };
+    } catch (error) {
+      await dispatch(fetchTransactions());
+      return rejectWithValue(error?.message || 'Failed to approve transaction');
+    }
   }
 );
+
+const setsLoadingOnMutation = (action) => {
+  const t = action.type;
+  return (
+    (t.startsWith('transactions/create/') && !t.includes('Bulk')) ||
+    t.startsWith('transactions/edit/')
+  );
+};
 
 const transactionsSlice = createSlice({
   name: 'transactions',
@@ -72,7 +96,7 @@ const transactionsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchTransactions.pending, (state) => {
-        state.isLoading = true;
+        if (!state.items.length) state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchTransactions.fulfilled, (state, action) => {
@@ -83,30 +107,45 @@ const transactionsSlice = createSlice({
         state.isLoading = false;
         state.error = action.error?.message || 'Failed to load transactions';
       })
-      .addMatcher(
-        (action) =>
-          action.type.startsWith('transactions/create/') ||
-          action.type.startsWith('transactions/createBulk/') ||
-          action.type.startsWith('transactions/edit/') ||
-          action.type.startsWith('transactions/delete/') ||
-          action.type.startsWith('transactions/deleteBulk/') ||
-          action.type.startsWith('transactions/approve/'),
-        (state, action) => {
-          if (action.type.endsWith('/pending')) {
-            state.isLoading = true;
-            state.error = null;
-          }
-          if (action.type.endsWith('/rejected')) {
-            state.isLoading = false;
-            state.error = action.error?.message || 'Transaction action failed';
-          }
-          if (action.type.endsWith('/fulfilled')) {
-            state.isLoading = false;
-          }
+      .addCase(approveTransaction.pending, (state, action) => {
+        const { transactionId, approvedBy } = action.meta.arg;
+        const item = state.items.find((i) => i.id === transactionId);
+        if (item) {
+          item.status = ENTRY_STATUS.APPROVED;
+          item.approvedBy = approvedBy;
+          item.approvedAt = new Date().toISOString();
         }
-      );
+      })
+      .addCase(approveTransaction.rejected, (state, action) => {
+        state.error = action.payload || action.error?.message || 'Failed to approve transaction';
+      })
+      .addCase(removeTransaction.pending, (state, action) => {
+        state.items = state.items.filter((i) => i.id !== action.meta.arg);
+      })
+      .addCase(removeTransaction.rejected, (state, action) => {
+        state.error = action.payload || action.error?.message || 'Failed to delete transaction';
+      })
+      .addCase(removeTransactionsBulk.pending, (state, action) => {
+        const ids = new Set(action.meta.arg || []);
+        state.items = state.items.filter((i) => !ids.has(i.id));
+      })
+      .addCase(removeTransactionsBulk.rejected, (state, action) => {
+        state.error = action.payload || action.error?.message || 'Failed to delete transactions';
+      })
+      .addMatcher(setsLoadingOnMutation, (state, action) => {
+        if (action.type.endsWith('/pending')) {
+          state.isLoading = true;
+          state.error = null;
+        }
+        if (action.type.endsWith('/rejected')) {
+          state.isLoading = false;
+          state.error = action.error?.message || 'Transaction action failed';
+        }
+        if (action.type.endsWith('/fulfilled')) {
+          state.isLoading = false;
+        }
+      });
   }
 });
 
 export default transactionsSlice.reducer;
-

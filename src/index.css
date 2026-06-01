@@ -6,7 +6,7 @@
   body {
     @apply min-h-screen text-slate-800 antialiased;
     background: linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 50%, #f8fafc 100%);
-    background-attachment: fixed;
+    background-attachment: scroll;
   }
 
   body::before {

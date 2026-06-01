@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FiHome, FiFileText, FiRepeat, FiTrendingDown, FiDollarSign, FiInbox, FiLayout, FiLogOut } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
@@ -15,15 +15,20 @@ import {
   sidebarLogoutClass
 } from '../constants/sidebarTheme';
 
-const Sidebar = ({ isOpen = true, isDesktop = true, onClose }) => {
+const Sidebar = ({ isOpen = true, isDesktop = true, onClose, motionClass = '' }) => {
   const location = useLocation();
   const { logout } = useAuth();
-  const transactions = useSelector((state) => state.transactions.items) || [];
-  const expenses = useSelector((state) => state.expenses.items) || [];
-  const projects = useSelector((state) => state.projects.items) || [];
-  const pendingCount = [transactions, expenses, projects].reduce(
-    (sum, list) => sum + list.filter((item) => !isApproved(item)).length,
-    0
+  const transactions = useSelector((state) => state.transactions.items);
+  const expenses = useSelector((state) => state.expenses.items);
+  const projects = useSelector((state) => state.projects.items);
+
+  const pendingCount = useMemo(
+    () =>
+      [transactions, expenses, projects].reduce(
+        (sum, list) => sum + (list || []).filter((item) => !isApproved(item)).length,
+        0
+      ),
+    [transactions, expenses, projects]
   );
 
   useEffect(() => {
@@ -40,27 +45,20 @@ const Sidebar = ({ isOpen = true, isDesktop = true, onClose }) => {
     { path: '/allocation', label: 'Allocation', icon: <FiLayout className="w-5 h-5 shrink-0" /> }
   ];
 
-  const showLabels = isOpen;
-  const asideClass = isDesktop
-    ? `fixed left-0 top-0 h-full z-50 transition-all duration-300 ${isOpen ? 'w-64' : 'w-0 overflow-hidden'}`
-    : `fixed left-0 top-0 h-full z-50 w-64 max-w-[85vw] transition-transform duration-300 ease-out ${
-        isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
-      }`;
+  const asideClass = `fixed left-0 top-0 z-50 h-full w-64 max-w-[85vw] ${motionClass} ${
+    isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
+  }`;
 
   return (
     <aside className={asideClass} aria-hidden={!isOpen}>
-      <div className={sidebarShellClass}>
-        <div
-          className={`p-5 sm:p-6 border-b ${sidebarSectionBorderClass} shrink-0 ${showLabels ? '' : 'opacity-0'} transition-opacity duration-300`}
-        >
+      <div className={`${sidebarShellClass} h-full [transform:translateZ(0)]`}>
+        <div className={`p-5 sm:p-6 border-b ${sidebarSectionBorderClass} shrink-0`}>
           <Link to="/" className="flex items-center" onClick={() => !isDesktop && onClose?.()}>
             <Logo variant="light" />
           </Link>
         </div>
 
-        <nav
-          className={`flex-1 p-3 sm:p-4 space-y-1 overflow-y-auto ${showLabels ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-        >
+        <nav className="flex-1 p-3 sm:p-4 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
             const count = item.badge ?? 0;
@@ -72,23 +70,17 @@ const Sidebar = ({ isOpen = true, isDesktop = true, onClose }) => {
                 className={`${sidebarNavLinkBase} ${isActive ? sidebarNavLinkActive : sidebarNavLinkInactive}`}
               >
                 {item.icon}
-                {showLabels && (
-                  <>
-                    <span className="flex-1 truncate">{item.label}</span>
-                    {count > 0 && <span className={sidebarBadgeClass}>{count}</span>}
-                  </>
-                )}
+                <span className="flex-1 truncate">{item.label}</span>
+                {count > 0 && <span className={sidebarBadgeClass}>{count}</span>}
               </Link>
             );
           })}
         </nav>
 
-        <div
-          className={`p-3 sm:p-4 border-t ${sidebarSectionBorderClass} shrink-0 ${showLabels ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-        >
+        <div className={`p-3 sm:p-4 border-t ${sidebarSectionBorderClass} shrink-0`}>
           <button type="button" onClick={logout} aria-label="Sign out" className={sidebarLogoutClass}>
             <FiLogOut className="w-5 h-5 shrink-0" />
-            {showLabels && <span>Sign out</span>}
+            <span>Sign out</span>
           </button>
         </div>
       </div>
@@ -96,4 +88,4 @@ const Sidebar = ({ isOpen = true, isDesktop = true, onClose }) => {
   );
 };
 
-export default Sidebar;
+export default memo(Sidebar);

@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, Outlet } from 'react-router-dom';
-import { FiX, FiMenu } from 'react-icons/fi';
+import { LuPanelLeft, LuPanelLeftClose } from 'react-icons/lu';
 import Sidebar from '../components/Sidebar';
 import Logo from '../components/Logo';
 
 const DESKTOP_MEDIA = '(min-width: 1024px)';
+const SIDEBAR_MOTION = 'transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none';
 
 const MainLayout = () => {
   const [isDesktop, setIsDesktop] = useState(
@@ -39,21 +40,32 @@ const MainLayout = () => {
   const toggleSidebar = () => setIsSidebarOpen((open) => !open);
 
   return (
-    <div className="flex h-screen bg-slate-100/90">
-      {!isDesktop && isSidebarOpen && (
+    <div className="relative flex h-screen overflow-hidden bg-slate-100/90">
+      {!isDesktop && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-emerald-950/60 lg:hidden"
+          className={`fixed inset-0 z-40 bg-slate-900/45 lg:hidden transition-opacity duration-300 ease-out motion-reduce:transition-none ${
+            isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
           aria-label="Close menu"
+          aria-hidden={!isSidebarOpen}
+          tabIndex={isSidebarOpen ? 0 : -1}
           onClick={closeSidebar}
         />
       )}
-      <Sidebar isOpen={isSidebarOpen} isDesktop={isDesktop} onClose={closeSidebar} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        isDesktop={isDesktop}
+        onClose={closeSidebar}
+        motionClass={SIDEBAR_MOTION}
+      />
       <div
-        className={`flex-1 min-w-0 transition-all duration-300 w-full ${isSidebarOpen ? 'lg:ml-64' : ''}`}
+        className={`relative z-10 flex flex-col flex-1 min-w-0 w-full h-full min-h-0 ${
+          isDesktop && isSidebarOpen ? 'lg:ml-64' : ''
+        }`}
       >
-        <header className="sticky top-0 z-30 bg-white border-b border-slate-200/80 shadow-card">
-          <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3">
+        <header className="sticky top-0 z-[60] bg-white border-b border-slate-200/80 shadow-card">
+          <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3">
             <Link
               to="/"
               className="lg:hidden min-w-0 shrink"
@@ -65,14 +77,14 @@ const MainLayout = () => {
             <button
               type="button"
               onClick={toggleSidebar}
-              className="p-2.5 rounded-xl hover:bg-slate-100 transition-colors text-slate-600 hover:text-primary-600 shrink-0 ml-auto lg:ml-0"
-              aria-label={isSidebarOpen ? 'Close menu' : 'Open menu'}
+              className="p-2.5 rounded-xl hover:bg-slate-100 transition-colors duration-150 text-slate-600 hover:text-primary-600 shrink-0 ml-auto"
+              aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
               aria-expanded={isSidebarOpen}
             >
-              {isSidebarOpen && !isDesktop ? (
-                <FiX className="w-5 h-5" />
+              {isSidebarOpen ? (
+                <LuPanelLeftClose className="w-6 h-6" aria-hidden />
               ) : (
-                <FiMenu className="w-5 h-5" />
+                <LuPanelLeft className="w-6 h-6" aria-hidden />
               )}
             </button>
           </div>

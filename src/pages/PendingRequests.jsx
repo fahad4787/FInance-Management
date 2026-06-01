@@ -9,9 +9,15 @@ import ExpenseFormModal from '../components/ExpenseFormModal';
 import ProjectFormModal from '../components/ProjectFormModal';
 import { formatMoney } from '../utils/format';
 import { isApproved, ENTRY_STATUS } from '../constants/app';
-import { fetchTransactions, approveTransaction, editTransaction, removeTransactionsBulk } from '../store/transactions/transactionsSlice';
-import { fetchExpenses, approveExpense, editExpense } from '../store/expenses/expensesSlice';
-import { fetchProjects, approveProject, editProject } from '../store/projects/projectsSlice';
+import {
+  fetchTransactions,
+  approveTransaction,
+  editTransaction,
+  removeTransaction,
+  removeTransactionsBulk
+} from '../store/transactions/transactionsSlice';
+import { fetchExpenses, approveExpense, editExpense, removeExpense } from '../store/expenses/expensesSlice';
+import { fetchProjects, approveProject, editProject, removeProject } from '../store/projects/projectsSlice';
 import { useClientOptions } from '../hooks/useClientOptions';
 import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_COLORS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
 import { PROJECT_TYPE_OPTIONS, PROJECT_TYPE_COLORS } from '../constants/projectTypes';
@@ -21,6 +27,7 @@ import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
 import Tabs from '../components/Tabs';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import ApproveAllConfirmModal from '../components/ApproveAllConfirmModal';
 
 const toNumber = (v) => {
   const n = Number(v);
@@ -153,12 +160,7 @@ const PendingRequests = () => {
     dispatch(fetchProjects());
   }, [dispatch]);
 
-  const canApproveTransaction = (t) =>
-    t?.status === ENTRY_STATUS.PENDING && t?.createdBy && currentUserId && t.createdBy !== currentUserId;
-  const canApproveExpense = (e) =>
-    e?.status === ENTRY_STATUS.PENDING && e?.createdBy && currentUserId && e.createdBy !== currentUserId;
-  const canApproveProject = (p) =>
-    p?.status === ENTRY_STATUS.PENDING && p?.createdBy && currentUserId && p.createdBy !== currentUserId;
+  const canApprovePending = () => !!currentUserId;
 
   const onApproveTransaction = async (id) => {
     if (!currentUserId) return;
@@ -174,19 +176,22 @@ const PendingRequests = () => {
   };
 
   const [approvingAll, setApprovingAll] = useState({ t: false, e: false, p: false });
+  const [approveAllConfirm, setApproveAllConfirm] = useState(null);
   const [activeTab, setActiveTab] = useState('transactions');
 
-  const approvableTransactionIds = pendingTransactions.filter(canApproveTransaction).map((t) => t.id);
-  const approvableExpenseIds = pendingExpenses.filter(canApproveExpense).map((e) => e.id);
-  const approvableProjectIds = pendingProjects.filter(canApproveProject).map((p) => p.id);
+  const approvableTransactionIds = pendingTransactions.map((t) => t.id).filter(Boolean);
+  const approvableExpenseIds = pendingExpenses.map((e) => e.id).filter(Boolean);
+  const approvableProjectIds = pendingProjects.map((p) => p.id).filter(Boolean);
 
   const onApproveAllTransactions = async () => {
     if (!currentUserId || approvableTransactionIds.length === 0) return;
     setApprovingAll((prev) => ({ ...prev, t: true }));
     try {
-      for (const id of approvableTransactionIds) {
-        await dispatch(approveTransaction({ transactionId: id, approvedBy: currentUserId })).unwrap();
-      }
+      await Promise.all(
+        approvableTransactionIds.map((id) =>
+          dispatch(approveTransaction({ transactionId: id, approvedBy: currentUserId })).unwrap()
+        )
+      );
     } finally {
       setApprovingAll((prev) => ({ ...prev, t: false }));
     }
@@ -206,9 +211,11 @@ const PendingRequests = () => {
     if (!currentUserId || approvableExpenseIds.length === 0) return;
     setApprovingAll((prev) => ({ ...prev, e: true }));
     try {
-      for (const id of approvableExpenseIds) {
-        await dispatch(approveExpense({ expenseId: id, approvedBy: currentUserId })).unwrap();
-      }
+      await Promise.all(
+        approvableExpenseIds.map((id) =>
+          dispatch(approveExpense({ expenseId: id, approvedBy: currentUserId })).unwrap()
+        )
+      );
     } finally {
       setApprovingAll((prev) => ({ ...prev, e: false }));
     }
@@ -217,13 +224,19 @@ const PendingRequests = () => {
     if (!currentUserId || approvableProjectIds.length === 0) return;
     setApprovingAll((prev) => ({ ...prev, p: true }));
     try {
-      for (const id of approvableProjectIds) {
-        await dispatch(approveProject({ projectId: id, approvedBy: currentUserId })).unwrap();
-      }
+      await Promise.all(
+        approvableProjectIds.map((id) =>
+          dispatch(approveProject({ projectId: id, approvedBy: currentUserId })).unwrap()
+        )
+      );
     } finally {
       setApprovingAll((prev) => ({ ...prev, p: false }));
     }
   };
+
+  const isInitialLoadingT = isLoadingT && !(transactions?.length);
+  const isInitialLoadingE = isLoadingE && !(expenses?.length);
+  const isInitialLoadingP = isLoadingP && !(projects?.length);
 
   const openEditTransaction = (transaction) => {
     setEditingTransaction(transaction || null);
@@ -303,6 +316,18 @@ const PendingRequests = () => {
       editProject({ projectId: editingProjectId, projectData: prepareProjectForFirestore(projectData) })
     ).unwrap();
     setEditingProjectId(null);
+  };
+
+  const onDeleteTransaction = async (id) => {
+    await dispatch(removeTransaction(id)).unwrap();
+  };
+
+  const onDeleteExpense = async (id) => {
+    await dispatch(removeExpense(id)).unwrap();
+  };
+
+  const onDeleteProject = async (id) => {
+    await dispatch(removeProject(id)).unwrap();
   };
 
   const transactionColumns = [
@@ -435,14 +460,15 @@ const PendingRequests = () => {
               data={pendingTransactionsSorted}
               columns={transactionColumns}
               title="Pending Transactions"
-              isLoading={isLoadingT}
+              isLoading={isInitialLoadingT}
               onEdit={(item) => openEditTransaction(item)}
               onApprove={(id) => onApproveTransaction(id)}
-              getCanApprove={canApproveTransaction}
+              onDelete={onDeleteTransaction}
+              getCanApprove={canApprovePending}
               searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
               filters={[]}
               emptyTitle="No pending transactions"
-              emptyDescription="Transactions added by the other user will appear here for approval"
+              emptyDescription="Pending transactions will appear here for review"
               titleActions={
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                   {resettablePendingTransactionIds.length > 0 ? (
@@ -456,7 +482,7 @@ const PendingRequests = () => {
                     </Button>
                   ) : null}
                   {approvableTransactionIds.length > 0 ? (
-                    <Button onClick={onApproveAllTransactions} disabled={approvingAll.t} size="sm">
+                    <Button onClick={() => setApproveAllConfirm('transactions')} disabled={approvingAll.t} size="sm">
                       {approvingAll.t ? 'Approving…' : `Approve all (${approvableTransactionIds.length})`}
                     </Button>
                   ) : null}
@@ -469,17 +495,18 @@ const PendingRequests = () => {
               data={pendingExpenses}
               columns={expenseColumns}
               title="Pending Expenses"
-              isLoading={isLoadingE}
+              isLoading={isInitialLoadingE}
               onEdit={(item) => openEditExpense(item)}
               onApprove={(id) => onApproveExpense(id)}
-              getCanApprove={canApproveExpense}
+              onDelete={onDeleteExpense}
+              getCanApprove={canApprovePending}
               searchConfig={{ enabled: true, placeholder: 'Search by name, type, date...', searchFields: ['expenseName', 'expenseType', 'date'] }}
               filters={[]}
               emptyTitle="No pending expenses"
-              emptyDescription="Expenses added by the other user will appear here for approval"
+              emptyDescription="Pending expenses will appear here for review"
               titleActions={
                 approvableExpenseIds.length > 0 ? (
-                  <Button onClick={onApproveAllExpenses} disabled={approvingAll.e} size="sm">
+                  <Button onClick={() => setApproveAllConfirm('expenses')} disabled={approvingAll.e} size="sm">
                     {approvingAll.e ? 'Approving…' : `Approve all (${approvableExpenseIds.length})`}
                   </Button>
                 ) : null
@@ -491,17 +518,18 @@ const PendingRequests = () => {
               data={pendingProjects}
               columns={projectColumns}
               title="Pending Projects"
-              isLoading={isLoadingP}
+              isLoading={isInitialLoadingP}
               onEdit={(item) => openEditProject(item)}
               onApprove={(id) => onApproveProject(id)}
-              getCanApprove={canApproveProject}
+              onDelete={onDeleteProject}
+              getCanApprove={canApprovePending}
               searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
               filters={[]}
               emptyTitle="No pending projects"
-              emptyDescription="Projects added by the other user will appear here for approval"
+              emptyDescription="Pending projects will appear here for review"
               titleActions={
                 approvableProjectIds.length > 0 ? (
-                  <Button onClick={onApproveAllProjects} disabled={approvingAll.p} size="sm">
+                  <Button onClick={() => setApproveAllConfirm('projects')} disabled={approvingAll.p} size="sm">
                     {approvingAll.p ? 'Approving…' : `Approve all (${approvableProjectIds.length})`}
                   </Button>
                 ) : null
@@ -556,6 +584,31 @@ const PendingRequests = () => {
         title="Reset auto-generated transactions"
         message="Delete your pending auto-generated transactions so you can generate them again with updated rules."
         isDeleting={isResettingTx}
+      />
+
+      <ApproveAllConfirmModal
+        isOpen={approveAllConfirm === 'transactions'}
+        onClose={() => setApproveAllConfirm(null)}
+        onConfirm={onApproveAllTransactions}
+        count={approvableTransactionIds.length}
+        entityLabel="transactions"
+        isApproving={approvingAll.t}
+      />
+      <ApproveAllConfirmModal
+        isOpen={approveAllConfirm === 'expenses'}
+        onClose={() => setApproveAllConfirm(null)}
+        onConfirm={onApproveAllExpenses}
+        count={approvableExpenseIds.length}
+        entityLabel="expenses"
+        isApproving={approvingAll.e}
+      />
+      <ApproveAllConfirmModal
+        isOpen={approveAllConfirm === 'projects'}
+        onClose={() => setApproveAllConfirm(null)}
+        onConfirm={onApproveAllProjects}
+        count={approvableProjectIds.length}
+        entityLabel="projects"
+        isApproving={approvingAll.p}
       />
     </PageContainer>
   );

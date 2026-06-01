@@ -25,7 +25,7 @@ import { useClientOptions } from '../hooks/useClientOptions';
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
 import { PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
-import { isProjectEligibleForTransactions } from '../utils/transactionsEligibility';
+import { isActiveProject, isProjectEligibleForTransactions } from '../utils/transactionsEligibility';
 import { buildExpectedTransactionDatesForMonth, countExpectedPayoutsInRange, getPayoutOccurrenceLabel } from '../utils/payoutSchedule';
 import { computeProjectTaxDollars } from '../utils/project';
 import { createTransactionsBulk } from '../store/transactions/transactionsSlice';
@@ -101,7 +101,10 @@ const Transactions = () => {
       return { items: [], totalToCreate: 0 };
     }
 
-    const approvedProjects = (projects || []).filter(isApproved).filter((p) => isProjectEligibleForTransactions(p, 2));
+    const approvedProjects = (projects || [])
+      .filter(isApproved)
+      .filter(isActiveProject)
+      .filter((p) => isProjectEligibleForTransactions(p, 2));
     const latestByKey = new Map();
     approvedProjects.forEach((p) => {
       const client = (p.client || '').trim();

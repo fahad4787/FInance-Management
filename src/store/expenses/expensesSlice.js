@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { ENTRY_STATUS } from '../../constants/app';
 import {
   getAllExpenses as getAllExpensesService,
   saveExpense as saveExpenseService,
@@ -29,19 +30,34 @@ export const editExpense = createAsyncThunk(
 
 export const removeExpense = createAsyncThunk(
   'expenses/delete',
-  async (expenseId, { dispatch }) => {
-    await deleteExpenseService(expenseId);
-    await dispatch(fetchExpenses());
+  async (expenseId, { dispatch, rejectWithValue }) => {
+    try {
+      await deleteExpenseService(expenseId);
+      return expenseId;
+    } catch (error) {
+      await dispatch(fetchExpenses());
+      return rejectWithValue(error?.message || 'Failed to delete expense');
+    }
   }
 );
 
 export const approveExpense = createAsyncThunk(
   'expenses/approve',
-  async ({ expenseId, approvedBy }, { dispatch }) => {
-    await approveExpenseService(expenseId, approvedBy);
-    await dispatch(fetchExpenses());
+  async ({ expenseId, approvedBy }, { dispatch, rejectWithValue }) => {
+    try {
+      await approveExpenseService(expenseId, approvedBy);
+      return { expenseId, approvedBy };
+    } catch (error) {
+      await dispatch(fetchExpenses());
+      return rejectWithValue(error?.message || 'Failed to approve expense');
+    }
   }
 );
+
+const setsLoadingOnMutation = (action) => {
+  const t = action.type;
+  return t.startsWith('expenses/create/') || t.startsWith('expenses/edit/');
+};
 
 const expensesSlice = createSlice({
   name: 'expenses',
@@ -54,7 +70,7 @@ const expensesSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchExpenses.pending, (state) => {
-        state.isLoading = true;
+        if (!state.items.length) state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchExpenses.fulfilled, (state, action) => {
@@ -65,26 +81,37 @@ const expensesSlice = createSlice({
         state.isLoading = false;
         state.error = action.error?.message || 'Failed to load expenses';
       })
-      .addMatcher(
-        (action) =>
-          action.type.startsWith('expenses/create/') ||
-          action.type.startsWith('expenses/edit/') ||
-          action.type.startsWith('expenses/delete/') ||
-          action.type.startsWith('expenses/approve/'),
-        (state, action) => {
-          if (action.type.endsWith('/pending')) {
-            state.isLoading = true;
-            state.error = null;
-          }
-          if (action.type.endsWith('/rejected')) {
-            state.isLoading = false;
-            state.error = action.error?.message || 'Expense action failed';
-          }
-          if (action.type.endsWith('/fulfilled')) {
-            state.isLoading = false;
-          }
+      .addCase(approveExpense.pending, (state, action) => {
+        const { expenseId, approvedBy } = action.meta.arg;
+        const item = state.items.find((i) => i.id === expenseId);
+        if (item) {
+          item.status = ENTRY_STATUS.APPROVED;
+          item.approvedBy = approvedBy;
+          item.approvedAt = new Date().toISOString();
         }
-      );
+      })
+      .addCase(approveExpense.rejected, (state, action) => {
+        state.error = action.payload || action.error?.message || 'Failed to approve expense';
+      })
+      .addCase(removeExpense.pending, (state, action) => {
+        state.items = state.items.filter((i) => i.id !== action.meta.arg);
+      })
+      .addCase(removeExpense.rejected, (state, action) => {
+        state.error = action.payload || action.error?.message || 'Failed to delete expense';
+      })
+      .addMatcher(setsLoadingOnMutation, (state, action) => {
+        if (action.type.endsWith('/pending')) {
+          state.isLoading = true;
+          state.error = null;
+        }
+        if (action.type.endsWith('/rejected')) {
+          state.isLoading = false;
+          state.error = action.error?.message || 'Expense action failed';
+        }
+        if (action.type.endsWith('/fulfilled')) {
+          state.isLoading = false;
+        }
+      });
   }
 });
 
