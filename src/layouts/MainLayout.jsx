@@ -64,7 +64,7 @@ const MainLayout = () => {
           isDesktop && isSidebarOpen ? 'lg:ml-64' : ''
         }`}
       >
-        <header className="sticky top-0 z-[60] bg-white border-b border-slate-200/80 shadow-card">
+        <header className="sticky top-0 z-30 bg-white border-b border-slate-200/80 shadow-card">
           <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3">
             <Link
               to="/"

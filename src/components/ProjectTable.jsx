@@ -5,6 +5,7 @@ import { isProjectContractEndingAlert } from '../utils/date';
 import { formatMoney } from '../utils/format';
 import { PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
 import PersonBadge from './PersonBadge';
+import ProjectTypeCountBar from './ProjectTypeCountBar';
 
 const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = 'Saved Projects', additionalFilters = null, hideFilters = [] }) => {
   const columns = [
@@ -145,6 +146,7 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
       filters={filters}
       additionalFilters={additionalFilters}
       getRowClassName={getRowClassName}
+      titleActions={<ProjectTypeCountBar projects={projects} />}
     />
   );
 };

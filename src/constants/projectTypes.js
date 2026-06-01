@@ -24,3 +24,18 @@ export const PROJECT_TYPE_COLORS = {
   Contract: 'bg-purple-100 text-purple-800',
   Freelance: 'bg-amber-100 text-amber-800'
 };
+
+export const countProjectsByType = (projects = []) => {
+  const counts = Object.fromEntries(PROJECT_TYPE_OPTIONS.map((o) => [o.value, 0]));
+  let unset = 0;
+  projects.forEach((p) => {
+    const type = String(p?.projectType || '').trim();
+    if (!type) {
+      unset += 1;
+      return;
+    }
+    if (counts[type] !== undefined) counts[type] += 1;
+    else counts[type] = (counts[type] || 0) + 1;
+  });
+  return { counts, unset, total: projects.length };
+};

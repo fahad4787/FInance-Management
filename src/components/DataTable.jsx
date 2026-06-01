@@ -100,6 +100,15 @@ const DataTable = ({
   const tableHeaderBarClass =
     'px-4 py-3.5 sm:px-6 sm:py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80';
 
+  const renderTableHeaderBar = () => (
+    <div
+      className={`${tableHeaderBarClass} flex flex-col sm:flex-row flex-wrap justify-between items-start sm:items-center gap-3 sm:gap-4`}
+    >
+      {tableHeader}
+      {titleActions ? <div className="w-full sm:w-auto min-w-0">{titleActions}</div> : null}
+    </div>
+  );
+
   const renderEmptyState = (Icon, iconBgClass, iconClass, heading, description) => (
     <div className="text-center py-8 sm:py-10 px-4 sm:px-6">
       <div
@@ -117,7 +126,7 @@ const DataTable = ({
   if (isLoading) {
     return (
       <div className={tableCardClass}>
-        <div className={tableHeaderBarClass}>{tableHeader}</div>
+        {renderTableHeaderBar()}
         <div className="flex justify-center py-8 sm:py-10 px-4">
           <Loader />
         </div>
@@ -128,7 +137,7 @@ const DataTable = ({
   if (data.length === 0) {
     return (
       <div className={tableCardClass}>
-        <div className={tableHeaderBarClass}>{tableHeader}</div>
+        {renderTableHeaderBar()}
         {renderEmptyState(
           FiFileText,
           'bg-primary-100',
@@ -142,10 +151,7 @@ const DataTable = ({
 
   return (
     <div className={tableCardClass}>
-      <div className={`${tableHeaderBarClass} flex flex-row flex-wrap justify-between items-center gap-3 sm:gap-4`}>
-        {tableHeader}
-        {titleActions && <div className="flex-shrink-0">{titleActions}</div>}
-      </div>
+      {renderTableHeaderBar()}
 
       <div className="p-3 sm:p-4 md:p-5 bg-slate-100/60 border-b border-slate-200/80 flex flex-col md:flex-row gap-3 sm:gap-4">
         {searchConfig.enabled && (

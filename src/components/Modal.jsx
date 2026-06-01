@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { FiX } from 'react-icons/fi';
 
 export const modalActionsClass =
@@ -12,9 +13,9 @@ export const modalScrollTableInnerClass =
 const Modal = ({ isOpen, onClose, title, children, panelClassName = 'max-w-2xl' }) => {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 !m-0"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 !m-0"
       style={{ backgroundColor: 'rgba(15, 23, 42, 0.75)' }}
       onClick={onClose}
       role="presentation"
@@ -43,7 +44,8 @@ const Modal = ({ isOpen, onClose, title, children, panelClassName = 'max-w-2xl' 
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

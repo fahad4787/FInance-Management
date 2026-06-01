@@ -1,4 +1,4 @@
-const PageHeader = ({ title, actions = null, meta = null, className = '' }) => (
+const PageHeader = ({ title, subtitle = null, actions = null, meta = null, className = '' }) => (
   <div
     className={`flex flex-col gap-3 sm:gap-4 md:flex-row md:items-start md:justify-between w-full min-w-0 ${className}`}
   >
@@ -7,6 +7,7 @@ const PageHeader = ({ title, actions = null, meta = null, className = '' }) => (
         {title}
       </h1>
       <div className="w-14 sm:w-20 md:w-24 h-0.5 sm:h-1 rounded-full bg-gradient-to-r from-primary-500 to-primary-400/60 mt-2 sm:mt-3" />
+      {subtitle ? <div className="mt-2 sm:mt-3">{subtitle}</div> : null}
     </div>
     {(meta || actions) && (
       <div className="flex flex-col gap-2 w-full md:w-auto md:items-end md:shrink-0 min-w-0">
