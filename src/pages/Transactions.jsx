@@ -25,7 +25,11 @@ import { useClientOptions } from '../hooks/useClientOptions';
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
 import { PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
-import { isActiveProject, isProjectEligibleForTransactions } from '../utils/transactionsEligibility';
+import { isFreelanceProject } from '../constants/projectTypes';
+import {
+  isProjectEligibleForAutoGenerateMonth,
+  isProjectEligibleForTransactions
+} from '../utils/transactionsEligibility';
 import { buildExpectedTransactionDatesForMonth, countExpectedPayoutsInRange, getPayoutOccurrenceLabel } from '../utils/payoutSchedule';
 import { computeProjectTaxDollars } from '../utils/project';
 import { createTransactionsBulk } from '../store/transactions/transactionsSlice';
@@ -103,8 +107,7 @@ const Transactions = () => {
 
     const approvedProjects = (projects || [])
       .filter(isApproved)
-      .filter(isActiveProject)
-      .filter((p) => isProjectEligibleForTransactions(p, 2));
+      .filter((p) => !isFreelanceProject(p));
     const latestByKey = new Map();
     approvedProjects.forEach((p) => {
       const client = (p.client || '').trim();
@@ -146,6 +149,8 @@ const Transactions = () => {
         const monthStart = `${monthKey}-01`;
         const lastDay = new Date(m.year, m.month + 1, 0).getDate();
         const monthEnd = `${monthKey}-${String(lastDay).padStart(2, '0')}`;
+
+        if (!isProjectEligibleForAutoGenerateMonth(p, monthStart, monthEnd)) return;
 
         const expected = countExpectedPayoutsInRange(p, monthStart, monthEnd);
         if (expected <= 0) return;
@@ -343,6 +348,7 @@ const Transactions = () => {
     const out = [];
     items.forEach((it) => {
       const p = it.projectRow;
+      if (isFreelanceProject(p)) return;
       const gross = toNumber(p?.totalMonthlyHours) * toNumber(p?.hourlyRate);
       const brokerageAmount = computeBrokerageAmountFromProject(p, gross);
       const tax = computeProjectTaxDollars(p);

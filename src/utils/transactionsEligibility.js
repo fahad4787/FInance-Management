@@ -1,13 +1,39 @@
 import { addMonths } from 'date-fns';
+import { isFreelanceProject } from '../constants/projectTypes';
 import { normalizeDateToYYYYMMDD } from './date';
 
 export const isActiveProject = (project) =>
   String(project?.projectStatus || 'active').trim().toLowerCase() === 'active';
 
+export const isProjectEligibleForAutoGenerateMonth = (project, monthStart, monthEnd) => {
+  if (!project || isFreelanceProject(project)) return false;
+
+  const startYmd = normalizeDateToYYYYMMDD(project.date);
+  const rangeStart = normalizeDateToYYYYMMDD(monthStart);
+  const rangeEnd = normalizeDateToYYYYMMDD(monthEnd);
+  if (!startYmd || !rangeStart || !rangeEnd) return false;
+  if (rangeEnd < startYmd) return false;
+
+  const contractEnd = normalizeDateToYYYYMMDD(project.contractEnding);
+  if (contractEnd && rangeStart > contractEnd) return false;
+
+  const status = String(project.projectStatus || 'active').trim().toLowerCase();
+  if (status === 'active') return true;
+
+  if (status === 'inactive') {
+    const inactiveAt = normalizeDateToYYYYMMDD(project.inactiveAt);
+    if (!inactiveAt) return !contractEnd || rangeStart <= contractEnd;
+    const monthKey = rangeStart.slice(0, 7);
+    const inactiveMonth = inactiveAt.slice(0, 7);
+    return monthKey <= inactiveMonth;
+  }
+
+  return true;
+};
+
 export const isProjectEligibleForTransactions = (project, monthsAfterInactive = 2) => {
   if (!project) return false;
-  const type = String(project.projectType || '').trim();
-  if (type === 'Freelance') return false;
+  if (isFreelanceProject(project)) return false;
   const status = String(project.projectStatus || 'active').trim().toLowerCase();
   if (status === 'active') return true;
   if (status !== 'inactive') return true;

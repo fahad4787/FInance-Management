@@ -4,6 +4,7 @@ import { FiUser } from 'react-icons/fi';
 import { HiOutlineCurrencyDollar, HiOutlinePercentBadge } from 'react-icons/hi2';
 import { getTaxFormDefaultsFromProject } from '../utils/project';
 import { PAYOUT_OCCURRENCE_OPTIONS, PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
+import { LEAD_OPTIONS, PROJECT_MANAGER_OPTIONS } from '../constants/projectAssignments';
 
 const getDateSixMonthsFromNow = () => {
   const d = new Date();
@@ -22,6 +23,8 @@ const defaultForm = {
   hourlyRate: '',
   projectCost: '',
   recruiterName: '',
+  lead: '',
+  projectManager: '',
   contractEnding: '',
   brokerageType: 'percentage',
   brokerageValue: '',
@@ -130,6 +133,20 @@ const ProjectFormModal = ({
           { value: 'inactive', label: 'Inactive' }
         ],
         hidePlaceholder: true
+      },
+      {
+        type: 'dropdown',
+        name: 'lead',
+        label: 'Lead',
+        options: LEAD_OPTIONS,
+        hidePlaceholder: false
+      },
+      {
+        type: 'dropdown',
+        name: 'projectManager',
+        label: 'Project Manager',
+        options: PROJECT_MANAGER_OPTIONS,
+        hidePlaceholder: false
       },
       {
         type: 'dropdown',

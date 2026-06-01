@@ -18,6 +18,7 @@ import { filterByDateRange } from '../utils/date';
 import { useDateFilter } from '../hooks/useDateFilter';
 import ErrorAlert from '../components/ErrorAlert';
 import PageContainer from '../components/PageContainer';
+import { compareTransactions, compareWithdrawals } from '../utils/tableSort';
 
 const IMPACT_FUND_PERCENT = 0.02;
 
@@ -295,6 +296,7 @@ const ImpactFund = () => {
               filters={[]}
               emptyTitle="No contributions yet"
               emptyDescription="Add transactions to see 2% Impact Fund contributions here."
+              sortCompare={compareTransactions}
             />
           )}
           {activeTab === 'withdraw' && (
@@ -313,6 +315,7 @@ const ImpactFund = () => {
               filters={[]}
               emptyTitle="No withdrawals yet"
               emptyDescription="Use Withdraw to record a withdrawal from the Impact Fund."
+              sortCompare={compareWithdrawals}
             />
             )}
           </Tabs>

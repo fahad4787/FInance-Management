@@ -30,8 +30,8 @@ const DataTable = ({
   emptyDescription = 'Get started by adding your first entry',
   titleActions = null,
   getRowClassName = null,
-  /** Optional row above column headers: { columnKey, label, aggregate: (rows) => number, format: (n) => string } */
-  headerSummary = null
+  headerSummary = null,
+  sortCompare = null
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterValues, setFilterValues] = useState({});
@@ -61,7 +61,7 @@ const DataTable = ({
     });
   });
 
-  const currentData = filteredData;
+  const currentData = sortCompare ? [...filteredData].sort(sortCompare) : filteredData;
 
   const headerSummaryColIndex =
     headerSummary && columns.length > 0

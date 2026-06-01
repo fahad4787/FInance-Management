@@ -9,6 +9,9 @@ export const PROJECT_TYPE_LABELS = PROJECT_TYPE_OPTIONS.map((o) => o.label);
 
 export const DASHBOARD_ACTIVE_PROJECT_TYPES = ['Full time', 'Part time', 'Contract'];
 
+export const isFreelanceProject = (project) =>
+  String(project?.projectType || '').trim().toLowerCase() === 'freelance';
+
 export const isDashboardActiveProject = (project) => {
   const status = project?.projectStatus || 'active';
   const type = (project?.projectType || '').trim();

@@ -2,6 +2,7 @@ import { FiFileText } from 'react-icons/fi';
 import DataTable from './DataTable';
 import { formatMoney } from '../utils/format';
 import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_COLORS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
+import { compareExpenses } from '../utils/tableSort';
 
 const sumExpenseAmounts = (rows) =>
   rows.reduce((s, e) => {
@@ -70,6 +71,7 @@ const ExpenseTable = ({ expenses, onDelete, onEdit, isLoading = false, title = '
         aggregate: sumExpenseAmounts,
         format: formatMoney
       }}
+      sortCompare={compareExpenses}
     />
   );
 };

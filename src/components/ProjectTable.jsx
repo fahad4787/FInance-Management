@@ -4,12 +4,15 @@ import { PROJECT_TYPE_COLORS } from '../constants/projectTypes';
 import { isProjectContractEndingAlert } from '../utils/date';
 import { formatMoney } from '../utils/format';
 import { PAYOUT_OCCURRENCE_LABEL_BY_VALUE } from '../constants/payoutOccurrences';
+import PersonBadge from './PersonBadge';
 
 const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = 'Saved Projects', additionalFilters = null, hideFilters = [] }) => {
   const columns = [
     { key: 'client', label: 'Broker' },
-    { key: 'date', label: 'Date' },
     { key: 'project', label: 'Project Name' },
+    { key: 'lead', label: 'Lead', render: (value) => <PersonBadge name={value} /> },
+    { key: 'projectManager', label: 'Project Manager', render: (value) => <PersonBadge name={value} /> },
+    { key: 'date', label: 'Date' },
     {
       key: 'projectType',
       label: 'Project Type',
@@ -94,12 +97,14 @@ const ProjectTable = ({ projects, onDelete, onEdit, isLoading = false, title = '
 
   const searchConfig = {
     enabled: true,
-    placeholder: 'Search by broker, date, project name, type, or recruiter...',
+    placeholder: 'Search by broker, project, lead, manager, type, or recruiter...',
     searchFields: [
       'client',
       'project',
       'projectType',
       'recruiterName',
+      'lead',
+      'projectManager',
       'date',
       'contractEnding',
       'payoutOccurrence',

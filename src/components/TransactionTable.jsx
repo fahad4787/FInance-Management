@@ -1,6 +1,7 @@
 import { FiUser, FiFileText } from 'react-icons/fi';
 import DataTable from './DataTable';
 import { formatMoney } from '../utils/format';
+import { compareTransactions } from '../utils/tableSort';
 
 const toNumber = (v) => {
   const n = Number(v);
@@ -83,6 +84,7 @@ const TransactionTable = ({ transactions, onDelete, onEdit, isLoading = false, t
         aggregate: (rows) => rows.reduce((s, t) => s + computeNetAfterImpactFund(t), 0),
         format: formatMoney
       }}
+      sortCompare={compareTransactions}
     />
   );
 };

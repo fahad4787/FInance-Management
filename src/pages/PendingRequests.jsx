@@ -21,6 +21,7 @@ import { fetchProjects, approveProject, editProject, removeProject } from '../st
 import { useClientOptions } from '../hooks/useClientOptions';
 import { EXPENSE_TYPE_LABELS, EXPENSE_TYPE_COLORS, RECURRING_MONTHS_LABELS } from '../constants/expenseTypes';
 import { PROJECT_TYPE_OPTIONS, PROJECT_TYPE_COLORS } from '../constants/projectTypes';
+import PersonBadge from '../components/PersonBadge';
 import { getTaxFormDefaultsFromProject, prepareProjectForFirestore } from '../utils/project';
 import { normalizeDateToYYYYMMDD } from '../utils/date';
 import ErrorAlert from '../components/ErrorAlert';
@@ -70,6 +71,8 @@ const defaultProjectForm = {
   hourlyRate: '',
   projectCost: '',
   recruiterName: '',
+  lead: '',
+  projectManager: '',
   contractEnding: '',
   brokerageType: 'percentage',
   brokerageValue: '',
@@ -282,6 +285,8 @@ const PendingRequests = () => {
       projectCost:
         project.projectCost != null && project.projectCost !== '' ? String(project.projectCost) : '',
       recruiterName: project.recruiterName || '',
+      lead: project.lead || '',
+      projectManager: project.projectManager || '',
       contractEnding: project.contractEnding || '',
       brokerageType: project.brokerageType || 'percentage',
       brokerageValue: project.brokerageValue || '',
@@ -380,8 +385,10 @@ const PendingRequests = () => {
 
   const projectColumns = [
     { key: 'client', label: 'Broker' },
-    { key: 'date', label: 'Date' },
     { key: 'project', label: 'Project Name' },
+    { key: 'lead', label: 'Lead', render: (value) => <PersonBadge name={value} /> },
+    { key: 'projectManager', label: 'Project Manager', render: (value) => <PersonBadge name={value} /> },
+    { key: 'date', label: 'Date' },
     {
       key: 'projectType',
       label: 'Project Type',
@@ -523,7 +530,11 @@ const PendingRequests = () => {
               onApprove={(id) => onApproveProject(id)}
               onDelete={onDeleteProject}
               getCanApprove={canApprovePending}
-              searchConfig={{ enabled: true, placeholder: 'Search by broker, project, date...', searchFields: ['client', 'project', 'date'] }}
+              searchConfig={{
+                enabled: true,
+                placeholder: 'Search by broker, project, lead, manager, date...',
+                searchFields: ['client', 'project', 'lead', 'projectManager', 'date']
+              }}
               filters={[]}
               emptyTitle="No pending projects"
               emptyDescription="Pending projects will appear here for review"
