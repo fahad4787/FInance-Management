@@ -29,6 +29,7 @@ import Modal, { modalActionsClass } from '../components/Modal';
 import InputField from '../components/InputField';
 import TransactionTable from '../components/TransactionTable';
 import TransactionFormModal from '../components/TransactionFormModal';
+import PortfolioLinks from '../components/PortfolioLinks';
 import { FiDollarSign, FiTarget, FiEdit2, FiBriefcase } from 'react-icons/fi';
 
 const defaultForm = {
@@ -357,6 +358,8 @@ const Dashboard = () => {
   return (
     <PageContainer>
       <PageHeader title="Overview" actions={<Button onClick={openAddModal}>Add Transaction</Button>} />
+
+        <PortfolioLinks />
 
         <FilterBar dateFilter={dateFilter}>
           <SearchableDropdown
